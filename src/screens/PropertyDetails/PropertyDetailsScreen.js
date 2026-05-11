@@ -1,49 +1,90 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
 
+let MapView, Marker, Polyline;
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+  Polyline = Maps.Polyline;
+}
+
 const { width } = Dimensions.get('window');
 
 export default function PropertyDetailsScreen({ route, navigation }) {
   const property = route.params?.property || {};
+  const passedUserCoords = route.params?.userCoords; // Priority to user selected location
+  
   const [currentImg, setCurrentImg] = useState(0);
   const [liked, setLiked] = useState(false);
   const [showInquiry, setShowInquiry] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
   const flatListRef = useRef(null);
-  const [userCoords, setUserCoords] = useState(null);
+  
+  const [userCoords, setUserCoords] = useState(passedUserCoords || null);
   const [distance, setDistance] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
+  const mapRef = useRef(null);
 
   const propCoords = property.location?.coordinates?.coordinates; // [lng, lat]
+  const propLat = propCoords ? propCoords[1] : 0;
+  const propLng = propCoords ? propCoords[0] : 0;
 
   useEffect(() => {
     (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        setUserCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-        if (propCoords && propCoords[0] !== 0) {
-          const R = 6371;
-          const dLat = (propCoords[1] - loc.coords.latitude) * Math.PI / 180;
-          const dLon = (propCoords[0] - loc.coords.longitude) * Math.PI / 180;
-          const a = Math.sin(dLat/2)**2 + Math.cos(loc.coords.latitude*Math.PI/180)*Math.cos(propCoords[1]*Math.PI/180)*Math.sin(dLon/2)**2;
-          setDistance((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1));
+      let uC = passedUserCoords;
+      if (!uC) {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            uC = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+            setUserCoords(uC);
+          }
+        } catch(e) {}
+      }
+
+      if (uC && propLat !== 0) {
+        // Calculate Haversine direct distance
+        const R = 6371;
+        const dLat = (propLat - uC.lat) * Math.PI / 180;
+        const dLon = (propLng - uC.lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(uC.lat*Math.PI/180)*Math.cos(propLat*Math.PI/180)*Math.sin(dLon/2)**2;
+        setDistance((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1));
+
+        // Fetch OSRM Route for Zomato-style Map
+        try {
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${uC.lng},${uC.lat};${propLng},${propLat}?overview=full&geometries=geojson`);
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            // OSRM returns [lng, lat], map to {latitude, longitude}
+            const coords = data.routes[0].geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] }));
+            setRouteCoords(coords);
+            // Fit map to coordinates
+            if (mapRef.current) {
+              setTimeout(() => {
+                mapRef.current.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+              }, 1000);
+            }
+          }
+        } catch (e) {
+          console.log('Routing error:', e);
         }
-      } catch(e) {}
+      }
     })();
   }, []);
 
   const openMap = () => {
     if (!propCoords || propCoords[0] === 0) return;
-    const dest = `${propCoords[1]},${propCoords[0]}`;
+    const dest = `${propLat},${propLng}`;
     const origin = userCoords ? `${userCoords.lat},${userCoords.lng}` : '';
     const url = origin
-      ? `https://www.google.com/maps/dir/${origin}/${dest}`
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`
       : `https://www.google.com/maps/search/?api=1&query=${dest}`;
     Linking.openURL(url);
   };
@@ -224,21 +265,57 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               </View>
             </View>
             {propCoords && propCoords[0] !== 0 ? (
-              <TouchableOpacity style={styles.mapBox} onPress={openMap} activeOpacity={0.85}>
-                <Image source={{uri:`https://maps.googleapis.com/maps/api/staticmap?center=${propCoords[1]},${propCoords[0]}&zoom=14&size=600x300&maptype=roadmap&markers=color:red|${propCoords[1]},${propCoords[0]}&key=AIzaSyDummy`}} style={styles.mapImg} />
-                <View style={styles.mapOverlay}>
-                  <Ionicons name="navigate-circle" size={36} color={COLORS.primary}/>
-                  <Text style={[FONTS.bodyBold,{color:COLORS.primary}]}>Open in Google Maps</Text>
-                  {distance && <Text style={FONTS.caption}>Get directions • {distance} km</Text>}
-                </View>
-              </TouchableOpacity>
+              <View style={styles.mapBox}>
+                {Platform.OS === 'web' || !MapView ? (
+                  <TouchableOpacity onPress={openMap} activeOpacity={0.85} style={{width:'100%', height:200, backgroundColor:COLORS.bgAlt, alignItems:'center', justifyContent:'center'}}>
+                    <Ionicons name="map" size={40} color={COLORS.textMuted} />
+                    <Text style={{...FONTS.body, marginTop:10}}>Map view requires mobile app</Text>
+                    <Text style={{...FONTS.caption, color:COLORS.primary, marginTop:10}}>Click to open in Google Maps</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={{width: '100%', height: 250, borderRadius: 16, overflow: 'hidden'}}>
+                    <MapView
+                      ref={mapRef}
+                      style={StyleSheet.absoluteFillObject}
+                      initialRegion={{
+                        latitude: propLat,
+                        longitude: propLng,
+                        latitudeDelta: 0.05,
+                        longitudeDelta: 0.05,
+                      }}
+                      zoomEnabled={true}
+                      scrollEnabled={false}
+                    >
+                      <Marker coordinate={{ latitude: propLat, longitude: propLng }}>
+                        <View style={{width:40,height:40,borderRadius:20,backgroundColor:'rgba(0,102,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+                          <View style={{width:16,height:16,borderRadius:8,backgroundColor:COLORS.primary,borderWidth:2,borderColor:'#FFF'}}/>
+                        </View>
+                      </Marker>
+                      {userCoords && (
+                        <Marker coordinate={{ latitude: userCoords.lat, longitude: userCoords.lng }}>
+                          <View style={{width:40,height:40,borderRadius:20,backgroundColor:'rgba(255,0,0,0.2)',alignItems:'center',justifyContent:'center'}}>
+                            <Ionicons name="person-circle" size={24} color={COLORS.error} />
+                          </View>
+                        </Marker>
+                      )}
+                      {routeCoords.length > 0 && (
+                        <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor={COLORS.primary} lineDashPattern={[0]} />
+                      )}
+                    </MapView>
+                    <TouchableOpacity style={styles.mapOverlayInteractive} onPress={openMap}>
+                      <View style={{flexDirection:'row',alignItems:'center',backgroundColor:'#FFF',paddingHorizontal:16,paddingVertical:10,borderRadius:20,...SHADOWS.md,gap:8}}>
+                        <Ionicons name="navigate" size={18} color={COLORS.primary}/>
+                        <Text style={[FONTS.bodyBold,{color:COLORS.primary, fontSize:13}]}>Navigate ({distance} km)</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             ) : (
-              <TouchableOpacity style={styles.mapBox} onPress={openMap}>
-                <View style={[styles.mapOverlay,{height:120}]}>
-                  <Ionicons name="map-outline" size={36} color={COLORS.textMuted}/>
-                  <Text style={FONTS.body}>Open in Google Maps</Text>
-                </View>
-              </TouchableOpacity>
+              <View style={[styles.mapBox, {height:120, alignItems:'center', justifyContent:'center'}]}>
+                <Ionicons name="map-outline" size={36} color={COLORS.textMuted}/>
+                <Text style={FONTS.body}>Location unavailable</Text>
+              </View>
             )}
           </View>
 
@@ -313,6 +390,7 @@ const styles = StyleSheet.create({
   mapBox: { marginTop: 12, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
   mapImg: { width: '100%', height: 160 },
   mapOverlay: { padding: 16, alignItems: 'center', gap: 4 },
+  mapOverlayInteractive: { position: 'absolute', bottom: 16, alignSelf: 'center' },
 
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 34, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight, ...SHADOWS.lg },
   bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
