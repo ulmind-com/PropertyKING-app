@@ -18,7 +18,7 @@ export default function FavoritesScreen({ navigation }) {
       <View style={styles.header}><Text style={FONTS.h2}>Favorites</Text><Text style={FONTS.caption}>{favorites.length} saved</Text></View>
       {loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} /> :
         <FlatList data={favorites} keyExtractor={i => i.id} contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <PropertyCard property={item.property || item} variant="list" onPress={() => navigation.navigate('PropertyDetails', { slug: item.property?.slug || item.id, property: item.property || item })} />}
+          renderItem={({ item }) => <PropertyCard property={item.property} onPress={() => navigation.navigate('PropertyDetails', { slug: item.property?.slug || item.property?.id, property: item.property })} />}
           ListEmptyComponent={<View style={styles.empty}><Ionicons name="heart-outline" size={48} color={COLORS.border} /><Text style={FONTS.body}>No favorites yet</Text></View>}
         />}
     </View>
