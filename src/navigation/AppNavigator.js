@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -88,9 +88,9 @@ function MainTabs() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarStyle: {
-          height: 80,
+          height: Platform.OS === 'ios' ? 85 : 65,
           paddingTop: 8,
-          paddingBottom: 24,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
           backgroundColor: COLORS.bg,
           borderTopWidth: 1,
           borderTopColor: COLORS.borderLight,
