@@ -154,7 +154,7 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             {nearbyProps.slice(0, 5).map(item => (
-              <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item })} />
+              <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} />
             ))}
           </View>
         )}
@@ -175,7 +175,7 @@ export default function HomeScreen({ navigation }) {
               contentContainerStyle={{paddingLeft:20,gap:16}}
               keyExtractor={i => i.id}
               renderItem={({item}) => (
-                <PropertyCard property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item })} style={{width:width*0.72}} />
+                <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
               )}
             />
           </View>

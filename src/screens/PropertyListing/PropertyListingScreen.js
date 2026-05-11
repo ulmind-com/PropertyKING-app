@@ -88,7 +88,7 @@ export default function PropertyListingScreen({ navigation, route }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
           renderItem={({ item }) => (
             <PropertyCard property={item}
-              onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item })}
+              onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords: route.params?.userCoords })}
               style={{ marginHorizontal: 20 }}
             />
           )}

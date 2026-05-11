@@ -254,7 +254,12 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           <View style={styles.section}>
             <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
               <Text style={FONTS.h4}>Location</Text>
-              {distance && <View style={styles.distBadge}><Ionicons name="navigate" size={14} color={COLORS.primary}/><Text style={styles.distText}>{distance} km away</Text></View>}
+              {distance && (
+                <TouchableOpacity style={styles.navigateBtn} onPress={openMap} activeOpacity={0.8}>
+                  <Ionicons name="navigate" size={16} color="#FFF" />
+                  <Text style={styles.navigateText}>Navigate ({distance} km)</Text>
+                </TouchableOpacity>
+              )}
             </View>
             <View style={styles.addrBox}>
               <Ionicons name="location" size={20} color={COLORS.primary} />
@@ -287,27 +292,24 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                       scrollEnabled={false}
                     >
                       <Marker coordinate={{ latitude: propLat, longitude: propLng }}>
-                        <View style={{width:40,height:40,borderRadius:20,backgroundColor:'rgba(0,102,255,0.2)',alignItems:'center',justifyContent:'center'}}>
-                          <View style={{width:16,height:16,borderRadius:8,backgroundColor:COLORS.primary,borderWidth:2,borderColor:'#FFF'}}/>
-                        </View>
+                        <Ionicons name="location" size={40} color={COLORS.primary} style={{ marginTop: -20 }} />
                       </Marker>
                       {userCoords && (
                         <Marker coordinate={{ latitude: userCoords.lat, longitude: userCoords.lng }}>
-                          <View style={{width:40,height:40,borderRadius:20,backgroundColor:'rgba(255,0,0,0.2)',alignItems:'center',justifyContent:'center'}}>
-                            <Ionicons name="person-circle" size={24} color={COLORS.error} />
+                          <View style={{width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,150,255,0.2)', alignItems: 'center', justifyContent: 'center'}}>
+                            <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: '#0066FF', borderWidth: 1.5, borderColor: '#FFF'}} />
                           </View>
                         </Marker>
                       )}
                       {routeCoords.length > 0 && (
-                        <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor={COLORS.primary} lineDashPattern={[0]} />
+                        <Polyline 
+                          coordinates={routeCoords} 
+                          strokeWidth={4} 
+                          strokeColor="#3b82f6" 
+                          lineDashPattern={[1]} 
+                        />
                       )}
                     </MapView>
-                    <TouchableOpacity style={styles.mapOverlayInteractive} onPress={openMap}>
-                      <View style={{flexDirection:'row',alignItems:'center',backgroundColor:'#FFF',paddingHorizontal:16,paddingVertical:10,borderRadius:20,...SHADOWS.md,gap:8}}>
-                        <Ionicons name="navigate" size={18} color={COLORS.primary}/>
-                        <Text style={[FONTS.bodyBold,{color:COLORS.primary, fontSize:13}]}>Navigate ({distance} km)</Text>
-                      </View>
-                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -384,13 +386,12 @@ const styles = StyleSheet.create({
 
   videoBtn: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: COLORS.borderLight },
   floorPlanImg: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt },
-  distBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: SIZES.radius.full, backgroundColor: COLORS.primarySoft },
-  distText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  navigateBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: SIZES.radius.full, backgroundColor: '#3b82f6', ...SHADOWS.sm },
+  navigateText: { fontSize: 13, fontWeight: '700', color: '#FFF' },
   addrBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 12, padding: 14, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md },
   mapBox: { marginTop: 12, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
   mapImg: { width: '100%', height: 160 },
   mapOverlay: { padding: 16, alignItems: 'center', gap: 4 },
-  mapOverlayInteractive: { position: 'absolute', bottom: 16, alignSelf: 'center' },
 
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 34, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight, ...SHADOWS.lg },
   bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
