@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Video, ResizeMode } from 'expo-av';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
@@ -248,10 +249,24 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           {property.video_url ? (
             <View style={styles.section}>
               <Text style={FONTS.h4}>Video Tour</Text>
-              <TouchableOpacity style={styles.videoBtn} onPress={() => Linking.openURL(property.video_url)}>
-                <Ionicons name="play-circle" size={40} color={COLORS.primary} />
-                <Text style={[FONTS.bodyBold, {marginTop:8}]}>Watch Property Video</Text>
-              </TouchableOpacity>
+              {property.video_url.includes('youtube.com') || property.video_url.includes('youtu.be') ? (
+                <TouchableOpacity style={styles.videoBtn} onPress={() => Linking.openURL(property.video_url)}>
+                  <Ionicons name="play-circle" size={40} color={COLORS.primary} />
+                  <Text style={[FONTS.bodyBold, {marginTop:8}]}>Watch Property Video</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.videoContainer}>
+                  <Video
+                    style={styles.inlineVideo}
+                    source={{ uri: property.video_url }}
+                    useNativeControls
+                    resizeMode={ResizeMode.COVER}
+                    isLooping
+                    shouldPlay
+                    isMuted
+                  />
+                </View>
+              )}
             </View>
           ) : null}
 
@@ -390,6 +405,8 @@ const styles = StyleSheet.create({
   mapPlaceholder: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center' },
 
   videoBtn: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: COLORS.borderLight },
+  videoContainer: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: '#000' },
+  inlineVideo: { width: '100%', height: '100%' },
   floorPlanImg: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt },
   navigateBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: SIZES.radius.full, backgroundColor: '#3b82f6', ...SHADOWS.sm },
   navigateText: { fontSize: 13, fontWeight: '700', color: '#FFF' },
