@@ -15,7 +15,10 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     if (!email || !password) return setError('Please fill all fields');
     setLoading(true); setError('');
-    try { await login(email, password); } catch (e) { setError(e.response?.data?.detail || 'Invalid credentials'); }
+    try { await login(email, password); } catch (e) { 
+      const detail = e.response?.data?.detail;
+      setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Invalid credentials')); 
+    }
     setLoading(false);
   };
 

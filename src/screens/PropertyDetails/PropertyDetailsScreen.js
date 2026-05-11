@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
 
@@ -14,6 +15,38 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
   const flatListRef = useRef(null);
+  const [userCoords, setUserCoords] = useState(null);
+  const [distance, setDistance] = useState(null);
+
+  const propCoords = property.location?.coordinates?.coordinates; // [lng, lat]
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        if (propCoords && propCoords[0] !== 0) {
+          const R = 6371;
+          const dLat = (propCoords[1] - loc.coords.latitude) * Math.PI / 180;
+          const dLon = (propCoords[0] - loc.coords.longitude) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(loc.coords.latitude*Math.PI/180)*Math.cos(propCoords[1]*Math.PI/180)*Math.sin(dLon/2)**2;
+          setDistance((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1));
+        }
+      } catch(e) {}
+    })();
+  }, []);
+
+  const openMap = () => {
+    if (!propCoords || propCoords[0] === 0) return;
+    const dest = `${propCoords[1]},${propCoords[0]}`;
+    const origin = userCoords ? `${userCoords.lat},${userCoords.lng}` : '';
+    const url = origin
+      ? `https://www.google.com/maps/dir/${origin}/${dest}`
+      : `https://www.google.com/maps/search/?api=1&query=${dest}`;
+    Linking.openURL(url);
+  };
 
   const images = property.images?.length > 0 ? property.images : [{ url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800' }];
   const d = property.details || {};
@@ -157,14 +190,56 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           )}
 
-          {/* Location Address */}
-          <View style={styles.section}>
-            <Text style={FONTS.h4}>Location Address</Text>
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="map-outline" size={40} color={COLORS.textMuted} />
-              <Text style={[FONTS.body, { marginTop: 8 }]}>{property.location?.address || 'Address available on request'}</Text>
-              <Text style={FONTS.caption}>{property.location?.city}, {property.location?.state} {property.location?.zip_code}</Text>
+          {/* Video */}
+          {property.video_url ? (
+            <View style={styles.section}>
+              <Text style={FONTS.h4}>Video Tour</Text>
+              <TouchableOpacity style={styles.videoBtn} onPress={() => Linking.openURL(property.video_url)}>
+                <Ionicons name="play-circle" size={40} color={COLORS.primary} />
+                <Text style={[FONTS.bodyBold, {marginTop:8}]}>Watch Property Video</Text>
+              </TouchableOpacity>
             </View>
+          ) : null}
+
+          {/* Floor Plan */}
+          {property.floor_plan_url ? (
+            <View style={styles.section}>
+              <Text style={FONTS.h4}>Floor Plan</Text>
+              <Image source={{ uri: property.floor_plan_url }} style={styles.floorPlanImg} resizeMode="contain" />
+            </View>
+          ) : null}
+
+          {/* Location & Map */}
+          <View style={styles.section}>
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+              <Text style={FONTS.h4}>Location</Text>
+              {distance && <View style={styles.distBadge}><Ionicons name="navigate" size={14} color={COLORS.primary}/><Text style={styles.distText}>{distance} km away</Text></View>}
+            </View>
+            <View style={styles.addrBox}>
+              <Ionicons name="location" size={20} color={COLORS.primary} />
+              <View style={{flex:1}}>
+                <Text style={FONTS.bodyBold}>{property.location?.address || 'Address available on request'}</Text>
+                <Text style={FONTS.caption}>{property.location?.city}, {property.location?.state} {property.location?.zip_code}</Text>
+                {property.location?.county && <Text style={FONTS.caption}>County: {property.location.county}</Text>}
+              </View>
+            </View>
+            {propCoords && propCoords[0] !== 0 ? (
+              <TouchableOpacity style={styles.mapBox} onPress={openMap} activeOpacity={0.85}>
+                <Image source={{uri:`https://maps.googleapis.com/maps/api/staticmap?center=${propCoords[1]},${propCoords[0]}&zoom=14&size=600x300&maptype=roadmap&markers=color:red|${propCoords[1]},${propCoords[0]}&key=AIzaSyDummy`}} style={styles.mapImg} />
+                <View style={styles.mapOverlay}>
+                  <Ionicons name="navigate-circle" size={36} color={COLORS.primary}/>
+                  <Text style={[FONTS.bodyBold,{color:COLORS.primary}]}>Open in Google Maps</Text>
+                  {distance && <Text style={FONTS.caption}>Get directions • {distance} km</Text>}
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.mapBox} onPress={openMap}>
+                <View style={[styles.mapOverlay,{height:120}]}>
+                  <Ionicons name="map-outline" size={36} color={COLORS.textMuted}/>
+                  <Text style={FONTS.body}>Open in Google Maps</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={{ height: 100 }} />
@@ -229,6 +304,15 @@ const styles = StyleSheet.create({
   amenityText: { fontSize: 13, fontWeight: '500', color: COLORS.textSecondary },
 
   mapPlaceholder: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center' },
+
+  videoBtn: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: COLORS.borderLight },
+  floorPlanImg: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt },
+  distBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: SIZES.radius.full, backgroundColor: COLORS.primarySoft },
+  distText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  addrBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 12, padding: 14, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md },
+  mapBox: { marginTop: 12, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
+  mapImg: { width: '100%', height: 160 },
+  mapOverlay: { padding: 16, alignItems: 'center', gap: 4 },
 
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 34, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight, ...SHADOWS.lg },
   bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },

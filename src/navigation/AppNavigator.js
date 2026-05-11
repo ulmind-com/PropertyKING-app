@@ -1,9 +1,10 @@
 import React from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../theme';
+import { COLORS, SHADOWS } from '../theme';
 import { useAuth } from '../context/AuthContext';
 
 // Screens
@@ -15,6 +16,7 @@ import FavoritesScreen from '../screens/Favorites/FavoritesScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
+import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -56,12 +58,26 @@ function AuthStack() {
   );
 }
 
+// Custom center "+" tab button
+function AddTabButton({ onPress }) {
+  return (
+    <TouchableOpacity style={styles.addBtn} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.addBtnInner}>
+        <Ionicons name="add" size={28} color="#FFF" />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// Dummy empty component for the Add tab (never rendered)
+function EmptyScreen() { return null; }
+
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
           else if (route.name === 'Search') iconName = focused ? 'search' : 'search-outline';
@@ -94,9 +110,35 @@ function MainTabs() {
           tabPress: (e) => { e.preventDefault(); navigation.navigate('Home', { screen: 'PropertyListing' }); }
         })}
       />
+      <Tab.Screen
+        name="Add"
+        component={EmptyScreen}
+        options={{
+          tabBarLabel: () => null,
+          tabBarIcon: () => null,
+          tabBarButton: (props) => (
+            <AddTabButton {...props} />
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('AddProperty');
+          },
+        })}
+      />
       <Tab.Screen name="Favorites" component={FavStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
+  );
+}
+
+function MainStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ presentation: 'modal' }} />
+    </Stack.Navigator>
   );
 }
 
@@ -107,7 +149,24 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabs /> : <AuthStack />}
+      {isAuthenticated ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  addBtn: {
+    top: -18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addBtnInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.primary,
+  },
+});
