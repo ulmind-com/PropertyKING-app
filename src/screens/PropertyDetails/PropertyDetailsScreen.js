@@ -200,6 +200,18 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           </View>
 
+          {/* Floor Plans */}
+          {((property.floor_plan_urls && property.floor_plan_urls.length > 0) || property.floor_plan_url) && (
+            <View style={styles.section}>
+              <Text style={FONTS.h4}>Floor Plans</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, marginTop: 12 }}>
+                {(property.floor_plan_urls?.length > 0 ? property.floor_plan_urls : [property.floor_plan_url]).map((url, i) => (
+                  <Image key={i} source={{ uri: url }} style={[styles.floorPlanImg, { width: width * 0.8, marginTop: 0 }]} resizeMode="contain" />
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           {/* US Specific Details */}
           {(d.mls_number || d.property_tax_annual || d.hoa_fee > 0 || d.zoning) && (
             <View style={styles.section}>
@@ -240,14 +252,6 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                 <Ionicons name="play-circle" size={40} color={COLORS.primary} />
                 <Text style={[FONTS.bodyBold, {marginTop:8}]}>Watch Property Video</Text>
               </TouchableOpacity>
-            </View>
-          ) : null}
-
-          {/* Floor Plan */}
-          {property.floor_plan_url ? (
-            <View style={styles.section}>
-              <Text style={FONTS.h4}>Floor Plan</Text>
-              <Image source={{ uri: property.floor_plan_url }} style={styles.floorPlanImg} resizeMode="contain" />
             </View>
           ) : null}
 
