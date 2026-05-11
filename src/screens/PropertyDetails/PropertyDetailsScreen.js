@@ -66,11 +66,9 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             const coords = data.routes[0].geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] }));
             setRouteCoords(coords);
             // Fit map to coordinates
-            if (mapRef.current) {
-              setTimeout(() => {
-                mapRef.current.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
-              }, 1000);
-            }
+            setTimeout(() => {
+              mapRef.current?.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+            }, 1000);
           }
         } catch (e) {
           console.log('Routing error:', e);

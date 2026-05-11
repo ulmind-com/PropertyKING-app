@@ -34,6 +34,16 @@ function HomeStack() {
   );
 }
 
+function ExploreStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ExploreMain" component={PropertyListingScreen} />
+      <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
+      <Stack.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
+    </Stack.Navigator>
+  );
+}
+
 function FavStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -107,9 +117,11 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Explore" component={PropertyListingScreen}
+      <Tab.Screen name="Explore" component={ExploreStack} 
         listeners={({ navigation }) => ({
-          tabPress: (e) => { e.preventDefault(); navigation.navigate('Home', { screen: 'PropertyListing' }); }
+          tabPress: (e) => {
+            navigation.navigate('Explore', { screen: 'ExploreMain' });
+          }
         })}
       />
       <Tab.Screen
