@@ -82,7 +82,7 @@ function MainTabs() {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Search') iconName = focused ? 'search' : 'search-outline';
+          else if (route.name === 'Explore') iconName = focused ? 'compass' : 'compass-outline';
           else if (route.name === 'Favorites') iconName = focused ? 'heart' : 'heart-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <Ionicons name={iconName} size={22} color={color} />;
@@ -107,7 +107,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Search" component={PropertyListingScreen}
+      <Tab.Screen name="Explore" component={PropertyListingScreen}
         listeners={({ navigation }) => ({
           tabPress: (e) => { e.preventDefault(); navigation.navigate('Home', { screen: 'PropertyListing' }); }
         })}
@@ -129,7 +129,14 @@ function MainTabs() {
           },
         })}
       />
-      <Tab.Screen name="Favorites" component={FavStack} />
+      <Tab.Screen name="Favorites" component={FavStack} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('Favorites', { screen: 'FavMain' });
+          }
+        })}
+      />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );
