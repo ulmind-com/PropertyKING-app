@@ -65,9 +65,12 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             // OSRM returns [lng, lat], map to {latitude, longitude}
             const coords = data.routes[0].geometry.coordinates.map(c => ({ latitude: c[1], longitude: c[0] }));
             setRouteCoords(coords);
-            // Fit map to coordinates
             setTimeout(() => {
-              mapRef.current?.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+              if (mapRef && mapRef.current && typeof mapRef.current.fitToCoordinates === 'function') {
+                try {
+                  mapRef.current.fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+                } catch(e) {}
+              }
             }, 1000);
           }
         } catch (e) {

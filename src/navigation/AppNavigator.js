@@ -116,7 +116,13 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Home" component={HomeStack} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('Home', { screen: 'HomeMain' });
+          }
+        })}
+      />
       <Tab.Screen name="Explore" component={ExploreStack} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
