@@ -34,7 +34,7 @@ export default function AddPropertyScreen({ navigation }) {
   const [images, setImages] = useState([]);
   const [videoUri, setVideoUri] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
-  const [floorPlanUrl, setFloorPlanUrl] = useState('');
+  const [floorPlanUrls, setFloorPlanUrls] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -106,14 +106,18 @@ export default function AddPropertyScreen({ navigation }) {
   const pickFloorPlan = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-    if (!result.canceled && result.assets?.[0]) {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 5 });
+    if (!result.canceled && result.assets?.length > 0) {
       setUploading(true);
       try {
-        const fd = new FormData();
-        fd.append('file', { uri: result.assets[0].uri, type: 'image/jpeg', name: `fp_${Date.now()}.jpg` });
-        const r = await api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        if (r.data?.image?.url) setFloorPlanUrl(r.data.image.url);
+        const uploaded = [];
+        for (const asset of result.assets) {
+          const fd = new FormData();
+          fd.append('file', { uri: asset.uri, type: 'image/jpeg', name: asset.fileName || `fp_${Date.now()}.jpg` });
+          const r = await api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+          if (r.data?.image?.url) uploaded.push(r.data.image.url);
+        }
+        setFloorPlanUrls([...floorPlanUrls, ...uploaded]);
       } catch(e) { Alert.alert('Upload Error', 'Failed to upload floor plan'); }
       setUploading(false);
     }
@@ -153,7 +157,7 @@ export default function AddPropertyScreen({ navigation }) {
         details: { bedrooms: parseInt(bedrooms)||0, bathrooms: parseFloat(bathrooms)||0, total_sqft: parseInt(sqft)||null, year_built: parseInt(yearBuilt)||null },
         location: locData, images,
         video_url: videoUrl || null,
-        floor_plan_url: floorPlanUrl || null,
+        floor_plan_urls: floorPlanUrls,
       };
       await propertyAPI.create(payload);
       Alert.alert('Submitted! 🎉', 'Property submitted for admin review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
@@ -247,10 +251,15 @@ export default function AddPropertyScreen({ navigation }) {
             <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
           :<TouchableOpacity style={s.addBox} onPress={pickVideo} disabled={uploading}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Video</Text></TouchableOpacity>}
 
-          <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Floor Plan (Optional)</Text>
-          {floorPlanUrl?<View style={s.fpDone}><Image source={{uri:floorPlanUrl}} style={s.fpImg}/>
-            <TouchableOpacity style={s.rmBtn} onPress={()=>setFloorPlanUrl('')}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity></View>
-          :<TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploading}><Ionicons name="map-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Floor Plan</Text></TouchableOpacity>}
+          <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Floor Plans (Optional)</Text>
+          <TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploading}>
+            <Ionicons name="map-outline" size={28} color={COLORS.primary}/>
+            <Text style={s.addTxt}>Add Floor Plans</Text>
+          </TouchableOpacity>
+          {floorPlanUrls.length>0&&<View style={s.imgGrid}>{floorPlanUrls.map((url,i)=>
+            <View key={i} style={s.fpDone}><Image source={{uri:url}} style={s.fpImg}/>
+              <TouchableOpacity style={s.rmBtn} onPress={()=>setFloorPlanUrls(floorPlanUrls.filter((_,idx)=>idx!==i))}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
+            </View>)}</View>}
         </View>}
         <View style={{height:120}}/>
       </ScrollView>
