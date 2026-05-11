@@ -39,15 +39,20 @@ export default function HomeScreen({ navigation }) {
     try { const r = await propertyTypeAPI.list(); setPropertyTypes(r.data || []); } catch(e) {}
   };
 
-  const loadNearby = async () => {
+  const loadNearby = async (customCoords = null, customName = null) => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setLocationName('Location denied'); return; }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      let coords = customCoords;
+      if (!coords) {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') { setLocationName('Location denied'); return; }
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        const [geo] = await Location.reverseGeocodeAsync({ latitude: coords.lat, longitude: coords.lng });
+        if (geo) setLocationName(`${geo.city || ''}, ${geo.region || ''}`);
+      } else {
+        if (customName) setLocationName(customName.split(',')[0]);
+      }
       setUserCoords(coords);
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: coords.lat, longitude: coords.lng });
-      if (geo) setLocationName(`${geo.city || ''}, ${geo.region || ''}`);
       const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 12.4, limit: 10 });
       setNearbyProps(res.data?.properties || []);
     } catch(e) { setLocationName('Unknown'); }
@@ -58,6 +63,16 @@ export default function HomeScreen({ navigation }) {
       const r = await propertyAPI.recommendations({ limit: 10 });
       setFeaturedProps(r.data?.properties || []);
     } catch(e) {}
+  };
+
+  const openLocationPicker = () => {
+    navigation.navigate('LocationPicker', {
+      currentLat: userCoords?.lat,
+      currentLng: userCoords?.lng,
+      onSelectLocation: (loc) => {
+        loadNearby({ lat: loc.lat, lng: loc.lng }, loc.address);
+      }
+    });
   };
 
   // Dedup: featured should not show items already in nearby
@@ -91,7 +106,7 @@ export default function HomeScreen({ navigation }) {
       <View style={st.headerArea}>
         <View style={st.topRow}>
           <TouchableOpacity><Ionicons name="menu" size={24} color={COLORS.text} /></TouchableOpacity>
-          <TouchableOpacity style={st.locBtn}>
+          <TouchableOpacity style={st.locBtn} onPress={openLocationPicker}>
             <Text style={st.locLabel}>Location</Text>
             <View style={{flexDirection:'row',alignItems:'center',gap:4}}>
               <Ionicons name="location" size={16} color={COLORS.primary} />

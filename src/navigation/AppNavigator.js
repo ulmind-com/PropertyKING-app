@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 
 // Screens
 import HomeScreen from '../screens/Home/HomeScreen';
+import LocationPickerScreen from '../screens/Home/LocationPickerScreen';
 import PropertyListingScreen from '../screens/PropertyListing/PropertyListingScreen';
 import PropertyDetailsScreen from '../screens/PropertyDetails/PropertyDetailsScreen';
 import FiltersScreen from '../screens/Filters/FiltersScreen';
@@ -25,6 +26,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="LocationPicker" component={LocationPickerScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="PropertyListing" component={PropertyListingScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
       <Stack.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
@@ -88,9 +90,9 @@ function MainTabs() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 85 : 65,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+          height: 75,
+          paddingTop: 10,
+          paddingBottom: 12,
           backgroundColor: COLORS.bg,
           borderTopWidth: 1,
           borderTopColor: COLORS.borderLight,
@@ -100,7 +102,7 @@ function MainTabs() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 4,
         },
       })}
     >
