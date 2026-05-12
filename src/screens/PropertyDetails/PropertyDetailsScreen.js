@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
@@ -21,6 +21,44 @@ const getYouTubeId = (url) => {
     if (m) return m[1];
   }
   return null;
+};
+
+// Robust YouTube Autoplayer Component
+const YoutubeAutoplayer = ({ ytId }) => {
+  const [playing, setPlaying] = useState(false);
+
+  const onReady = useCallback(() => {
+    // Delay play slightly until iframe is fully registered in WebView
+    setTimeout(() => {
+      setPlaying(true);
+    }, 250);
+  }, []);
+
+  return (
+    <View pointerEvents="none" style={{ flex: 1, backgroundColor: '#000' }}>
+      <YoutubePlayer
+        height={260} // Slightly larger to hide controls/title via clipping
+        play={playing}
+        onReady={onReady}
+        videoId={ytId}
+        mute={true}
+        webViewProps={{
+          mediaPlaybackRequiresUserAction: false,
+          allowsInlineMediaPlayback: true,
+          javaScriptEnabled: true,
+        }}
+        initialPlayerParams={{
+          loop: true,
+          rel: false,
+          controls: false,
+          modestbranding: true,
+          iv_load_policy: 3,
+          showinfo: false,
+          disablekb: true,
+        }}
+      />
+    </View>
+  );
 };
 
 let MapView, Marker, Polyline;
@@ -262,25 +300,9 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={FONTS.h4}>Video Tour</Text>
                 </View>
                 {ytId ? (
-                  /* YouTube — Inline Autoplay */
+                  /* YouTube — Robust Inline Autoplay */
                   <View style={styles.videoContainer}>
-                    <YoutubePlayer
-                      height={220}
-                      play={true}
-                      videoId={ytId}
-                      mute={true}
-                      webViewProps={{
-                        mediaPlaybackRequiresUserAction: false,
-                        allowsInlineMediaPlayback: true
-                      }}
-                      initialPlayerParams={{
-                        loop: true,
-                        rel: false,
-                        controls: false,
-                        modestbranding: true,
-                        iv_load_policy: 3
-                      }}
-                    />
+                    <YoutubeAutoplayer ytId={ytId} />
                   </View>
                 ) : (
                   /* Direct uploaded video — native player */
