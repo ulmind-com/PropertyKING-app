@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+
+const AVAILABLE_SCREENS = ['MyListings'];
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -16,6 +18,14 @@ export default function ProfileScreen({ navigation }) {
     { icon: 'settings-outline', label: 'Settings', screen: 'Settings' },
     { icon: 'help-circle-outline', label: 'Help & Support', screen: 'Help' },
   ];
+
+  const handleMenuPress = (item) => {
+    if (AVAILABLE_SCREENS.includes(item.screen)) {
+      navigation.navigate(item.screen);
+    } else {
+      Alert.alert('Coming Soon 🚀', `${item.label} will be available in the next update!`);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -43,7 +53,7 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.menu}>
           {menuItems.map((item, i) => (
             <TouchableOpacity key={i} style={styles.menuItem} activeOpacity={0.7}
-              onPress={() => { if (item.screen) navigation.navigate(item.screen); }}
+              onPress={() => handleMenuPress(item)}
             >
               <View style={styles.menuIcon}><Ionicons name={item.icon} size={20} color={COLORS.primary} /></View>
               <Text style={styles.menuLabel}>{item.label}</Text>
