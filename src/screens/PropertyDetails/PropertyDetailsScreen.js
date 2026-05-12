@@ -23,52 +23,9 @@ const getYouTubeId = (url) => {
   return null;
 };
 
-// Build YouTube autoplay HTML — uses IFrame Player API with origin trick
-const buildYTAutoplayHTML = (videoId) => `
-<!DOCTYPE html>
-<html style="height:100%;width:100%">
-<head>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>
-  *{margin:0;padding:0}
-  html,body{width:100%;height:100%;background:#000;overflow:hidden}
-  #player,iframe{width:100%!important;height:100%!important;border:0}
-</style>
-</head>
-<body>
-<div id="player"></div>
-<script>
-  var tag=document.createElement('script');
-  tag.src='https://www.youtube.com/iframe_api';
-  var fs=document.getElementsByTagName('script')[0];
-  fs.parentNode.insertBefore(tag,fs);
-  var player;
-  function onYouTubeIframeAPIReady(){
-    player=new YT.Player('player',{
-      width:'100%',height:'100%',
-      videoId:'${videoId}',
-      playerVars:{
-        autoplay:1,mute:1,controls:0,loop:1,
-        playlist:'${videoId}',playsinline:1,
-        rel:0,modestbranding:1,showinfo:0,
-        iv_load_policy:3,enablejsapi:1,
-        origin:'https://www.youtube.com',
-        widget_referrer:'https://www.youtube.com'
-      },
-      events:{
-        onReady:function(e){
-          e.target.mute();
-          e.target.playVideo();
-          setTimeout(function(){e.target.playVideo();},300);
-          setTimeout(function(){e.target.playVideo();},800);
-          setTimeout(function(){e.target.playVideo();},1500);
-        }
-      }
-    });
-  }
-</script>
-</body>
-</html>`;
+// Build YouTube embed URL
+const getYTEmbedUrl = (videoId) =>
+  `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${videoId}&iv_load_policy=3&fs=0`;
 
 let MapView, Marker, Polyline;
 if (Platform.OS !== 'web') {
@@ -309,20 +266,22 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={FONTS.h4}>Video Tour</Text>
                 </View>
                 {ytId ? (
-                  /* YouTube — WebView + IFrame Player API + Origin trick */
+                  /* YouTube — inline embed with Referer header (fixes Error 153) */
                   <View style={styles.videoContainer}>
                     <WebView
                       style={styles.inlineVideo}
-                      source={{ html: buildYTAutoplayHTML(ytId), baseUrl: 'https://www.youtube.com' }}
+                      source={{
+                        uri: getYTEmbedUrl(ytId),
+                        headers: { 'Referer': 'https://propertyking.app' }
+                      }}
                       javaScriptEnabled={true}
                       domStorageEnabled={true}
                       mediaPlaybackRequiresUserAction={false}
                       allowsInlineMediaPlayback={true}
                       scrollEnabled={false}
-                      allowsFullscreenVideo={false}
+                      allowsFullscreenVideo={true}
                       mixedContentMode="always"
                       originWhitelist={['*']}
-                      setSupportMultipleWindows={false}
                     />
                   </View>
                 ) : (
