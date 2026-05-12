@@ -262,16 +262,28 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               {(() => {
                 const ytId = getYouTubeId(property.video_url);
                 if (ytId) {
-                  // YouTube — embed like Play Store does
+                  // YouTube — iframe HTML embed (like Play Store / Play Console)
+                  const ytHtml = `
+                    <!DOCTYPE html>
+                    <html><head>
+                      <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+                      <style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style>
+                    </head><body>
+                      <iframe src="https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&showinfo=0&controls=1"
+                        allow="autoplay;encrypted-media;picture-in-picture"
+                        allowfullscreen frameborder="0"></iframe>
+                    </body></html>`;
                   return (
                     <View style={styles.videoContainer}>
                       <WebView
                         style={styles.inlineVideo}
-                        source={{ uri: `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1` }}
+                        source={{ html: ytHtml }}
                         allowsInlineMediaPlayback={true}
                         mediaPlaybackRequiresUserAction={false}
                         javaScriptEnabled={true}
+                        domStorageEnabled={true}
                         scrollEnabled={false}
+                        allowsFullscreenVideo={true}
                       />
                     </View>
                   );
