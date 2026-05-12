@@ -2,9 +2,26 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
+
+// Extract YouTube video ID from any YT URL format
+const getYouTubeId = (url) => {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+};
 
 let MapView, Marker, Polyline;
 if (Platform.OS !== 'web') {
@@ -201,17 +218,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           </View>
 
-          {/* Floor Plans */}
-          {((property.floor_plan_urls && property.floor_plan_urls.length > 0) || property.floor_plan_url) && (
-            <View style={styles.section}>
-              <Text style={FONTS.h4}>Floor Plans</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, marginTop: 12 }}>
-                {(property.floor_plan_urls?.length > 0 ? property.floor_plan_urls : [property.floor_plan_url]).map((url, i) => (
-                  <Image key={i} source={{ uri: url }} style={[styles.floorPlanImg, { width: width * 0.8, marginTop: 0 }]} resizeMode="contain" />
-                ))}
-              </ScrollView>
-            </View>
-          )}
+
 
           {/* US Specific Details */}
           {(d.mls_number || d.property_tax_annual || d.hoa_fee > 0 || d.zoning) && (
@@ -245,30 +252,68 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           )}
 
-          {/* Video */}
+          {/* Video Tour — inline for ALL types */}
           {property.video_url ? (
             <View style={styles.section}>
-              <Text style={FONTS.h4}>Video Tour</Text>
-              {property.video_url.includes('youtube.com') || property.video_url.includes('youtu.be') ? (
-                <TouchableOpacity style={styles.videoBtn} onPress={() => Linking.openURL(property.video_url)}>
-                  <Ionicons name="play-circle" size={40} color={COLORS.primary} />
-                  <Text style={[FONTS.bodyBold, {marginTop:8}]}>Watch Property Video</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.videoContainer}>
-                  <Video
-                    style={styles.inlineVideo}
-                    source={{ uri: property.video_url }}
-                    useNativeControls
-                    resizeMode={ResizeMode.COVER}
-                    isLooping
-                    shouldPlay
-                    isMuted
-                  />
-                </View>
-              )}
+              <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+                <Ionicons name="videocam" size={20} color={COLORS.primary} />
+                <Text style={FONTS.h4}>Video Tour</Text>
+              </View>
+              {(() => {
+                const ytId = getYouTubeId(property.video_url);
+                if (ytId) {
+                  // YouTube — embed like Play Store does
+                  return (
+                    <View style={styles.videoContainer}>
+                      <WebView
+                        style={styles.inlineVideo}
+                        source={{ uri: `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1` }}
+                        allowsInlineMediaPlayback={true}
+                        mediaPlaybackRequiresUserAction={false}
+                        javaScriptEnabled={true}
+                        scrollEnabled={false}
+                      />
+                    </View>
+                  );
+                }
+                // Direct upload — play natively
+                return (
+                  <View style={styles.videoContainer}>
+                    <Video
+                      style={styles.inlineVideo}
+                      source={{ uri: property.video_url }}
+                      useNativeControls
+                      resizeMode={ResizeMode.COVER}
+                      isLooping
+                      shouldPlay
+                      isMuted
+                    />
+                  </View>
+                );
+              })()}
             </View>
           ) : null}
+
+          {/* Floor Plans — right after video */}
+          {((property.floor_plan_urls && property.floor_plan_urls.length > 0) || property.floor_plan_url) && (
+            <View style={styles.section}>
+              <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+                <Ionicons name="layers-outline" size={20} color={COLORS.primary} />
+                <Text style={FONTS.h4}>Floor Plans</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, marginTop: 12, paddingRight: 4 }}>
+                {(property.floor_plan_urls?.length > 0 ? property.floor_plan_urls : [property.floor_plan_url]).map((url, i) => (
+                  <TouchableOpacity key={i} activeOpacity={0.9} style={styles.floorPlanCard}>
+                    <Image source={{ uri: url }} style={styles.floorPlanImg} resizeMode="contain" />
+                    <View style={styles.floorPlanLabel}>
+                      <Ionicons name="map-outline" size={14} color="#FFF" />
+                      <Text style={styles.floorPlanLabelText}>Plan {i + 1}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Location & Map */}
           <View style={styles.section}>
@@ -404,10 +449,12 @@ const styles = StyleSheet.create({
 
   mapPlaceholder: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center' },
 
-  videoBtn: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: COLORS.borderLight },
-  videoContainer: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: '#000' },
+  videoContainer: { marginTop: 12, width: '100%', height: 220, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1, borderColor: COLORS.borderLight },
   inlineVideo: { width: '100%', height: '100%' },
-  floorPlanImg: { marginTop: 12, width: '100%', height: 250, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt },
+  floorPlanCard: { width: width * 0.75, height: 220, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight, position: 'relative' },
+  floorPlanImg: { width: '100%', height: '100%' },
+  floorPlanLabel: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: 'rgba(0,0,0,0.55)' },
+  floorPlanLabelText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
   navigateBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: SIZES.radius.full, backgroundColor: '#3b82f6', ...SHADOWS.sm },
   navigateText: { fontSize: 13, fontWeight: '700', color: '#FFF' },
   addrBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 12, padding: 14, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md },
