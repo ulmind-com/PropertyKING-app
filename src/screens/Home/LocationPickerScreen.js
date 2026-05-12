@@ -3,12 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator, 
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
-
-// Only import MapView on native platforms, otherwise use a fallback
-let MapView = null;
-if (Platform.OS !== 'web') {
-  MapView = require('react-native-maps').default;
-}
+import { MapView } from '../../components/Map/MapViewComponent';
 
 export default function LocationPickerScreen({ navigation, route }) {
   const [region, setRegion] = useState({

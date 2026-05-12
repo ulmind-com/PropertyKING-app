@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { WebView } from 'react-native-webview';
+import { WebView } from '../../components/WebView/WebViewComponent';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
@@ -27,13 +27,7 @@ const getYouTubeId = (url) => {
 const getYTEmbedUrl = (videoId) =>
   `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${videoId}&iv_load_policy=3&fs=0`;
 
-let MapView, Marker, Polyline;
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Marker = Maps.Marker;
-  Polyline = Maps.Polyline;
-}
+import { MapView, Marker, Polyline } from '../../components/Map/MapViewComponent';
 
 const { width } = Dimensions.get('window');
 
