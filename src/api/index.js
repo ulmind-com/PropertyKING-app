@@ -39,6 +39,7 @@ export const propertyAPI = {
   nearby: (params) => api.get('/properties/nearby', { params }),
   recommendations: (params) => api.get('/properties/recommendations', { params }),
   myListings: (params) => api.get('/properties/my-listings', { params }),
+  getViewers: (id, params) => api.get(`/properties/${id}/viewers`, { params }),
 };
 
 export const propertyTypeAPI = { list: () => api.get('/property-types') };

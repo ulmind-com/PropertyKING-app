@@ -18,6 +18,8 @@ import ProfileScreen from '../screens/Profile/ProfileScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
 import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
+import MyListingsScreen from '../screens/Profile/MyListingsScreen';
+import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -57,6 +59,8 @@ function ProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      <Stack.Screen name="MyListings" component={MyListingsScreen} />
+      <Stack.Screen name="PropertyLeads" component={PropertyLeadsScreen} />
     </Stack.Navigator>
   );
 }

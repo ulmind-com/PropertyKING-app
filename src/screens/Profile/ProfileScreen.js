@@ -42,7 +42,9 @@ export default function ProfileScreen({ navigation }) {
 
         <View style={styles.menu}>
           {menuItems.map((item, i) => (
-            <TouchableOpacity key={i} style={styles.menuItem} activeOpacity={0.7}>
+            <TouchableOpacity key={i} style={styles.menuItem} activeOpacity={0.7}
+              onPress={() => { if (item.screen) navigation.navigate(item.screen); }}
+            >
               <View style={styles.menuIcon}><Ionicons name={item.icon} size={20} color={COLORS.primary} /></View>
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
