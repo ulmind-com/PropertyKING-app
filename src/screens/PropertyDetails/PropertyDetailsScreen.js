@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import YoutubePlayer from 'react-native-youtube-iframe';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
@@ -23,43 +23,37 @@ const getYouTubeId = (url) => {
   return null;
 };
 
-// Robust YouTube Autoplayer Component
-const YoutubeAutoplayer = ({ ytId }) => {
-  const [playing, setPlaying] = useState(false);
-
-  const onReady = useCallback(() => {
-    // Delay play slightly until iframe is fully registered in WebView
-    setTimeout(() => {
-      setPlaying(true);
-    }, 250);
-  }, []);
-
-  return (
-    <View pointerEvents="none" style={{ flex: 1, backgroundColor: '#000' }}>
-      <YoutubePlayer
-        height={260} // Slightly larger to hide controls/title via clipping
-        play={playing}
-        onReady={onReady}
-        videoId={ytId}
-        mute={true}
-        webViewProps={{
-          mediaPlaybackRequiresUserAction: false,
-          allowsInlineMediaPlayback: true,
-          javaScriptEnabled: true,
-        }}
-        initialPlayerParams={{
-          loop: true,
-          rel: false,
-          controls: false,
-          modestbranding: true,
-          iv_load_policy: 3,
-          showinfo: false,
-          disablekb: true,
-        }}
-      />
-    </View>
-  );
-};
+// Build YouTube IFrame Player API HTML — guaranteed autoplay
+const buildYTAutoplayHTML = (videoId) => `
+<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;overflow:hidden}
+  #player{position:absolute;top:-30px;left:0;width:100%;height:calc(100% + 60px)}
+</style>
+</head><body>
+<div id="player"></div>
+<script>
+  var tag=document.createElement('script');
+  tag.src="https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+  var player;
+  function onYouTubeIframeAPIReady(){
+    player=new YT.Player('player',{
+      videoId:'${videoId}',
+      playerVars:{
+        autoplay:1,mute:1,controls:0,loop:1,
+        playlist:'${videoId}',playsinline:1,
+        rel:0,modestbranding:1,showinfo:0,
+        iv_load_policy:3,disablekb:1,fs:0
+      },
+      events:{onReady:function(e){e.target.mute();e.target.playVideo();}}
+    });
+  }
+</script>
+</body></html>`;
 
 let MapView, Marker, Polyline;
 if (Platform.OS !== 'web') {
@@ -300,9 +294,20 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={FONTS.h4}>Video Tour</Text>
                 </View>
                 {ytId ? (
-                  /* YouTube — Robust Inline Autoplay */
+                  /* YouTube — Raw WebView + IFrame Player API = Guaranteed Autoplay */
                   <View style={styles.videoContainer}>
-                    <YoutubeAutoplayer ytId={ytId} />
+                    <WebView
+                      style={styles.inlineVideo}
+                      source={{ html: buildYTAutoplayHTML(ytId) }}
+                      javaScriptEnabled={true}
+                      domStorageEnabled={true}
+                      mediaPlaybackRequiresUserAction={false}
+                      allowsInlineMediaPlayback={true}
+                      scrollEnabled={false}
+                      allowsFullscreenVideo={false}
+                      mixedContentMode="always"
+                      originWhitelist={['*']}
+                    />
                   </View>
                 ) : (
                   /* Direct uploaded video — native player */
