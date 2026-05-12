@@ -252,44 +252,44 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           )}
 
-          {/* Video Tour — inline for ALL types */}
-          {property.video_url ? (
-            <View style={styles.section}>
-              <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
-                <Ionicons name="videocam" size={20} color={COLORS.primary} />
-                <Text style={FONTS.h4}>Video Tour</Text>
-              </View>
-              {(() => {
-                const ytId = getYouTubeId(property.video_url);
-                if (ytId) {
-                  // YouTube — iframe HTML embed (like Play Store / Play Console)
-                  const ytHtml = `
-                    <!DOCTYPE html>
-                    <html><head>
-                      <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-                      <style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style>
-                    </head><body>
-                      <iframe src="https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&showinfo=0&controls=1"
-                        allow="autoplay;encrypted-media;picture-in-picture"
-                        allowfullscreen frameborder="0"></iframe>
-                    </body></html>`;
-                  return (
-                    <View style={styles.videoContainer}>
-                      <WebView
-                        style={styles.inlineVideo}
-                        source={{ html: ytHtml }}
-                        allowsInlineMediaPlayback={true}
-                        mediaPlaybackRequiresUserAction={false}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        scrollEnabled={false}
-                        allowsFullscreenVideo={true}
-                      />
+          {/* Video Tour */}
+          {property.video_url ? (() => {
+            const ytId = getYouTubeId(property.video_url);
+            return (
+              <View style={styles.section}>
+                <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+                  <Ionicons name="videocam" size={20} color={COLORS.primary} />
+                  <Text style={FONTS.h4}>Video Tour</Text>
+                </View>
+                {ytId ? (
+                  /* YouTube — thumbnail preview + tap to open YouTube app */
+                  <TouchableOpacity 
+                    activeOpacity={0.85}
+                    style={styles.videoContainer}
+                    onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`)}
+                  >
+                    <Image 
+                      source={{ uri: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` }} 
+                      style={styles.inlineVideo} 
+                      resizeMode="cover"
+                    />
+                    {/* Dark overlay */}
+                    <View style={styles.videoOverlay} />
+                    {/* Play button */}
+                    <View style={styles.playBtnWrap}>
+                      <View style={styles.playBtn}>
+                        <Ionicons name="play" size={32} color="#FFF" style={{marginLeft:3}} />
+                      </View>
+                      <Text style={styles.playLabel}>Play on YouTube</Text>
                     </View>
-                  );
-                }
-                // Direct upload — play natively
-                return (
+                    {/* YouTube badge */}
+                    <View style={styles.ytBadge}>
+                      <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+                      <Text style={styles.ytBadgeText}>YouTube</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  /* Direct uploaded video — native player */
                   <View style={styles.videoContainer}>
                     <Video
                       style={styles.inlineVideo}
@@ -301,10 +301,10 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                       isMuted
                     />
                   </View>
-                );
-              })()}
-            </View>
-          ) : null}
+                )}
+              </View>
+            );
+          })() : null}
 
           {/* Floor Plans — right after video */}
           {((property.floor_plan_urls && property.floor_plan_urls.length > 0) || property.floor_plan_url) && (
@@ -461,8 +461,14 @@ const styles = StyleSheet.create({
 
   mapPlaceholder: { marginTop: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 24, alignItems: 'center' },
 
-  videoContainer: { marginTop: 12, width: '100%', height: 220, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1, borderColor: COLORS.borderLight },
+  videoContainer: { marginTop: 12, width: '100%', height: 220, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1, borderColor: COLORS.borderLight, position: 'relative' },
   inlineVideo: { width: '100%', height: '100%' },
+  videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  playBtnWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  playBtn: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 2, borderColor: '#FFF', alignItems: 'center', justifyContent: 'center' },
+  playLabel: { color: '#FFF', fontSize: 13, fontWeight: '700', marginTop: 8 },
+  ytBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  ytBadgeText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
   floorPlanCard: { width: width * 0.75, height: 220, borderRadius: SIZES.radius.lg, overflow: 'hidden', backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight, position: 'relative' },
   floorPlanImg: { width: '100%', height: '100%' },
   floorPlanLabel: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: 'rgba(0,0,0,0.55)' },
