@@ -23,37 +23,52 @@ const getYouTubeId = (url) => {
   return null;
 };
 
-// Build YouTube IFrame Player API HTML — guaranteed autoplay
+// Build YouTube autoplay HTML — uses IFrame Player API with origin trick
 const buildYTAutoplayHTML = (videoId) => `
 <!DOCTYPE html>
-<html><head>
+<html style="height:100%;width:100%">
+<head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#000;overflow:hidden}
-  #player{position:absolute;top:-30px;left:0;width:100%;height:calc(100% + 60px)}
+  *{margin:0;padding:0}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #player,iframe{width:100%!important;height:100%!important;border:0}
 </style>
-</head><body>
+</head>
+<body>
 <div id="player"></div>
 <script>
   var tag=document.createElement('script');
-  tag.src="https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
+  tag.src='https://www.youtube.com/iframe_api';
+  var fs=document.getElementsByTagName('script')[0];
+  fs.parentNode.insertBefore(tag,fs);
   var player;
   function onYouTubeIframeAPIReady(){
     player=new YT.Player('player',{
+      width:'100%',height:'100%',
       videoId:'${videoId}',
       playerVars:{
         autoplay:1,mute:1,controls:0,loop:1,
         playlist:'${videoId}',playsinline:1,
         rel:0,modestbranding:1,showinfo:0,
-        iv_load_policy:3,disablekb:1,fs:0
+        iv_load_policy:3,enablejsapi:1,
+        origin:'https://www.youtube.com',
+        widget_referrer:'https://www.youtube.com'
       },
-      events:{onReady:function(e){e.target.mute();e.target.playVideo();}}
+      events:{
+        onReady:function(e){
+          e.target.mute();
+          e.target.playVideo();
+          setTimeout(function(){e.target.playVideo();},300);
+          setTimeout(function(){e.target.playVideo();},800);
+          setTimeout(function(){e.target.playVideo();},1500);
+        }
+      }
     });
   }
 </script>
-</body></html>`;
+</body>
+</html>`;
 
 let MapView, Marker, Polyline;
 if (Platform.OS !== 'web') {
@@ -294,11 +309,11 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={FONTS.h4}>Video Tour</Text>
                 </View>
                 {ytId ? (
-                  /* YouTube — Raw WebView + IFrame Player API = Guaranteed Autoplay */
+                  /* YouTube — WebView + IFrame Player API + Origin trick */
                   <View style={styles.videoContainer}>
                     <WebView
                       style={styles.inlineVideo}
-                      source={{ html: buildYTAutoplayHTML(ytId) }}
+                      source={{ html: buildYTAutoplayHTML(ytId), baseUrl: 'https://www.youtube.com' }}
                       javaScriptEnabled={true}
                       domStorageEnabled={true}
                       mediaPlaybackRequiresUserAction={false}
@@ -307,6 +322,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                       allowsFullscreenVideo={false}
                       mixedContentMode="always"
                       originWhitelist={['*']}
+                      setSupportMultipleWindows={false}
                     />
                   </View>
                 ) : (
