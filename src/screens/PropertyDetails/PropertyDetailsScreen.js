@@ -249,11 +249,22 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </Text>
           </View>
 
-          {/* Rating */}
-          <View style={styles.ratingRow}>
-            <Ionicons name="star" size={16} color={COLORS.accent} />
-            <Text style={styles.ratingValue}>{property.average_rating || '4.7'} ratings</Text>
-            <Text style={styles.ratingCount}>  ({property.reviews_count || '0'} reviewers)</Text>
+          {/* Listed By */}
+          <View style={styles.listerCard}>
+            <View style={styles.listerAvatar}>
+              {property.lister_avatar ? (
+                <Image source={{ uri: property.lister_avatar }} style={styles.listerImg} />
+              ) : (
+                <Text style={styles.listerInitials}>{(property.lister_name || 'U')[0].toUpperCase()}</Text>
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.listerName}>{property.lister_name || 'Anonymous Lister'}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.primary} />
+                <Text style={styles.listerType}>{property.lister_type ? property.lister_type.replace('_', ' ') : 'Verified Owner'}</Text>
+              </View>
+            </View>
           </View>
 
           {/* Description */}
@@ -577,9 +588,13 @@ const styles = StyleSheet.create({
   content: { padding: 20, marginTop: -20, backgroundColor: COLORS.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
 
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 4 },
-  ratingValue: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  ratingCount: { fontSize: 13, color: COLORS.textMuted },
+  
+  listerCard: { flexDirection: 'row', alignItems: 'center', marginTop: 16, padding: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, gap: 12, borderWidth: 1, borderColor: COLORS.borderLight },
+  listerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  listerImg: { width: 44, height: 44 },
+  listerInitials: { fontSize: 18, fontWeight: '800', color: '#FFF' },
+  listerName: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  listerType: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted, textTransform: 'capitalize' },
 
   section: { marginTop: 24 },
   readMore: { color: COLORS.primary, fontWeight: '600', fontSize: 14, marginTop: 6 },
