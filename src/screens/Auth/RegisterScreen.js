@@ -8,14 +8,18 @@ export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleRegister = async () => {
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !phone || !password) {
       return setError('Please fill all fields');
+    }
+    if (phone.replace(/\D/g, '').length < 10) {
+      return setError('Please enter a valid phone number');
     }
     if (password.length < 6) {
       return setError('Password must be at least 6 characters');
@@ -23,7 +27,8 @@ export default function RegisterScreen({ navigation }) {
 
     setLoading(true); setError('');
     try {
-      await register({ full_name: fullName, email, password });
+      const cleanPhone = phone.startsWith('+') ? phone : `+1${phone.replace(/\D/g, '')}`;
+      await register({ full_name: fullName, email, phone: cleanPhone, password });
     } catch (e) { 
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed')); 
@@ -59,6 +64,26 @@ export default function RegisterScreen({ navigation }) {
             <View style={styles.inputBox}>
               <Ionicons name="mail-outline" size={18} color={COLORS.textMuted} />
               <TextInput style={styles.input} placeholder="john@example.com" placeholderTextColor={COLORS.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Phone Number</Text>
+            <View style={styles.inputBox}>
+              <View style={styles.countryCode}>
+                <Text style={styles.flag}>🇺🇸</Text>
+                <Text style={styles.codeText}>+1</Text>
+              </View>
+              <View style={styles.phoneDivider} />
+              <TextInput 
+                style={styles.input} 
+                placeholder="(555) 123-4567" 
+                placeholderTextColor={COLORS.textMuted} 
+                value={phone} 
+                onChangeText={setPhone} 
+                keyboardType="phone-pad"
+                maxLength={15}
+              />
             </View>
           </View>
 
@@ -102,6 +127,11 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   inputBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, paddingHorizontal: 16, height: 52, borderWidth: 1, borderColor: COLORS.borderLight },
   input: { flex: 1, fontSize: 14, color: COLORS.text },
+
+  countryCode: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  flag: { fontSize: 18 },
+  codeText: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  phoneDivider: { width: 1, height: 24, backgroundColor: COLORS.borderLight, marginHorizontal: 4 },
 
   signupBtn: { height: 54, backgroundColor: COLORS.primary, borderRadius: SIZES.radius.lg, alignItems: 'center', justifyContent: 'center', marginTop: 12, ...SHADOWS.primary },
   signupBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },

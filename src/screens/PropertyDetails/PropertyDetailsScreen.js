@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { WebView } from 'react-native-webview';
@@ -47,6 +47,10 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
   const flatListRef = useRef(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [contactPref, setContactPref] = useState('call');
+  const [inquiryLoading, setInquiryLoading] = useState(false);
   
   const [userCoords, setUserCoords] = useState(passedUserCoords || null);
   const [distance, setDistance] = useState(null);
@@ -125,9 +129,66 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   };
 
   const handleInquiry = async () => {
-    if (!inquiryMsg.trim()) return;
-    try { await inquiryAPI.create({ property_id: property.id, message: inquiryMsg, inquiry_type: 'general' }); setShowInquiry(false); setInquiryMsg(''); } catch(e) {}
+    if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
+      return Alert.alert('Message Required', 'Please write at least 10 characters describing your interest.');
+    }
+    if (!selectedDate) return Alert.alert('Select Date', 'Please pick a preferred meeting date.');
+    if (!selectedTime) return Alert.alert('Select Time', 'Please pick a preferred time slot.');
+
+    setInquiryLoading(true);
+    try {
+      await inquiryAPI.create({
+        property_id: property.id,
+        message: inquiryMsg,
+        inquiry_type: 'viewing',
+        preferred_date: selectedDate,
+        preferred_time: selectedTime,
+        contact_preference: contactPref,
+      });
+      setShowInquiry(false);
+      setInquiryMsg('');
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setContactPref('call');
+      Alert.alert('Meeting Requested! ✅', 'The property owner will review your request and get back to you soon.');
+    } catch(e) {
+      Alert.alert('Error', 'Failed to submit. Please try again.');
+    }
+    setInquiryLoading(false);
   };
+
+  // Generate next 7 days for date picker
+  const getNext7Days = () => {
+    const days = [];
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(); d.setDate(d.getDate() + i);
+      days.push({
+        label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()],
+        date: d.getDate(),
+        month: monthNames[d.getMonth()],
+        value: d.toISOString().split('T')[0],
+      });
+    }
+    return days;
+  };
+
+  const timeSlots = [
+    { label: '9 AM', value: '09:00', icon: 'sunny-outline' },
+    { label: '11 AM', value: '11:00', icon: 'sunny-outline' },
+    { label: '1 PM', value: '13:00', icon: 'sunny' },
+    { label: '3 PM', value: '15:00', icon: 'partly-sunny-outline' },
+    { label: '5 PM', value: '17:00', icon: 'cloudy-outline' },
+    { label: '7 PM', value: '19:00', icon: 'moon-outline' },
+  ];
+
+  const contactOptions = [
+    { label: 'Call', value: 'call', icon: 'call-outline' },
+    { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
+    { label: 'In Person', value: 'in_person', icon: 'people-outline' },
+    { label: 'Video', value: 'video_call', icon: 'videocam-outline' },
+  ];
 
   const details = [
     d.bedrooms > 0 && { icon: 'bed-outline', label: 'Bedrooms', value: d.bedrooms },
@@ -412,6 +473,89 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* ─── Schedule Meeting Modal ─── */}
+      <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowInquiry(false)} />
+          <View style={styles.modalSheet}>
+            {/* Handle bar */}
+            <View style={styles.sheetHandle} />
+
+            <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
+            <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
+
+            {/* ── Date Picker ── */}
+            <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {getNext7Days().map((day) => (
+                <TouchableOpacity
+                  key={day.value}
+                  style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
+                  onPress={() => setSelectedDate(day.value)}
+                >
+                  <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
+                  <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
+                  <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* ── Time Slots ── */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
+            <View style={styles.timeGrid}>
+              {timeSlots.map((slot) => (
+                <TouchableOpacity
+                  key={slot.value}
+                  style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
+                  onPress={() => setSelectedTime(slot.value)}
+                >
+                  <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
+                  <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* ── Contact Preference ── */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
+            <View style={styles.contactGrid}>
+              {contactOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
+                  onPress={() => setContactPref(opt.value)}
+                >
+                  <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
+                  <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* ── Message ── */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
+            <TextInput
+              style={styles.msgInput}
+              placeholder="Hi, I'd love to visit this property and discuss..."
+              placeholderTextColor={COLORS.textMuted}
+              value={inquiryMsg}
+              onChangeText={setInquiryMsg}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            {/* ── Submit ── */}
+            <TouchableOpacity
+              style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
+              onPress={handleInquiry}
+              disabled={inquiryLoading}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#FFF" />
+              <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -475,9 +619,42 @@ const styles = StyleSheet.create({
   mapImg: { width: '100%', height: 160 },
   mapOverlay: { padding: 16, alignItems: 'center', gap: 4 },
 
-  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 34, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight, ...SHADOWS.lg },
-  bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  favBtnBottom: { width: 48, height: 48, borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  checkoutBtn: { paddingHorizontal: 28, height: 48, borderRadius: 14, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.primary },
-  checkoutText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, paddingBottom: Platform.OS === 'ios' ? 28 : 12, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
+  bottomActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  favBtnBottom: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center' },
+  checkoutBtn: { height: 44, paddingHorizontal: 28, borderRadius: SIZES.radius.full, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', ...SHADOWS.primary },
+  checkoutText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+
+  /* ─── Schedule Meeting Modal ─── */
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalDismiss: { flex: 1 },
+  modalSheet: { backgroundColor: COLORS.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.borderLight, alignSelf: 'center', marginBottom: 16 },
+  sheetTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
+  sheetSub: { fontSize: 13, color: COLORS.textMuted, marginTop: 4, marginBottom: 20 },
+
+  pickerLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 10 },
+
+  dateChip: { width: 72, paddingVertical: 12, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt, alignItems: 'center', borderWidth: 1.5, borderColor: COLORS.borderLight },
+  dateChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  dateChipLabel: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
+  dateChipDate: { fontSize: 22, fontWeight: '800', color: COLORS.text, marginVertical: 2 },
+  dateChipMonth: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
+  dateChipTextActive: { color: '#FFF' },
+
+  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  timeChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: SIZES.radius.full, backgroundColor: COLORS.bgAlt, borderWidth: 1.5, borderColor: COLORS.borderLight },
+  timeChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  timeChipText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  timeChipTextActive: { color: '#FFF' },
+
+  contactGrid: { flexDirection: 'row', gap: 10 },
+  contactChip: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.bgAlt, borderWidth: 1.5, borderColor: COLORS.borderLight },
+  contactChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  contactChipText: { fontSize: 11, fontWeight: '700', color: COLORS.text },
+
+  msgInput: { backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, padding: 14, fontSize: 14, color: COLORS.text, height: 80, borderWidth: 1, borderColor: COLORS.borderLight },
+
+  submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.primary, marginTop: 20, ...SHADOWS.primary },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });
