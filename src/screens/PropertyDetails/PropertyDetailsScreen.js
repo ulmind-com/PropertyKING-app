@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI } from '../../api';
@@ -262,39 +262,32 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={FONTS.h4}>Video Tour</Text>
                 </View>
                 {ytId ? (
-                  /* YouTube — thumbnail preview + tap to open YouTube app */
-                  <TouchableOpacity 
-                    activeOpacity={0.85}
-                    style={styles.videoContainer}
-                    onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`)}
-                  >
-                    <Image 
-                      source={{ uri: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` }} 
-                      style={styles.inlineVideo} 
-                      resizeMode="cover"
+                  /* YouTube — Inline Autoplay */
+                  <View style={styles.videoContainer}>
+                    <YoutubePlayer
+                      height={220}
+                      play={true}
+                      videoId={ytId}
+                      mute={true}
+                      initialPlayerParams={{
+                        loop: true,
+                        rel: false,
+                        controls: false,
+                        modestbranding: true
+                      }}
                     />
-                    {/* Dark overlay */}
-                    <View style={styles.videoOverlay} />
-                    {/* Play button */}
-                    <View style={styles.playBtnWrap}>
-                      <View style={styles.playBtn}>
-                        <Ionicons name="play" size={32} color="#FFF" style={{marginLeft:3}} />
-                      </View>
-                      <Text style={styles.playLabel}>Play on YouTube</Text>
-                    </View>
                     {/* YouTube badge */}
                     <View style={styles.ytBadge}>
                       <Ionicons name="logo-youtube" size={18} color="#FF0000" />
                       <Text style={styles.ytBadgeText}>YouTube</Text>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 ) : (
                   /* Direct uploaded video — native player */
                   <View style={styles.videoContainer}>
                     <Video
                       style={styles.inlineVideo}
                       source={{ uri: property.video_url }}
-                      useNativeControls
                       resizeMode={ResizeMode.COVER}
                       isLooping
                       shouldPlay
