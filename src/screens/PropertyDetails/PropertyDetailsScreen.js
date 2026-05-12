@@ -269,18 +269,18 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                       play={true}
                       videoId={ytId}
                       mute={true}
+                      webViewProps={{
+                        mediaPlaybackRequiresUserAction: false,
+                        allowsInlineMediaPlayback: true
+                      }}
                       initialPlayerParams={{
                         loop: true,
                         rel: false,
                         controls: false,
-                        modestbranding: true
+                        modestbranding: true,
+                        iv_load_policy: 3
                       }}
                     />
-                    {/* YouTube badge */}
-                    <View style={styles.ytBadge}>
-                      <Ionicons name="logo-youtube" size={18} color="#FF0000" />
-                      <Text style={styles.ytBadgeText}>YouTube</Text>
-                    </View>
                   </View>
                 ) : (
                   /* Direct uploaded video — native player */
