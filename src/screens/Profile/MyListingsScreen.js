@@ -8,24 +8,44 @@ export default function MyListingsScreen({ navigation }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchListings = async () => {
+  const fetchListings = async (pageNum = 1, isRefresh = false) => {
     try {
-      const res = await propertyAPI.myListings({ page: 1, limit: 50 });
-      setListings(res.data.properties || []);
+      if (pageNum > 1) setLoadingMore(true);
+      const res = await propertyAPI.myListings({ page: pageNum, limit: 5 });
+      const newProps = res.data.properties || [];
+
+      if (isRefresh || pageNum === 1) {
+        setListings(newProps);
+      } else {
+        setListings(prev => [...prev, ...newProps]);
+      }
+      setHasMore(pageNum < res.data.total_pages);
+      setPage(pageNum);
     } catch (e) {
       console.log('Fetch listings error:', e);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
-    setLoading(false);
-    setRefreshing(false);
   };
 
-  useEffect(() => { fetchListings(); }, []);
+  useEffect(() => { fetchListings(1); }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchListings();
+    fetchListings(1, true);
   }, []);
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchListings(page + 1);
+    }
+  };
 
   const getImg = (property) => {
     const imgs = property.images || [];
@@ -119,6 +139,11 @@ export default function MyListingsScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 20 }} /> : null
+          }
         />
       )}
     </View>
