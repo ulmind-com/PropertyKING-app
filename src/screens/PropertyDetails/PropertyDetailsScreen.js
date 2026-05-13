@@ -159,12 +159,12 @@ export default function PropertyDetailsScreen({ route, navigation }) {
     setInquiryLoading(false);
   };
 
-  // Generate next 7 days for date picker
-  const getNext7Days = () => {
+  // Generate next 30 days for date picker
+  const getNext30Days = () => {
     const days = [];
     const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 30; i++) {
       const d = new Date(); d.setDate(d.getDate() + i);
       days.push({
         label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()],
@@ -176,14 +176,22 @@ export default function PropertyDetailsScreen({ route, navigation }) {
     return days;
   };
 
-  const timeSlots = [
-    { label: '9 AM', value: '09:00', icon: 'sunny-outline' },
-    { label: '11 AM', value: '11:00', icon: 'sunny-outline' },
-    { label: '1 PM', value: '13:00', icon: 'sunny' },
-    { label: '3 PM', value: '15:00', icon: 'partly-sunny-outline' },
-    { label: '5 PM', value: '17:00', icon: 'cloudy-outline' },
-    { label: '7 PM', value: '19:00', icon: 'moon-outline' },
-  ];
+  // Generate 30-min interval times from 8 AM to 8 PM
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let i = 8; i <= 20; i++) {
+      const ampm = i >= 12 ? 'PM' : 'AM';
+      const hour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
+      let icon = i >= 18 ? 'moon-outline' : i >= 16 ? 'partly-sunny-outline' : i >= 12 ? 'sunny' : 'sunny-outline';
+      
+      slots.push({ label: `${hour}:00 ${ampm}`, value: `${i.toString().padStart(2, '0')}:00`, icon });
+      if (i < 20) {
+        slots.push({ label: `${hour}:30 ${ampm}`, value: `${i.toString().padStart(2, '0')}:30`, icon });
+      }
+    }
+    return slots;
+  };
+  const timeSlots = generateTimeSlots();
 
   const contactOptions = [
     { label: 'Call', value: 'call', icon: 'call-outline' },
@@ -501,7 +509,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             {/* ── Date Picker ── */}
             <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {getNext7Days().map((day) => (
+              {getNext30Days().map((day) => (
                 <TouchableOpacity
                   key={day.value}
                   style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
@@ -516,7 +524,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
 
             {/* ── Time Slots ── */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <View style={styles.timeGrid}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {timeSlots.map((slot) => (
                 <TouchableOpacity
                   key={slot.value}
@@ -527,7 +535,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                   <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
 
             {/* ── Contact Preference ── */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
