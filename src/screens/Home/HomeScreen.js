@@ -278,12 +278,8 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             {finalTopViewed.map(item => (
-              <View key={item.id} style={[st.topViewedCard, { marginBottom: 12 }]}>
+              <View key={item.id} style={{ marginBottom: 12 }}>
                 <PropertyCard property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} />
-                <View style={st.viewsBadge}>
-                  <Ionicons name="eye" size={12} color="#FFF" />
-                  <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
-                </View>
               </View>
             ))}
           </View>
