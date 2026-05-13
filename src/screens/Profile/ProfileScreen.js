@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 
-const AVAILABLE_SCREENS = ['MyListings'];
+const AVAILABLE_SCREENS = ['MyListings', 'EditProfile'];
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -33,7 +33,11 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.avatarArea}>
-            <View style={styles.avatar}><Text style={styles.avatarText}>{user?.full_name?.[0] || 'U'}</Text></View>
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.full_name?.[0] || 'U'}</Text></View>
+            )}
             <View>
               <Text style={FONTS.h3}>{user?.full_name || 'User'}</Text>
               <Text style={FONTS.caption}>{user?.email}</Text>

@@ -20,6 +20,7 @@ import RegisterScreen from '../screens/Auth/RegisterScreen';
 import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
 import MyListingsScreen from '../screens/Profile/MyListingsScreen';
 import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
+import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -61,6 +62,7 @@ function ProfileStack() {
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="MyListings" component={MyListingsScreen} />
       <Stack.Screen name="PropertyLeads" component={PropertyLeadsScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 }
