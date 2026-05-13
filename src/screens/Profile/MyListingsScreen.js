@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator, RefreshControl, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { propertyAPI } from '../../api';
@@ -122,8 +122,13 @@ export default function MyListingsScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} style={{ alignSelf: 'center', marginRight: 12 }} />
         </TouchableOpacity>
 
-        {/* Active/Inactive Toggle */}
-        <View style={styles.toggleRow}>
+        {/* Active/Inactive Toggle — using TouchableOpacity instead of Switch for reliability */}
+        <TouchableOpacity
+          style={styles.toggleRow}
+          activeOpacity={0.7}
+          onPress={() => handleToggleStatus(item)}
+          disabled={isToggling}
+        >
           <View style={styles.toggleLeft}>
             <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
             <Text style={[styles.toggleLabel, !isActive && { color: COLORS.textMuted }]}>
@@ -133,14 +138,11 @@ export default function MyListingsScreen({ navigation }) {
           {isToggling ? (
             <ActivityIndicator size="small" color={COLORS.primary} />
           ) : (
-            <Switch
-              value={isActive}
-              onValueChange={() => handleToggleStatus(item)}
-              trackColor={{ false: '#D1D5DB', true: '#BBF7D0' }}
-              thumbColor={isActive ? '#10B981' : '#9CA3AF'}
-            />
+            <View style={[styles.toggleTrack, isActive && styles.toggleTrackActive]}>
+              <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
+            </View>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -238,6 +240,10 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: '#10B981' },
   dotInactive: { backgroundColor: '#9CA3AF' },
   toggleLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
+  toggleTrack: { width: 48, height: 28, borderRadius: 14, backgroundColor: '#D1D5DB', justifyContent: 'center', padding: 2 },
+  toggleTrackActive: { backgroundColor: '#BBF7D0' },
+  toggleThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#9CA3AF' },
+  toggleThumbActive: { backgroundColor: '#10B981', alignSelf: 'flex-end' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingBottom: 100 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
