@@ -32,6 +32,57 @@ const TYPE_ICON_MAP = {
 };
 const getTypeIcon = (name = '') => TYPE_ICON_MAP[name.toLowerCase()] || 'home-outline';
 
+const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, turnStart }) => {
+  const textColor = scrollY.interpolate({
+    inputRange: [turnStart, turnStart + 60],
+    outputRange: [COLORS.text, '#FFFFFF'],
+    extrapolate: 'clamp',
+  });
+  
+  const seeAllColor = scrollY.interpolate({
+    inputRange: [turnStart, turnStart + 60],
+    outputRange: [COLORS.text, 'rgba(255,255,255,0.7)'],
+    extrapolate: 'clamp',
+  });
+
+  const boxBg = scrollY.interpolate({
+    inputRange: [turnStart, turnStart + 60],
+    outputRange: [COLORS.bgDark, 'rgba(255,255,255,0.2)'],
+    extrapolate: 'clamp',
+  });
+
+  const darkOpacity = scrollY.interpolate({
+    inputRange: [turnStart, turnStart + 60],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const lightOpacity = scrollY.interpolate({
+    inputRange: [turnStart, turnStart + 60],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <View style={st.sectionHeader}>
+      <View style={st.sectionLeft}>
+        <Animated.View style={[st.sectionIconBox, { backgroundColor: boxBg }]}>
+          <Animated.View style={{ position: 'absolute', opacity: darkOpacity }}>
+            <Ionicons name={icon} size={14} color={COLORS.text} />
+          </Animated.View>
+          <Animated.View style={{ position: 'absolute', opacity: lightOpacity }}>
+            <Ionicons name={icon} size={14} color="#FFF" />
+          </Animated.View>
+        </Animated.View>
+        <Animated.Text style={[FONTS.h3, { color: textColor }]}>{title}</Animated.Text>
+      </View>
+      <TouchableOpacity onPress={onSeeAll}>
+        <Animated.Text style={[st.seeAll, { color: seeAllColor }]}>See all</Animated.Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -61,7 +112,7 @@ export default function HomeScreen({ navigation }) {
         if (data.userCoords) setUserCoords(data.userCoords);
         setLoading(false);
       }
-    } catch (e) {}
+    } catch (e) { }
     fetchFreshData();
   };
 
@@ -75,7 +126,7 @@ export default function HomeScreen({ navigation }) {
       if (featRes) setFeaturedProps(featRes.data?.properties || []);
       if (topRes) setTopViewedProps(topRes.data?.properties || []);
       saveCache(featRes?.data?.properties, topRes?.data?.properties);
-    } catch (e) {}
+    } catch (e) { }
     setLoading(false);
   };
 
@@ -86,7 +137,7 @@ export default function HomeScreen({ navigation }) {
         topViewed: topViewed || topViewedProps, types: propertyTypes,
         locationName, userCoords, savedAt: Date.now(),
       }));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const onRefresh = useCallback(async () => {
@@ -99,12 +150,12 @@ export default function HomeScreen({ navigation }) {
       if (featRes) setFeaturedProps(featRes.data?.properties || []);
       if (topRes) setTopViewedProps(topRes.data?.properties || []);
       saveCache(featRes?.data?.properties, topRes?.data?.properties);
-    } catch (e) {}
+    } catch (e) { }
     setRefreshing(false);
   }, [userCoords]);
 
   const loadTypes = async () => {
-    try { const r = await propertyTypeAPI.list(); setPropertyTypes(r.data || []); } catch(e) {}
+    try { const r = await propertyTypeAPI.list(); setPropertyTypes(r.data || []); } catch (e) { }
   };
 
   const loadNearby = async (customCoords = null, customName = null) => {
@@ -125,7 +176,7 @@ export default function HomeScreen({ navigation }) {
       const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 25, limit: 15 });
       setNearbyProps(res.data?.properties || []);
       saveCache();
-    } catch(e) { setLocationName('Unknown'); }
+    } catch (e) { setLocationName('Unknown'); }
   };
 
   const openLocationPicker = () => {
@@ -235,7 +286,7 @@ export default function HomeScreen({ navigation }) {
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{nativeEvent:{contentOffset:{y:scrollY}}}],{useNativeDriver:true})}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.text} colors={[COLORS.text]} />}
       >
         {/* ═══════════ CATEGORY GRID CARD ═══════════ */}
@@ -295,17 +346,13 @@ export default function HomeScreen({ navigation }) {
         {/* ═══════════ NEAR YOU ═══════════ */}
         {finalNearby.length > 0 && (
           <View style={st.section}>
-            <View style={st.sectionHeader}>
-              <View style={st.sectionLeft}>
-                <View style={st.sectionIconBox}>
-                  <Ionicons name="location" size={14} color={COLORS.text} />
-                </View>
-                <Text style={FONTS.h3}>Near You</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'nearby', userCoords })}>
-                <Text style={st.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
+            <AnimatedSectionHeader 
+              title="Near You" 
+              icon="location"
+              scrollY={scrollY}
+              turnStart={30} // Near You enters dark zone quickly
+              onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'nearby', userCoords })}
+            />
             {finalNearby.map(item => (
               <PropertyCard
                 key={item.id} property={item}
@@ -318,17 +365,13 @@ export default function HomeScreen({ navigation }) {
         {/* ═══════════ FEATURED ═══════════ */}
         {finalFeatured.length > 0 && (
           <View style={st.section}>
-            <View style={st.sectionHeader}>
-              <View style={st.sectionLeft}>
-                <View style={st.sectionIconBox}>
-                  <Ionicons name="star" size={14} color={COLORS.text} />
-                </View>
-                <Text style={FONTS.h3}>Featured</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'featured' })}>
-                <Text style={st.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
+            <AnimatedSectionHeader 
+              title="Featured" 
+              icon="star"
+              scrollY={scrollY}
+              turnStart={310} // Featured enters dark zone later
+              onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'featured' })}
+            />
             <FlatList
               data={finalFeatured}
               horizontal
@@ -349,17 +392,13 @@ export default function HomeScreen({ navigation }) {
         {/* ═══════════ TOP VIEWED ═══════════ */}
         {finalTopViewed.length > 0 && (
           <View style={st.section}>
-            <View style={st.sectionHeader}>
-              <View style={st.sectionLeft}>
-                <View style={st.sectionIconBox}>
-                  <Ionicons name="trending-up" size={14} color={COLORS.text} />
-                </View>
-                <Text style={FONTS.h3}>Top Viewed</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}>
-                <Text style={st.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
+            <AnimatedSectionHeader 
+              title="Top Viewed" 
+              icon="trending-up"
+              scrollY={scrollY}
+              turnStart={560} // Top Viewed enters dark zone even later
+              onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}
+            />
             {finalTopViewed.map(item => (
               <PropertyCard
                 key={item.id} property={item}
