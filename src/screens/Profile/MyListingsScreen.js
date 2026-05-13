@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, backgroundColor: COLORS.bg },
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
+  headerTitle: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, letterSpacing: -0.5 },
 
   // Stats Grid
   summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, paddingBottom: 24, paddingTop: 16, backgroundColor: COLORS.bg },
   summaryCard: { flex: 1, alignItems: 'center', paddingVertical: 20, borderRadius: 24, ...SHADOWS.sm },
   iconBox: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  summaryValue: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
-  summaryLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  summaryValue: { fontSize: 24, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, marginBottom: 2 },
+  summaryLabel: { fontSize: 12, fontFamily: 'Raleway_700Bold', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   // Cards
   card: { backgroundColor: COLORS.bg, borderRadius: 24, marginBottom: 20, ...SHADOWS.md, padding: 12 },
@@ -252,21 +252,21 @@ const styles = StyleSheet.create({
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   dotActive: { backgroundColor: '#10B981' },
   dotInactive: { backgroundColor: '#9CA3AF' },
-  statusText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+  statusText: { fontSize: 9, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 },
   statusTextActive: { color: '#059669' },
   statusTextInactive: { color: '#6B7280' },
 
   cardBody: { flex: 1, paddingVertical: 4 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, lineHeight: 20, marginBottom: 6 },
-  cardPrice: { fontSize: 18, fontWeight: '800', color: COLORS.primary, marginBottom: 12 },
+  cardTitle: { fontSize: 15, fontFamily: 'Raleway_700Bold', color: COLORS.text, lineHeight: 20, marginBottom: 6 },
+  cardPrice: { fontSize: 18, fontFamily: 'Raleway_800ExtraBold', color: COLORS.primary, marginBottom: 12 },
 
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.bgAlt, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  statText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '700' },
+  statText: { fontSize: 12, color: COLORS.textSecondary, fontFamily: 'Raleway_700Bold' },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
-  detailsBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  detailsBtnText: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.primary },
   
   toggleSwitch: { width: 50, height: 28, borderRadius: 14, backgroundColor: '#E5E7EB', padding: 2, justifyContent: 'center' },
   toggleSwitchActive: { backgroundColor: '#10B981' },
@@ -274,6 +274,6 @@ const styles = StyleSheet.create({
   toggleThumbActive: { transform: [{ translateX: 22 }] },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingBottom: 100 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
+  emptyTitle: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text },
   emptySub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 },
 });

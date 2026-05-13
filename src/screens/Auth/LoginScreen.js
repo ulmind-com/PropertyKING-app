@@ -78,22 +78,22 @@ const styles = StyleSheet.create({
 
   logoArea: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logoIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 26, fontWeight: '800', color: COLORS.text },
+  logoText: { fontSize: 26, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text },
 
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: COLORS.errorLight, padding: 14, borderRadius: SIZES.radius.md, marginTop: 20 },
-  errorText: { fontSize: 13, color: COLORS.error, fontWeight: '500' },
+  errorText: { fontSize: 13, color: COLORS.error, fontFamily: 'Raleway_500Medium' },
 
   form: { marginTop: 32, gap: 20 },
   inputGroup: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  label: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   inputBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, paddingHorizontal: 16, height: 52, borderWidth: 1, borderColor: COLORS.borderLight },
   input: { flex: 1, fontSize: 14, color: COLORS.text },
 
-  forgotText: { color: COLORS.primary, fontSize: 13, fontWeight: '600', alignSelf: 'flex-end' },
+  forgotText: { color: COLORS.primary, fontSize: 13, fontFamily: 'Raleway_600SemiBold', alignSelf: 'flex-end' },
 
   loginBtn: { height: 54, backgroundColor: COLORS.primary, borderRadius: SIZES.radius.lg, alignItems: 'center', justifyContent: 'center', marginTop: 8, ...SHADOWS.primary },
-  loginBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  loginBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Raleway_700Bold' },
 
   bottomText: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
-  signupLink: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
+  signupLink: { color: COLORS.primary, fontFamily: 'Raleway_700Bold', fontSize: 14 },
 });

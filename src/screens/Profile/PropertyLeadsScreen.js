@@ -192,7 +192,7 @@ export default function PropertyLeadsScreen({ route, navigation }) {
           <View style={styles.detailRow}>
             <Ionicons name={getContactIcon(item.contact_preference)} size={15} color="#10B981" />
             <Text style={styles.detailLabel}>Contact via:</Text>
-            <Text style={[styles.detailValue, { color: '#10B981', fontWeight: '700' }]}>{getContactLabel(item.contact_preference)}</Text>
+            <Text style={[styles.detailValue, { color: '#10B981', fontFamily: 'Raleway_700Bold' }]}>{getContactLabel(item.contact_preference)}</Text>
           </View>
         )}
 
@@ -317,29 +317,29 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12 },
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
-  headerSub: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+  headerTitle: { fontSize: 16, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text },
+  headerSub: { fontSize: 12, color: COLORS.textMuted, fontFamily: 'Raleway_500Medium' },
 
   statsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginBottom: 12 },
   statCard: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, borderWidth: 1.5 },
-  statValue: { fontSize: 20, fontWeight: '800', color: COLORS.text },
-  statLabel: { fontSize: 10, fontWeight: '700', color: COLORS.textMuted },
+  statValue: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text },
+  statLabel: { fontSize: 10, fontFamily: 'Raleway_700Bold', color: COLORS.textMuted },
 
   tabRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginBottom: 8 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: SIZES.radius.full, backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
   tabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  tabText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
+  tabText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted },
   tabTextActive: { color: '#FFF' },
 
   leadCard: { flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 10, backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight },
   leadAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImg: { width: 44, height: 44 },
-  avatarText: { fontSize: 18, fontWeight: '800', color: '#FFF' },
+  avatarText: { fontSize: 18, fontFamily: 'Raleway_800ExtraBold', color: '#FFF' },
   leadBody: { flex: 1, marginLeft: 12, gap: 2 },
-  leadName: { fontSize: 14, fontWeight: '700', color: COLORS.text },
+  leadName: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.text },
   leadDetail: { fontSize: 12, color: COLORS.textMuted },
   viewMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  viewCount: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
+  viewCount: { fontSize: 11, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   viewTime: { fontSize: 11, color: COLORS.textMuted },
   leadActions: { gap: 6 },
   actionBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: COLORS.primaryLight || '#EEF2FF', alignItems: 'center', justifyContent: 'center' },
@@ -349,20 +349,20 @@ const styles = StyleSheet.create({
   inquiryStatus: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 100 },
   statusPendingInq: { backgroundColor: '#FEF3C7' },
   statusResponded: { backgroundColor: '#D1FAE5' },
-  inquiryStatusText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
+  inquiryStatusText: { fontSize: 10, fontFamily: 'Raleway_700Bold', textTransform: 'capitalize' },
   inquiryMsg: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 12, backgroundColor: COLORS.bgAlt, padding: 12, borderRadius: SIZES.radius.md },
 
   // Detailed info box
   detailsBox: { backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, padding: 14, marginBottom: 12, gap: 10 },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  detailLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted, minWidth: 75 },
-  detailValue: { fontSize: 13, fontWeight: '600', color: COLORS.text, flex: 1 },
+  detailLabel: { fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted, minWidth: 75 },
+  detailValue: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.text, flex: 1 },
 
   contactRow: { flexDirection: 'row', gap: 10 },
   contactBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: SIZES.radius.md, backgroundColor: COLORS.primary },
-  contactBtnText: { fontSize: 13, fontWeight: '700', color: '#FFF' },
+  contactBtnText: { fontSize: 13, fontFamily: 'Raleway_700Bold', color: '#FFF' },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingBottom: 100 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
+  emptyTitle: { fontSize: 18, fontFamily: 'Raleway_700Bold', color: COLORS.text },
   emptySub: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', paddingHorizontal: 40 },
 });

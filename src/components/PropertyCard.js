@@ -106,18 +106,18 @@ const s = StyleSheet.create({
   badge: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   badgeSale: { backgroundColor: COLORS.primary },
   badgeRent: { backgroundColor: '#8B5CF6' },
-  badgeText: { color: '#FFF', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  badgeText: { color: '#FFF', fontSize: 10, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 },
   
   topActions: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', gap: 8 },
   iconBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
   iconBtnActive: { backgroundColor: '#FFF' },
 
   info: { padding: 16, gap: 8 },
-  title: { fontSize: 16, fontWeight: '700', color: COLORS.text, lineHeight: 22 },
+  title: { fontSize: 16, fontFamily: 'Raleway_700Bold', color: COLORS.text, lineHeight: 22 },
   locRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locText: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500' },
+  locText: { fontSize: 13, color: COLORS.textMuted, fontFamily: 'Raleway_500Medium' },
   statsRow: { flexDirection: 'row', gap: 16, paddingTop: 4 },
   statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  price: { fontSize: 20, fontWeight: '800', color: COLORS.primary, marginTop: 4 },
+  statText: { fontSize: 12, color: COLORS.textSecondary, fontFamily: 'Raleway_500Medium' },
+  price: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.primary, marginTop: 4 },
 });

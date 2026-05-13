@@ -28,6 +28,6 @@ const styles = StyleSheet.create({
   text: {
     color: '#FFF',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
   }
 });

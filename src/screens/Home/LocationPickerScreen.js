@@ -179,13 +179,13 @@ const s = StyleSheet.create({
 
   bottomSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: Platform.OS === 'ios' ? 34 : 20, ...SHADOWS.lg },
   sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.border, alignSelf: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 16 },
+  sheetTitle: { fontSize: 16, fontFamily: 'Raleway_700Bold', color: COLORS.text, marginBottom: 16 },
   addressBox: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  addressTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  addressTitle: { fontSize: 18, fontFamily: 'Raleway_700Bold', color: COLORS.text, marginBottom: 4 },
   addressDesc: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
   
   btn: { backgroundColor: COLORS.primary, height: 54, borderRadius: SIZES.radius.lg, alignItems: 'center', justifyContent: 'center', ...SHADOWS.primary },
-  btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  btnText: { color: '#FFF', fontSize: 16, fontFamily: 'Raleway_700Bold' },
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 40 : 10 },
   backBtn: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },

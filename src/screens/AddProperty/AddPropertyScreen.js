@@ -197,9 +197,9 @@ export default function AddPropertyScreen({ navigation }) {
               </TouchableOpacity>)}</View>
           </View>
           <View style={s.ig}><Text style={s.lb}>Price (USD) *</Text>
-            <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{fontSize:20,fontWeight:'700',color:COLORS.primary}}>$</Text>
+            <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{fontSize:20,fontFamily: 'Raleway_700Bold',color:COLORS.primary}}>$</Text>
               <TextInput style={[s.inp,{flex:1}]} placeholder="0" placeholderTextColor={COLORS.textMuted} value={price} onChangeText={setPrice} keyboardType="numeric"/>
-              {listingType==='rent'&&<Text style={{fontSize:14,fontWeight:'600',color:COLORS.textMuted}}>/month</Text>}
+              {listingType==='rent'&&<Text style={{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.textMuted}}>/month</Text>}
             </View>
           </View>
         </View>}
@@ -247,7 +247,7 @@ export default function AddPropertyScreen({ navigation }) {
             </View>)}</View>}
 
           <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Video (Optional)</Text>
-          {videoUrl?<View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontWeight:'600'}}>Video uploaded</Text>
+          {videoUrl?<View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontFamily: 'Raleway_600SemiBold'}}>Video uploaded</Text>
             <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
           :<TouchableOpacity style={s.addBox} onPress={pickVideo} disabled={uploading}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Video</Text></TouchableOpacity>}
 
@@ -301,48 +301,48 @@ const s = StyleSheet.create({
   container:{flex:1,backgroundColor:COLORS.bg},
   header:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:20,paddingTop:56,paddingBottom:12},
   backBtn:{width:40,height:40,borderRadius:12,borderWidth:1,borderColor:COLORS.border,alignItems:'center',justifyContent:'center'},
-  stepLabel:{fontSize:13,fontWeight:'600',color:COLORS.textMuted},
+  stepLabel:{fontSize:13,fontFamily: 'Raleway_600SemiBold',color:COLORS.textMuted},
   progBar:{flexDirection:'row',paddingHorizontal:20,gap:6,marginBottom:6},
   progDot:{flex:1,height:4,borderRadius:2,backgroundColor:COLORS.borderLight},
   progDotActive:{backgroundColor:COLORS.primary},
   stepTitle:{...FONTS.caption,paddingHorizontal:20,marginBottom:8,color:COLORS.primary,textTransform:'uppercase',letterSpacing:1},
   errBox:{flexDirection:'row',alignItems:'center',gap:8,backgroundColor:COLORS.errorLight,padding:14,borderRadius:SIZES.radius.md,marginHorizontal:20,marginBottom:8},
-  errText:{fontSize:13,color:COLORS.error,fontWeight:'500',flex:1},
+  errText:{fontSize:13,color:COLORS.error,fontFamily: 'Raleway_500Medium',flex:1},
   sc:{gap:20},ig:{gap:6},
-  lb:{fontSize:13,fontWeight:'600',color:COLORS.textSecondary},
+  lb:{fontSize:13,fontFamily: 'Raleway_600SemiBold',color:COLORS.textSecondary},
   inp:{backgroundColor:COLORS.bgAlt,borderRadius:SIZES.radius.md,paddingHorizontal:16,height:52,fontSize:14,color:COLORS.text,borderWidth:1,borderColor:COLORS.borderLight},
   selBtn:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',backgroundColor:COLORS.bgAlt,borderRadius:SIZES.radius.md,paddingHorizontal:16,height:52,borderWidth:1,borderColor:COLORS.borderLight},
   selTxt:{fontSize:14,color:COLORS.text},selPh:{fontSize:14,color:COLORS.textMuted},
   togRow:{flexDirection:'row',gap:10},
   togBtn:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,paddingVertical:14,borderRadius:SIZES.radius.md,borderWidth:1.5,borderColor:COLORS.border,backgroundColor:COLORS.bgAlt},
   togBtnA:{backgroundColor:COLORS.primary,borderColor:COLORS.primary},
-  togTxt:{fontSize:14,fontWeight:'600',color:COLORS.textSecondary},togTxtA:{color:'#FFF'},
+  togTxt:{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.textSecondary},togTxtA:{color:'#FFF'},
   gpsBtn:{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,height:48,borderRadius:SIZES.radius.md,borderWidth:1.5,borderColor:COLORS.primary,borderStyle:'dashed',backgroundColor:COLORS.primarySoft},
-  gpsTxt:{fontSize:14,fontWeight:'600',color:COLORS.primary},
-  gpsInfo:{fontSize:12,color:COLORS.success,fontWeight:'600',textAlign:'center',marginTop:-8},
+  gpsTxt:{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.primary},
+  gpsInfo:{fontSize:12,color:COLORS.success,fontFamily: 'Raleway_600SemiBold',textAlign:'center',marginTop:-8},
   addBox:{alignItems:'center',justifyContent:'center',height:120,borderRadius:SIZES.radius.lg,borderWidth:2,borderColor:COLORS.border,borderStyle:'dashed',backgroundColor:COLORS.bgAlt,gap:6},
-  addTxt:{fontSize:14,fontWeight:'600',color:COLORS.primary},
+  addTxt:{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.primary},
   imgGrid:{flexDirection:'row',flexWrap:'wrap',gap:10,marginTop:12},
   thumb:{width:'30%',aspectRatio:1,borderRadius:SIZES.radius.md,overflow:'hidden',position:'relative'},
   thumbImg:{width:'100%',height:'100%'},
   rmBtn:{position:'absolute',top:4,right:4},
   coverBadge:{position:'absolute',top:4,left:4,backgroundColor:COLORS.primary,paddingHorizontal:6,paddingVertical:2,borderRadius:4},
-  coverTxt:{fontSize:9,fontWeight:'700',color:'#FFF'},
+  coverTxt:{fontSize:9,fontFamily: 'Raleway_700Bold',color:'#FFF'},
   setPrimBtn:{position:'absolute',bottom:0,left:0,right:0,backgroundColor:'rgba(0,0,0,0.5)',paddingVertical:4,alignItems:'center'},
-  setPrimTxt:{fontSize:10,fontWeight:'600',color:'#FFF'},
+  setPrimTxt:{fontSize:10,fontFamily: 'Raleway_600SemiBold',color:'#FFF'},
   mediaDone:{flexDirection:'row',alignItems:'center',gap:10,padding:16,backgroundColor:COLORS.successLight,borderRadius:SIZES.radius.md},
   fpDone:{width:120,aspectRatio:1,borderRadius:SIZES.radius.md,overflow:'hidden',position:'relative'},
   fpImg:{width:'100%',height:'100%'},
   bottomBar:{position:'absolute',bottom:0,left:0,right:0,padding:20,paddingBottom:34,backgroundColor:COLORS.bg,borderTopWidth:1,borderTopColor:COLORS.borderLight},
   nextBtn:{flexDirection:'row',height:54,backgroundColor:COLORS.primary,borderRadius:SIZES.radius.lg,alignItems:'center',justifyContent:'center',gap:8,...SHADOWS.primary},
-  nextTxt:{color:'#FFF',fontSize:16,fontWeight:'700'},
+  nextTxt:{color:'#FFF',fontSize:16,fontFamily: 'Raleway_700Bold'},
   submitBtn:{height:54,backgroundColor:COLORS.success,borderRadius:SIZES.radius.lg,alignItems:'center',justifyContent:'center',...SHADOWS.sm},
-  submitTxt:{color:'#FFF',fontSize:16,fontWeight:'700'},
+  submitTxt:{color:'#FFF',fontSize:16,fontFamily: 'Raleway_700Bold'},
   mo:{flex:1,backgroundColor:'rgba(0,0,0,0.5)',justifyContent:'flex-end'},
   mc:{backgroundColor:COLORS.bg,borderTopLeftRadius:24,borderTopRightRadius:24,maxHeight:'60%',paddingBottom:34},
   mh:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',padding:20,borderBottomWidth:1,borderBottomColor:COLORS.borderLight},
   opt:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:20,paddingVertical:16,borderBottomWidth:1,borderBottomColor:COLORS.borderLight},
   optA:{backgroundColor:COLORS.primarySoft},
-  optTxt:{fontSize:15,fontWeight:'500',color:COLORS.text},
-  optTxtA:{color:COLORS.primary,fontWeight:'700'},
+  optTxt:{fontSize:15,fontFamily: 'Raleway_500Medium',color:COLORS.text},
+  optTxtA:{color:COLORS.primary,fontFamily: 'Raleway_700Bold'},
 });

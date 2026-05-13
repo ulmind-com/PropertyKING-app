@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   clearBtn: { padding: 8 },
-  clearBtnText: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
+  clearBtnText: { color: COLORS.primary, fontFamily: 'Raleway_700Bold', fontSize: 14 },
   
   emptyContent: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, marginTop: 12 },
+  emptyTitle: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, marginTop: 12 },
   emptySub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
   exploreBtn: { marginTop: 24, backgroundColor: COLORS.primary, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 16 },
-  exploreBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  exploreBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Raleway_700Bold' },
 
   scrollContent: { padding: 16, gap: 16 },
   column: { width: ITEM_WIDTH },
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   cardImage: { width: '100%', height: 140, backgroundColor: COLORS.borderLight },
   cardBody: { padding: 12 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text, lineHeight: 20, marginBottom: 4 },
+  cardTitle: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.text, lineHeight: 20, marginBottom: 4 },
   cardLocation: { fontSize: 12, color: COLORS.textSecondary },
   removeBtn: { position: 'absolute', top: 8, right: 8, zIndex: 10, backgroundColor: '#FFF', borderRadius: 12 },
 
@@ -171,9 +171,9 @@ const styles = StyleSheet.create({
     gap: 8,
     ...SHADOWS.sm
   },
-  attributeLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  priceText: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
-  attrText: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  attributeLabel: { fontSize: 11, fontFamily: 'Raleway_700Bold', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  priceText: { fontSize: 18, fontFamily: 'Raleway_800ExtraBold', color: COLORS.primary },
+  attrText: { fontSize: 15, fontFamily: 'Raleway_700Bold', color: COLORS.text },
   
   amenitiesSection: {
     backgroundColor: COLORS.bg, 
@@ -184,5 +184,5 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   amenityChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4 },
-  amenityText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary }
+  amenityText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary }
 });

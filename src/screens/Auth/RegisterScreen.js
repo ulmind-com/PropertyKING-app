@@ -119,23 +119,23 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
 
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: COLORS.errorLight, padding: 14, borderRadius: SIZES.radius.md, marginTop: 20 },
-  errorText: { fontSize: 13, color: COLORS.error, fontWeight: '500', flex: 1 },
+  errorText: { fontSize: 13, color: COLORS.error, fontFamily: 'Raleway_500Medium', flex: 1 },
 
   form: { marginTop: 32, gap: 20 },
 
   inputGroup: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  label: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   inputBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, paddingHorizontal: 16, height: 52, borderWidth: 1, borderColor: COLORS.borderLight },
   input: { flex: 1, fontSize: 14, color: COLORS.text },
 
   countryCode: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   flag: { fontSize: 18 },
-  codeText: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  codeText: { fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: COLORS.text },
   phoneDivider: { width: 1, height: 24, backgroundColor: COLORS.borderLight, marginHorizontal: 4 },
 
   signupBtn: { height: 54, backgroundColor: COLORS.primary, borderRadius: SIZES.radius.lg, alignItems: 'center', justifyContent: 'center', marginTop: 12, ...SHADOWS.primary },
-  signupBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  signupBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Raleway_700Bold' },
 
   bottomText: { flexDirection: 'row', justifyContent: 'center', marginTop: 32, paddingBottom: 20 },
-  signInLink: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
+  signInLink: { color: COLORS.primary, fontFamily: 'Raleway_700Bold', fontSize: 14 },
 });

@@ -82,20 +82,20 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20 },
   avatarArea: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 26, fontWeight: '800', color: '#FFF' },
+  avatarText: { fontSize: 26, fontFamily: 'Raleway_800ExtraBold', color: '#FFF' },
   listerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, backgroundColor: COLORS.primaryLight, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 100 },
-  listerText: { fontSize: 11, fontWeight: '600', color: COLORS.primary, textTransform: 'capitalize' },
+  listerText: { fontSize: 11, fontFamily: 'Raleway_600SemiBold', color: COLORS.primary, textTransform: 'capitalize' },
 
   statsRow: { flexDirection: 'row', marginHorizontal: 20, padding: 18, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, marginBottom: 20 },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+  statValue: { fontSize: 22, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, marginBottom: 2 },
   statDivider: { width: 1, backgroundColor: COLORS.border },
 
   menu: { marginHorizontal: 20, backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
   menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight, gap: 14 },
   menuIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: COLORS.text },
+  menuLabel: { flex: 1, fontSize: 14, fontFamily: 'Raleway_500Medium', color: COLORS.text },
 
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 24, padding: 16, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.errorLight },
-  logoutText: { fontSize: 15, fontWeight: '600', color: COLORS.error },
+  logoutText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
 });

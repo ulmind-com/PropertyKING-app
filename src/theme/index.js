@@ -38,16 +38,16 @@ export const COLORS = {
 };
 
 export const FONTS = {
-  h1: { fontSize: 28, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
-  h2: { fontSize: 22, fontWeight: '700', color: COLORS.text, letterSpacing: -0.3 },
-  h3: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  h4: { fontSize: 16, fontWeight: '600', color: COLORS.text },
-  body: { fontSize: 14, fontWeight: '400', color: COLORS.textSecondary, lineHeight: 22 },
-  bodyBold: { fontSize: 14, fontWeight: '600', color: COLORS.text },
-  caption: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted },
-  tiny: { fontSize: 10, fontWeight: '600', color: COLORS.textMuted, letterSpacing: 0.5, textTransform: 'uppercase' },
-  price: { fontSize: 24, fontWeight: '800', color: COLORS.text },
-  priceSmall: { fontSize: 18, fontWeight: '700', color: COLORS.text },
+  h1: { fontFamily: 'Raleway_800ExtraBold', fontSize: 28, color: COLORS.text, letterSpacing: -0.5 },
+  h2: { fontFamily: 'Raleway_700Bold', fontSize: 22, color: COLORS.text, letterSpacing: -0.3 },
+  h3: { fontFamily: 'Raleway_700Bold', fontSize: 18, color: COLORS.text },
+  h4: { fontFamily: 'Raleway_600SemiBold', fontSize: 16, color: COLORS.text },
+  body: { fontFamily: 'Raleway_400Regular', fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
+  bodyBold: { fontFamily: 'Raleway_600SemiBold', fontSize: 14, color: COLORS.text },
+  caption: { fontFamily: 'Raleway_500Medium', fontSize: 12, color: COLORS.textMuted },
+  tiny: { fontFamily: 'Raleway_600SemiBold', fontSize: 10, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: 'uppercase' },
+  price: { fontFamily: 'Raleway_800ExtraBold', fontSize: 24, color: COLORS.text },
+  priceSmall: { fontFamily: 'Raleway_700Bold', fontSize: 18, color: COLORS.text },
 };
 
 export const SHADOWS = {

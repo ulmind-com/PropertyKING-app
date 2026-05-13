@@ -58,12 +58,12 @@ const styles = StyleSheet.create({
   badgeText: {
     color: COLORS.primary,
     fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'Raleway_800ExtraBold',
   },
   text: {
     color: '#FFF',
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Raleway_700Bold',
     flex: 1,
     textAlign: 'center',
   }

@@ -452,9 +452,9 @@ const st = StyleSheet.create({
   },
   avatarImg: { width: 42, height: 42, borderRadius: 21 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerLocLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: '500', marginBottom: 3 },
+  headerLocLabel: { fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'Raleway_500Medium', marginBottom: 3 },
   headerLocRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  headerLocText: { fontSize: 14, fontWeight: '700', color: '#FFF', maxWidth: 160 },
+  headerLocText: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: '#FFF', maxWidth: 160 },
   notifBtn: {
     width: 42,
     height: 42,
@@ -523,7 +523,7 @@ const st = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     color: COLORS.text,
     textAlign: 'center',
   },
@@ -538,7 +538,7 @@ const st = StyleSheet.create({
   },
   allCatText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Raleway_600SemiBold',
     color: COLORS.textSecondary,
   },
 
@@ -557,7 +557,7 @@ const st = StyleSheet.create({
   },
   typeChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   typeIcon: { fontSize: 14 },
-  typeText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  typeText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   typeTextActive: { color: '#FFF' },
 
   // ─── SECTIONS ───
@@ -577,5 +577,5 @@ const st = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  seeAll: { fontSize: 14, fontWeight: '600', color: COLORS.text, opacity: 0.5 },
+  seeAll: { fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: COLORS.text, opacity: 0.5 },
 });

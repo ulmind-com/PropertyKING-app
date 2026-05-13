@@ -118,7 +118,7 @@ function MainTabs() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontFamily: 'Raleway_600SemiBold',
           marginTop: 4,
         },
       })}

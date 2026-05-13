@@ -199,7 +199,7 @@ export default function FiltersScreen({ navigation, route }) {
                 onChangeText={setMinPrice}
               />
             </View>
-            <View style={s.rangeDash}><Text style={{ color: COLORS.textMuted, fontWeight: '700' }}>—</Text></View>
+            <View style={s.rangeDash}><Text style={{ color: COLORS.textMuted, fontFamily: 'Raleway_700Bold' }}>—</Text></View>
             <View style={s.inputWrap}>
               <Text style={s.inputPrefix}>$</Text>
               <TextInput
@@ -284,7 +284,7 @@ export default function FiltersScreen({ navigation, route }) {
               <Ionicons name="resize-outline" size={16} color={COLORS.textMuted} />
               <TextInput style={s.rangeInput} placeholder="Min sqft" placeholderTextColor={COLORS.textMuted} keyboardType="numeric" value={minSqft} onChangeText={setMinSqft} />
             </View>
-            <View style={s.rangeDash}><Text style={{ color: COLORS.textMuted, fontWeight: '700' }}>—</Text></View>
+            <View style={s.rangeDash}><Text style={{ color: COLORS.textMuted, fontFamily: 'Raleway_700Bold' }}>—</Text></View>
             <View style={s.inputWrap}>
               <Ionicons name="resize-outline" size={16} color={COLORS.textMuted} />
               <TextInput style={s.rangeInput} placeholder="Max sqft" placeholderTextColor={COLORS.textMuted} keyboardType="numeric" value={maxSqft} onChangeText={setMaxSqft} />
@@ -355,75 +355,75 @@ const s = StyleSheet.create({
   // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight },
   clearBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  clearText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  clearText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.primary },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
+  headerTitle: { fontSize: 18, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text },
   badge: { backgroundColor: COLORS.primary, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
+  badgeText: { color: '#FFF', fontSize: 11, fontFamily: 'Raleway_800ExtraBold' },
   closeBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.bgAlt, alignItems: 'center', justifyContent: 'center' },
 
   scrollContent: { padding: 20, paddingBottom: 20 },
 
   // Section
   section: { marginBottom: 26 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 12, letterSpacing: -0.2 },
+  sectionTitle: { fontSize: 15, fontFamily: 'Raleway_700Bold', color: COLORS.text, marginBottom: 12, letterSpacing: -0.2 },
 
   // Sort
   sortSelector: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight },
-  sortSelectorText: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.text },
+  sortSelectorText: { flex: 1, fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: COLORS.text },
   sortDropdown: { marginTop: 8, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
   sortOption: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight },
   sortOptionActive: { backgroundColor: COLORS.primarySoft },
-  sortOptionText: { flex: 1, fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
-  sortOptionTextActive: { color: COLORS.primary, fontWeight: '600' },
+  sortOptionText: { flex: 1, fontSize: 14, fontFamily: 'Raleway_500Medium', color: COLORS.textSecondary },
+  sortOptionTextActive: { color: COLORS.primary, fontFamily: 'Raleway_600SemiBold' },
 
   // Chips
   chipRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingVertical: 11, borderRadius: SIZES.radius.full, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.bg },
   chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  chipText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   chipTextActive: { color: '#FFF' },
 
   // Property Type Grid
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   typeCard: { width: '22.5%', aspectRatio: 0.9, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: COLORS.bgAlt },
   typeCardActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary, ...SHADOWS.sm },
-  typeCardText: { fontSize: 10, fontWeight: '700', color: COLORS.textSecondary, textAlign: 'center' },
+  typeCardText: { fontSize: 10, fontFamily: 'Raleway_700Bold', color: COLORS.textSecondary, textAlign: 'center' },
   typeCardTextActive: { color: '#FFF' },
 
   // Range inputs
   rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   inputWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, borderWidth: 1, borderColor: COLORS.borderLight, paddingHorizontal: 14, height: 48 },
-  inputPrefix: { fontSize: 15, fontWeight: '700', color: COLORS.textMuted },
-  rangeInput: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.text },
+  inputPrefix: { fontSize: 15, fontFamily: 'Raleway_700Bold', color: COLORS.textMuted },
+  rangeInput: { flex: 1, fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: COLORS.text },
   rangeDash: { width: 24, alignItems: 'center' },
 
   // Quick price chips
   quickChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: SIZES.radius.full, backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
   quickChipActive: { backgroundColor: COLORS.primarySoft, borderColor: COLORS.primary },
-  quickChipText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  quickChipText: { fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   quickChipTextActive: { color: COLORS.primary },
 
   // Number chips
   numChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 16, paddingVertical: 12, borderRadius: SIZES.radius.md, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.bg },
   numChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  numChipNum: { fontSize: 16, fontWeight: '700', color: COLORS.text },
-  numChipText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
+  numChipNum: { fontSize: 16, fontFamily: 'Raleway_700Bold', color: COLORS.text },
+  numChipText: { fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   numChipTextActive: { color: '#FFF' },
 
   // Amenities
   amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   amenityChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: SIZES.radius.full, backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
   amenityChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  amenityChipText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  amenityChipText: { fontSize: 12, fontFamily: 'Raleway_600SemiBold', color: COLORS.textSecondary },
   amenityChipTextActive: { color: '#FFF' },
 
   // Bottom bar
   bottomBar: { flexDirection: 'row', padding: 16, paddingBottom: 34, gap: 12, borderTopWidth: 1, borderTopColor: COLORS.borderLight, backgroundColor: COLORS.bg },
   resetBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 20, height: 52, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.border },
-  resetText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
+  resetText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted },
   applyBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, borderRadius: SIZES.radius.lg, backgroundColor: COLORS.primary, ...SHADOWS.primary },
-  applyText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  applyText: { color: '#FFF', fontSize: 15, fontFamily: 'Raleway_700Bold' },
   applyBadge: { backgroundColor: '#FFF', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  applyBadgeText: { color: COLORS.primary, fontSize: 11, fontWeight: '800' },
+  applyBadgeText: { color: COLORS.primary, fontSize: 11, fontFamily: 'Raleway_800ExtraBold' },
 });

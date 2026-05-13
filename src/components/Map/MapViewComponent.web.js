@@ -19,6 +19,6 @@ const styles = StyleSheet.create({
   text: {
     color: '#6B7280',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Raleway_500Medium',
   }
 });
