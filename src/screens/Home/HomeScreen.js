@@ -151,7 +151,8 @@ export default function HomeScreen({ navigation }) {
   if (loading) return (
     <View style={st.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
-      <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
+      <LinearGradient colors={HEADER_GRADIENT} style={st.bgGradient} />
+      <View style={st.headerContent}>
         <View style={st.headerRow}>
           <View style={st.avatarCircle}>
             <Ionicons name="person" size={18} color="#FFF" />
@@ -167,7 +168,7 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
           </View>
         </View>
-      </LinearGradient>
+      </View>
       <HomeSkeleton />
     </View>
   );
@@ -176,8 +177,11 @@ export default function HomeScreen({ navigation }) {
     <View style={st.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
 
-      {/* ═══════════ DARK HEADER ═══════════ */}
-      <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
+      {/* ═══════════ BACKGROUND GRADIENT ═══════════ */}
+      <LinearGradient colors={HEADER_GRADIENT} style={st.bgGradient} />
+
+      {/* ═══════════ HEADER CONTENT ═══════════ */}
+      <View style={st.headerContent}>
         {/* Row 1: Avatar | Location | Bell */}
         <View style={st.headerRow}>
           {/* Avatar */}
@@ -227,7 +231,7 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="options-outline" size={18} color={COLORS.text} />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
@@ -371,18 +375,25 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const HEADER_GRADIENT = ['#000000', '#1C1C1E', '#3A3A3C']; // Top is black, fades to lighter dark
+const HEADER_GRADIENT = ['#000000', '#1C1C1E', '#3A3A3C', COLORS.bg]; // Fades to background color
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
 
-  // ─── DARK HEADER ───
-  header: {
+  // ─── FULL BACKGROUND GRADIENT ───
+  bgGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320, // Enough height to go behind the category card and fade out
+  },
+
+  // ─── HEADER CONTENT ───
+  headerContent: {
     paddingTop: Platform.OS === 'ios' ? 54 : 42,
     paddingHorizontal: 20,
     paddingBottom: 20,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
   },
   headerRow: {
     flexDirection: 'row',
