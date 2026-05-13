@@ -17,7 +17,7 @@ export default function PropertyListingScreen({ navigation, route }) {
   const params = route?.params || {};
   const mode = params.mode; // 'nearby' | 'top-viewed' | 'featured' | undefined
 
-  useEffect(() => { load(1, true); }, []);
+  useEffect(() => { load(1, true); }, [JSON.stringify(params)]);
 
   const load = async (p = 1, fresh = false) => {
     if (fresh) setLoading(true);
@@ -30,7 +30,7 @@ export default function PropertyListingScreen({ navigation, route }) {
       } else if (mode === 'featured') {
         res = await propertyAPI.recommendations({ page: p, limit: 10 });
       } else {
-        const { mode: _, userCoords, ...filterParams } = params;
+        const { mode: _, userCoords, typeName, ...filterParams } = params;
         res = await propertyAPI.list({ page: p, limit: 10, ...filterParams });
       }
       const newProps = res.data?.properties || [];
