@@ -77,38 +77,41 @@ export default function PropertyListingScreen({ navigation, route }) {
       </View>
       {!loading && <Text style={s.count}>{total} properties found</Text>}
 
-      {loading ? (
-        <View style={{padding:20,gap:12}}>
-          {[1,2,3].map(i => <PropertyCardSkeleton key={i} />)}
-        </View>
-      ) : (
-        <FlatList
-          data={properties}
-          keyExtractor={(i, idx) => i.id + '_' + idx}
-          contentContainerStyle={s.list}
-          showsVerticalScrollIndicator={false}
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.5}
-          initialNumToRender={4}
-          maxToRenderPerBatch={4}
-          windowSize={5}
-          removeClippedSubviews={true}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
-          renderItem={({ item }) => (
-            <PropertyCard property={item}
-              onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords: route.params?.userCoords })}
-              style={{ marginHorizontal: 20 }}
-            />
-          )}
-          ListFooterComponent={
-            loadingMore ? <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View> :
-            !hasMore && properties.length > 0 ? <Text style={s.endText}>You've seen all properties</Text> : null
-          }
-          ListEmptyComponent={
-            <View style={s.empty}><Ionicons name="search-outline" size={48} color={COLORS.border} /><Text style={FONTS.body}>No properties found</Text></View>
-          }
-        />
-      )}
+      <FlatList
+        data={loading ? [] : properties}
+        keyExtractor={(i, idx) => loading ? 'skel_' + idx : i.id + '_' + idx}
+        contentContainerStyle={s.list}
+        showsVerticalScrollIndicator={false}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={true}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
+        renderItem={({ item }) => (
+          <PropertyCard property={item}
+            onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords: route.params?.userCoords })}
+            style={{ marginHorizontal: 20 }}
+          />
+        )}
+        ListFooterComponent={
+          loadingMore ? <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View> :
+          !hasMore && properties.length > 0 && !loading ? <Text style={s.endText}>You've seen all properties</Text> : null
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={{padding:20,gap:12}}>
+              {[1,2,3].map(i => <PropertyCardSkeleton key={i} />)}
+            </View>
+          ) : (
+            <View style={s.empty}>
+              <Ionicons name="search-outline" size={48} color={COLORS.border} />
+              <Text style={FONTS.body}>No properties found</Text>
+            </View>
+          )
+        }
+      />
     </View>
   );
 }
