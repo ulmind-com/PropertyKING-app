@@ -150,7 +150,7 @@ export default function HomeScreen({ navigation }) {
 
   if (loading) return (
     <View style={st.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4A4A4A" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
         <View style={st.headerRow}>
           <View style={st.avatarCircle}>
@@ -174,7 +174,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={st.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4A4A4A" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
 
       {/* ═══════════ DARK HEADER ═══════════ */}
       <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
@@ -371,7 +371,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const HEADER_GRADIENT = ['#4A4A4A', '#2A2A2A']; // Very light black/grey gradient
+const HEADER_GRADIENT = ['#000000', '#1C1C1E', '#3A3A3C']; // Top is black, fades to lighter dark
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
