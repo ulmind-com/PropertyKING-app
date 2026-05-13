@@ -113,46 +113,48 @@ export default function MyListingsScreen({ navigation }) {
         >
           <View style={styles.imgWrap}>
             <Image source={{ uri: getImg(item) }} style={styles.cardImg} />
-            {!isActive && (
-              <View style={styles.inactiveOverlay}>
-                <Text style={styles.inactiveOverlayText}>INACTIVE</Text>
-              </View>
-            )}
+            <View style={[styles.statusBadge, isActive ? styles.badgeActive : styles.badgeInactive]}>
+              <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
+              <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextInactive]}>
+                {isActive ? 'ACTIVE' : 'INACTIVE'}
+              </Text>
+            </View>
           </View>
+
           <View style={styles.cardBody}>
-            <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
             <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
 
             <View style={styles.statsRow}>
-              <View style={styles.statBadge}>
-                <Ionicons name="eye-outline" size={14} color={COLORS.primary} />
-                <Text style={styles.statText}>{item.views_count || 0} views</Text>
+              <View style={styles.statChip}>
+                <Ionicons name="eye" size={14} color="#6366F1" />
+                <Text style={styles.statText}>{item.views_count || 0}</Text>
               </View>
-              <View style={styles.statBadge}>
-                <Ionicons name="chatbubble-outline" size={14} color="#10B981" />
-                <Text style={styles.statText}>{item.inquiries_count || 0} inquiries</Text>
+              <View style={styles.statChip}>
+                <Ionicons name="chatbubble" size={14} color="#10B981" />
+                <Text style={styles.statText}>{item.inquiries_count || 0}</Text>
               </View>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} style={{ alignSelf: 'center', marginRight: 12 }} />
         </TouchableOpacity>
 
-        {/* Active/Inactive Toggle — Optimistic UI */}
-        <TouchableOpacity
-          style={styles.toggleRow}
-          activeOpacity={0.7}
-          onPress={() => handleToggleStatus(item)}
-        >
-          <View style={styles.toggleLeft}>
-            <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
-            <Text style={[styles.toggleLabel, !isActive && { color: COLORS.textMuted }]}>
-              {isActive ? 'Active' : 'Inactive'}
-            </Text>
-          </View>
-          <View style={[styles.toggleTrack, isActive && styles.toggleTrackActive]}>
+        <View style={styles.cardFooter}>
+          <TouchableOpacity 
+            style={styles.detailsBtn}
+            onPress={() => navigation.navigate('PropertyLeads', { property: item })}
+          >
+            <Text style={styles.detailsBtnText}>View Leads</Text>
+            <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.toggleSwitch, isActive && styles.toggleSwitchActive]}
+            activeOpacity={0.8}
+            onPress={() => handleToggleStatus(item)}
+          >
             <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -166,26 +168,32 @@ export default function MyListingsScreen({ navigation }) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Listings</Text>
+        <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Summary — loads from separate API */}
+      {/* Summary — OP Level UI */}
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Ionicons name="home" size={22} color={COLORS.primary} />
+        <View style={[styles.summaryCard, { backgroundColor: '#EFF6FF' }]}>
+          <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}>
+            <Ionicons name="business" size={20} color={COLORS.primary} />
+          </View>
           <Text style={styles.summaryValue}>{stats.totalProps}</Text>
-          <Text style={styles.summaryLabel}>Properties</Text>
+          <Text style={styles.summaryLabel}>Listings</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Ionicons name="eye" size={22} color="#8B5CF6" />
+        <View style={[styles.summaryCard, { backgroundColor: '#F5F3FF' }]}>
+          <View style={[styles.iconBox, { backgroundColor: '#EDE9FE' }]}>
+            <Ionicons name="eye" size={20} color="#8B5CF6" />
+          </View>
           <Text style={styles.summaryValue}>{stats.totalViews}</Text>
-          <Text style={styles.summaryLabel}>Total Views</Text>
+          <Text style={styles.summaryLabel}>Views</Text>
         </View>
-        <View style={styles.summaryCard}>
-          <Ionicons name="chatbubbles" size={22} color="#10B981" />
+        <View style={[styles.summaryCard, { backgroundColor: '#ECFDF5' }]}>
+          <View style={[styles.iconBox, { backgroundColor: '#D1FAE5' }]}>
+            <Ionicons name="chatbubbles" size={20} color="#10B981" />
+          </View>
           <Text style={styles.summaryValue}>{stats.totalInquiries}</Text>
-          <Text style={styles.summaryLabel}>Inquiries</Text>
+          <Text style={styles.summaryLabel}>Leads</Text>
         </View>
       </View>
 
@@ -195,16 +203,16 @@ export default function MyListingsScreen({ navigation }) {
         </View>
       ) : listings.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="home-outline" size={64} color={COLORS.textMuted} />
+          <Ionicons name="home-outline" size={64} color={COLORS.border} />
           <Text style={styles.emptyTitle}>No Listings Yet</Text>
-          <Text style={styles.emptySub}>List your first property to start tracking leads</Text>
+          <Text style={styles.emptySub}>List your first property to start tracking leads and views</Text>
         </View>
       ) : (
         <FlatList
           data={listings}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
@@ -218,44 +226,54 @@ export default function MyListingsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: COLORS.bgDark },
 
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12 },
-  backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, backgroundColor: COLORS.bg },
+  backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
 
-  summaryRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginBottom: 8 },
-  summaryCard: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 14, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight },
-  summaryValue: { fontSize: 20, fontWeight: '800', color: COLORS.text },
-  summaryLabel: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
+  // Stats Grid
+  summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, paddingBottom: 24, paddingTop: 16, backgroundColor: COLORS.bg },
+  summaryCard: { flex: 1, alignItems: 'center', paddingVertical: 20, borderRadius: 24, ...SHADOWS.sm },
+  iconBox: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  summaryValue: { fontSize: 24, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+  summaryLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  card: { backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, marginBottom: 14, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
-  cardInactive: { opacity: 0.7, borderColor: '#D1D5DB' },
-  cardTouchable: { flexDirection: 'row' },
+  // Cards
+  card: { backgroundColor: COLORS.bg, borderRadius: 24, marginBottom: 20, ...SHADOWS.md, padding: 12 },
+  cardInactive: { opacity: 0.6 },
+  cardTouchable: { flexDirection: 'row', gap: 16 },
+  
   imgWrap: { position: 'relative' },
-  cardImg: { width: 100, height: 100 },
-  inactiveOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
-  inactiveOverlayText: { fontSize: 10, fontWeight: '800', color: '#FFF', letterSpacing: 1 },
-  cardBody: { flex: 1, padding: 12, justifyContent: 'center', gap: 4 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  cardPrice: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
-
-  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  statBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  statText: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
-
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.borderLight, backgroundColor: COLORS.bgAlt },
-  toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  cardImg: { width: 110, height: 110, borderRadius: 16, backgroundColor: COLORS.borderLight },
+  statusBadge: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.9)' },
+  badgeActive: { backgroundColor: '#ECFDF5' },
+  badgeInactive: { backgroundColor: '#F3F4F6' },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
   dotActive: { backgroundColor: '#10B981' },
   dotInactive: { backgroundColor: '#9CA3AF' },
-  toggleLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
-  toggleTrack: { width: 48, height: 28, borderRadius: 14, backgroundColor: '#D1D5DB', justifyContent: 'center', padding: 2 },
-  toggleTrackActive: { backgroundColor: '#BBF7D0' },
-  toggleThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#9CA3AF' },
-  toggleThumbActive: { backgroundColor: '#10B981', alignSelf: 'flex-end' },
+  statusText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+  statusTextActive: { color: '#059669' },
+  statusTextInactive: { color: '#6B7280' },
 
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingBottom: 100 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
-  emptySub: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', paddingHorizontal: 40 },
+  cardBody: { flex: 1, paddingVertical: 4 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, lineHeight: 20, marginBottom: 6 },
+  cardPrice: { fontSize: 18, fontWeight: '800', color: COLORS.primary, marginBottom: 12 },
+
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.bgAlt, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
+  statText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '700' },
+
+  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
+  detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
+  detailsBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  
+  toggleSwitch: { width: 50, height: 28, borderRadius: 14, backgroundColor: '#E5E7EB', padding: 2, justifyContent: 'center' },
+  toggleSwitchActive: { backgroundColor: '#10B981' },
+  toggleThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFF', ...SHADOWS.sm },
+  toggleThumbActive: { transform: [{ translateX: 22 }] },
+
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingBottom: 100 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
+  emptySub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22 },
 });
