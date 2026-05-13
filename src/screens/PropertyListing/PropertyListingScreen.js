@@ -15,7 +15,7 @@ export default function PropertyListingScreen({ navigation, route }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const params = route?.params || {};
-  const isNearby = params.mode === 'nearby';
+  const mode = params.mode; // 'nearby' | 'top-viewed' | 'featured' | undefined
 
   useEffect(() => { load(1, true); }, []);
 
@@ -23,11 +23,15 @@ export default function PropertyListingScreen({ navigation, route }) {
     if (fresh) setLoading(true);
     try {
       let res;
-      if (isNearby && params.userCoords) {
-        res = await propertyAPI.nearby({ lat: params.userCoords.lat, lng: params.userCoords.lng, radius_miles: 12.4, page: p, limit: 20 });
+      if (mode === 'nearby' && params.userCoords) {
+        res = await propertyAPI.nearby({ lat: params.userCoords.lat, lng: params.userCoords.lng, radius_miles: 25, page: p, limit: 10 });
+      } else if (mode === 'top-viewed') {
+        res = await propertyAPI.topViewed({ page: p, limit: 10 });
+      } else if (mode === 'featured') {
+        res = await propertyAPI.recommendations({ page: p, limit: 10 });
       } else {
-        const { mode, userCoords, ...filterParams } = params;
-        res = await propertyAPI.list({ page: p, limit: 20, ...filterParams });
+        const { mode: _, userCoords, ...filterParams } = params;
+        res = await propertyAPI.list({ page: p, limit: 10, ...filterParams });
       }
       const newProps = res.data?.properties || [];
       setTotal(res.data?.total || 0);
@@ -57,7 +61,7 @@ export default function PropertyListingScreen({ navigation, route }) {
     load(nextPage, false);
   };
 
-  const title = isNearby ? 'Near You' : (params.typeName || 'Properties');
+  const title = mode === 'nearby' ? 'Near You' : mode === 'top-viewed' ? 'Top Viewed' : mode === 'featured' ? 'Featured' : (params.typeName || 'Properties');
 
   return (
     <View style={s.container}>
@@ -75,7 +79,7 @@ export default function PropertyListingScreen({ navigation, route }) {
 
       {loading ? (
         <View style={{padding:20,gap:12}}>
-          {[1,2,3,4,5].map(i => <PropertyCardSkeleton key={i} />)}
+          {[1,2,3].map(i => <PropertyCardSkeleton key={i} />)}
         </View>
       ) : (
         <FlatList
@@ -84,7 +88,7 @@ export default function PropertyListingScreen({ navigation, route }) {
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
           onEndReached={onEndReached}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
           renderItem={({ item }) => (
             <PropertyCard property={item}

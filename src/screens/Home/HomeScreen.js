@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, Dimensions, Animated, StatusBar, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
 import { HomeSkeleton } from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
+const CACHE_KEY = 'pk_home_cache';
 
 export default function HomeScreen({ navigation }) {
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -22,41 +24,80 @@ export default function HomeScreen({ navigation }) {
   const [userCoords, setUserCoords] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => { initialLoad(); }, []);
+  useEffect(() => { loadCacheThenFresh(); }, []);
 
-  const initialLoad = async () => {
-    setLoading(true);
-    // Start all requests in parallel to make it FAST
+  // ── CACHE-FIRST: Show cached data instantly, then refresh in background ──
+  const loadCacheThenFresh = async () => {
+    // Step 1: Try to load cached data INSTANTLY
+    try {
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        setNearbyProps(data.nearby || []);
+        setFeaturedProps(data.featured || []);
+        setTopViewedProps(data.topViewed || []);
+        setPropertyTypes(data.types || []);
+        if (data.locationName) setLocationName(data.locationName);
+        if (data.userCoords) setUserCoords(data.userCoords);
+        setLoading(false); // Show cached content immediately — NO skeleton
+      }
+    } catch (e) {}
+
+    // Step 2: Fetch fresh data in background
+    fetchFreshData();
+  };
+
+  const fetchFreshData = async () => {
+    // Fire everything in parallel
     const typesPromise = loadTypes();
-    const featuredPromise = propertyAPI.recommendations({ limit: 15 });
-    const topViewedPromise = propertyAPI.topViewed({ limit: 15 });
-    
-    // Don't wait for location to finish before showing other data
-    loadNearby(); 
+    const featuredPromise = propertyAPI.recommendations({ limit: 15 }).catch(() => null);
+    const topViewedPromise = propertyAPI.topViewed({ limit: 15 }).catch(() => null);
+
+    // Start location-based fetch (doesn't block)
+    loadNearby();
 
     try {
       const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
-      setFeaturedProps(featRes.data?.properties || []);
-      setTopViewedProps(topRes.data?.properties || []);
+      if (featRes) setFeaturedProps(featRes.data?.properties || []);
+      if (topRes) setTopViewedProps(topRes.data?.properties || []);
+
+      // Save to cache for next app open
+      saveCache(featRes?.data?.properties, topRes?.data?.properties);
     } catch (e) {
-      console.log('Error fetching initial data:', e);
+      console.log('Error fetching fresh data:', e);
     }
-    
+
     setLoading(false);
+  };
+
+  const saveCache = async (featured, topViewed) => {
+    try {
+      const data = {
+        nearby: nearbyProps,
+        featured: featured || featuredProps,
+        topViewed: topViewed || topViewedProps,
+        types: propertyTypes,
+        locationName,
+        userCoords,
+        savedAt: Date.now(),
+      };
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch (e) {}
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const featuredPromise = propertyAPI.recommendations({ limit: 15 });
-    const topViewedPromise = propertyAPI.topViewed({ limit: 15 });
+    const featuredPromise = propertyAPI.recommendations({ limit: 15 }).catch(() => null);
+    const topViewedPromise = propertyAPI.topViewed({ limit: 15 }).catch(() => null);
     loadNearby(userCoords ? userCoords : null);
-    
+
     try {
       const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
-      setFeaturedProps(featRes.data?.properties || []);
-      setTopViewedProps(topRes.data?.properties || []);
+      if (featRes) setFeaturedProps(featRes.data?.properties || []);
+      if (topRes) setTopViewedProps(topRes.data?.properties || []);
+      saveCache(featRes?.data?.properties, topRes?.data?.properties);
     } catch (e) {}
-    
+
     setRefreshing(false);
   }, [userCoords]);
 
@@ -70,7 +111,7 @@ export default function HomeScreen({ navigation }) {
       if (!coords) {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') { setLocationName('Location denied'); return; }
-        
+
         // Use last known first for speed, then get current
         let loc = await Location.getLastKnownPositionAsync();
         if (!loc) {
@@ -85,6 +126,9 @@ export default function HomeScreen({ navigation }) {
       setUserCoords(coords);
       const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 25, limit: 15 });
       setNearbyProps(res.data?.properties || []);
+
+      // Update cache with nearby data
+      saveCache();
     } catch(e) { setLocationName('Unknown'); }
   };
 
@@ -104,15 +148,15 @@ export default function HomeScreen({ navigation }) {
 
   // --- FRONTEND DEDUPLICATION ---
   // Sequence: Near You -> Featured -> Top Viewed
-  
+
   // 1. Near You uses all its items
   const finalNearby = nearbyProps.slice(0, 5);
   const nearbyIds = new Set(finalNearby.map(p => p.id));
-  
+
   // 2. Featured excludes Near You items
   const finalFeatured = featuredProps.filter(p => !nearbyIds.has(p.id)).slice(0, 5);
   const featuredIds = new Set(finalFeatured.map(p => p.id));
-  
+
   // 3. Top Viewed excludes both Near You and Featured items
   const finalTopViewed = topViewedProps.filter(p => !nearbyIds.has(p.id) && !featuredIds.has(p.id)).slice(0, 5);
 
@@ -202,7 +246,7 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 <Text style={FONTS.h3}>Featured</Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing')}>
+              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'featured' })}>
                 <Text style={st.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
