@@ -12,12 +12,19 @@ export default function MyListingsScreen({ navigation }) {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [stats, setStats] = useState({ totalProps: 0, totalViews: 0, totalInquiries: 0 });
 
   const fetchListings = async (pageNum = 1, isRefresh = false) => {
     try {
       if (pageNum > 1) setLoadingMore(true);
       const res = await propertyAPI.myListings({ page: pageNum, limit: 5 });
       const newProps = res.data.properties || [];
+
+      setStats({
+        totalProps: res.data.total || 0,
+        totalViews: res.data.total_views || 0,
+        totalInquiries: res.data.total_inquiries || 0
+      });
 
       if (isRefresh || pageNum === 1) {
         setListings(newProps);
@@ -148,14 +155,6 @@ export default function MyListingsScreen({ navigation }) {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
@@ -173,22 +172,26 @@ export default function MyListingsScreen({ navigation }) {
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Ionicons name="home" size={22} color={COLORS.primary} />
-          <Text style={styles.summaryValue}>{listings.length}</Text>
+          {loading && page === 1 ? <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalProps}</Text>}
           <Text style={styles.summaryLabel}>Properties</Text>
         </View>
         <View style={styles.summaryCard}>
           <Ionicons name="eye" size={22} color="#8B5CF6" />
-          <Text style={styles.summaryValue}>{listings.reduce((a, b) => a + (b.views_count || 0), 0)}</Text>
+          {loading && page === 1 ? <ActivityIndicator size="small" color="#8B5CF6" style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalViews}</Text>}
           <Text style={styles.summaryLabel}>Total Views</Text>
         </View>
         <View style={styles.summaryCard}>
           <Ionicons name="chatbubbles" size={22} color="#10B981" />
-          <Text style={styles.summaryValue}>{listings.reduce((a, b) => a + (b.inquiries_count || 0), 0)}</Text>
+          {loading && page === 1 ? <ActivityIndicator size="small" color="#10B981" style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalInquiries}</Text>}
           <Text style={styles.summaryLabel}>Inquiries</Text>
         </View>
       </View>
 
-      {listings.length === 0 ? (
+      {loading && page === 1 ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : listings.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="home-outline" size={64} color={COLORS.textMuted} />
           <Text style={styles.emptyTitle}>No Listings Yet</Text>
