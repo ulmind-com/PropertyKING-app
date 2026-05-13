@@ -36,9 +36,8 @@ const GRADIENT_HEIGHT = 420; // Must match st.bgGradient.height
 
 const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, sectionY }) => {
   // turnStart = scroll position at which this section enters the gradient's dark zone
-  // sectionY is the section's Y position in the scroll content (measured via onLayout)
-  // Section enters gradient bottom when scrollY = sectionY - GRADIENT_HEIGHT
-  const turnStart = Math.max(0, (sectionY || 9999) - GRADIENT_HEIGHT);
+  // Through testing, subtracting ~120 gives the perfect point where it enters the dark background.
+  const turnStart = Math.max(0, (sectionY || 9999) - 120);
 
   const textColor = scrollY.interpolate({
     inputRange: [turnStart, turnStart + 60],
