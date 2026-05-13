@@ -6,6 +6,7 @@ import { WebView } from '../../components/WebView/WebViewComponent';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI, propertyAPI } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 // Extract YouTube video ID from any YT URL format
 const getYouTubeId = (url) => {
@@ -32,6 +33,7 @@ import { MapView, Marker, Polyline } from '../../components/Map/MapViewComponent
 const { width } = Dimensions.get('window');
 
 export default function PropertyDetailsScreen({ route, navigation }) {
+  const { user } = useAuth();
   const property = route.params?.property || {};
   const passedUserCoords = route.params?.userCoords; // Priority to user selected location
   
@@ -262,14 +264,14 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           {/* Listed By */}
           <View style={styles.listerCard}>
             <View style={styles.listerAvatar}>
-              {property.lister_avatar ? (
-                <Image source={{ uri: property.lister_avatar }} style={styles.listerImg} />
+              {(property.listed_by === user?.id && user?.avatar) || property.lister_avatar ? (
+                <Image source={{ uri: property.listed_by === user?.id && user?.avatar ? user.avatar : property.lister_avatar }} style={styles.listerImg} />
               ) : (
-                <Text style={styles.listerInitials}>{(property.lister_name || 'U')[0].toUpperCase()}</Text>
+                <Text style={styles.listerInitials}>{((property.listed_by === user?.id && user?.full_name ? user.full_name : property.lister_name) || 'U')[0].toUpperCase()}</Text>
               )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.listerName}>{property.lister_name || 'Anonymous Lister'}</Text>
+              <Text style={styles.listerName}>{property.listed_by === user?.id && user?.full_name ? user.full_name : (property.lister_name || 'Anonymous Lister')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <Ionicons name="checkmark-circle" size={14} color={COLORS.primary} />
                 <Text style={styles.listerType}>{property.lister_type ? property.lister_type.replace('_', ' ') : 'Verified Owner'}</Text>
