@@ -6,6 +6,7 @@ import { WebView } from '../../components/WebView/WebViewComponent';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI, propertyAPI } from '../../api';
+import { useCompare } from '../../context/CompareContext';
 import { useAuth } from '../../context/AuthContext';
 
 // Extract YouTube video ID from any YT URL format
@@ -34,6 +35,7 @@ const { width } = Dimensions.get('window');
 
 export default function PropertyDetailsScreen({ route, navigation }) {
   const { user } = useAuth();
+  const { isInCompare, addToCompare, removeFromCompare } = useCompare();
   const property = route.params?.property || {};
   const passedUserCoords = route.params?.userCoords; // Priority to user selected location
   
@@ -230,12 +232,15 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               <Image source={{ uri: item.url }} style={styles.galleryImage} />
             )}
           />
-          {/* Back & More Buttons */}
+          {/* Back & Compare Buttons */}
           <TouchableOpacity style={[styles.galleryBtn, styles.backBtn]} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#FFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.galleryBtn, styles.moreBtn]}>
-            <Ionicons name="ellipsis-vertical" size={22} color="#FFF" />
+          <TouchableOpacity 
+            style={[styles.galleryBtn, styles.moreBtn, isInCompare(property.id) && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}
+            onPress={() => isInCompare(property.id) ? removeFromCompare(property.id) : addToCompare(property)}
+          >
+            <Ionicons name="git-compare" size={20} color="#FFF" />
           </TouchableOpacity>
           {/* Page Indicator */}
           <View style={styles.pageIndicator}>

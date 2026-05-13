@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../theme';
+import { useCompare } from '../context/CompareContext';
 
 const { width } = Dimensions.get('window');
 
 export default function PropertyCard({ property, onPress, style }) {
   const [liked, setLiked] = useState(property?.is_favorited || false);
+  const { isInCompare, addToCompare, removeFromCompare } = useCompare();
 
   const primaryImage = property?.images?.find(i => i.is_primary)?.url
     || property?.images?.[0]?.url
@@ -21,6 +23,7 @@ export default function PropertyCard({ property, onPress, style }) {
 
   const d = property?.details || {};
   const loc = property?.location || {};
+  const isCompared = isInCompare(property.id);
 
   return (
     <TouchableOpacity style={[s.card, style]} onPress={onPress} activeOpacity={0.9}>
@@ -33,10 +36,17 @@ export default function PropertyCard({ property, onPress, style }) {
           <Text style={s.badgeText}>{property?.listing_type === 'sale' ? 'FOR SALE' : 'FOR RENT'}</Text>
         </View>
 
-        {/* Heart */}
-        <TouchableOpacity style={s.heartBtn} onPress={() => setLiked(!liked)}>
-          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? '#EF4444' : '#FFF'} />
-        </TouchableOpacity>
+        <View style={s.topActions}>
+          <TouchableOpacity 
+            style={[s.iconBtn, isCompared && s.iconBtnActive]} 
+            onPress={() => isCompared ? removeFromCompare(property.id) : addToCompare(property)}
+          >
+            <Ionicons name="git-compare" size={18} color={isCompared ? COLORS.primary : '#FFF'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={s.iconBtn} onPress={() => setLiked(!liked)}>
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? '#EF4444' : '#FFF'} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Info */}
@@ -95,9 +105,12 @@ const s = StyleSheet.create({
   img: { width: '100%', height: 200, backgroundColor: COLORS.bgDark },
   badge: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   badgeSale: { backgroundColor: COLORS.primary },
-  badgeRent: { backgroundColor: COLORS.success },
+  badgeRent: { backgroundColor: '#8B5CF6' },
   badgeText: { color: '#FFF', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-  heartBtn: { position: 'absolute', top: 12, right: 12, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  
+  topActions: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  iconBtnActive: { backgroundColor: '#FFF' },
 
   info: { padding: 16, gap: 8 },
   title: { fontSize: 16, fontWeight: '700', color: COLORS.text, lineHeight: 22 },

@@ -21,7 +21,8 @@ import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
 import MyListingsScreen from '../screens/Profile/MyListingsScreen';
 import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
-
+import CompareScreen from '../screens/PropertyListing/CompareScreen';
+import FloatingCompareButton from '../components/FloatingCompareButton';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
@@ -171,6 +172,7 @@ function MainStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="CompareScreen" component={CompareScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }
@@ -183,6 +185,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       {isAuthenticated ? <MainStack /> : <AuthStack />}
+      {isAuthenticated && <FloatingCompareButton />}
     </NavigationContainer>
   );
 }
