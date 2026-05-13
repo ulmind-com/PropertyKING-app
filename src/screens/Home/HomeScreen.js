@@ -32,7 +32,14 @@ const TYPE_ICON_MAP = {
 };
 const getTypeIcon = (name = '') => TYPE_ICON_MAP[name.toLowerCase()] || 'home-outline';
 
-const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, turnStart }) => {
+const GRADIENT_HEIGHT = 420; // Must match st.bgGradient.height
+
+const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, sectionY }) => {
+  // turnStart = scroll position at which this section enters the gradient's dark zone
+  // sectionY is the section's Y position in the scroll content (measured via onLayout)
+  // Section enters gradient bottom when scrollY = sectionY - GRADIENT_HEIGHT
+  const turnStart = Math.max(0, (sectionY || 9999) - GRADIENT_HEIGHT);
+
   const textColor = scrollY.interpolate({
     inputRange: [turnStart, turnStart + 60],
     outputRange: [COLORS.text, '#FFFFFF'],
@@ -96,6 +103,7 @@ export default function HomeScreen({ navigation }) {
   const [locationName, setLocationName] = useState('Detecting...');
   const [userCoords, setUserCoords] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [sectionYs, setSectionYs] = useState({ nearby: 0, featured: 0, topViewed: 0 });
 
   useEffect(() => { loadCacheThenFresh(); }, []);
 
@@ -345,12 +353,12 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ NEAR YOU ═══════════ */}
         {finalNearby.length > 0 && (
-          <View style={st.section}>
+          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, nearby: e.nativeEvent.layout.y }))}>
             <AnimatedSectionHeader 
               title="Near You" 
               icon="location"
               scrollY={scrollY}
-              turnStart={30} // Near You enters dark zone quickly
+              sectionY={sectionYs.nearby}
               onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'nearby', userCoords })}
             />
             {finalNearby.map(item => (
@@ -364,12 +372,12 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ FEATURED ═══════════ */}
         {finalFeatured.length > 0 && (
-          <View style={st.section}>
+          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, featured: e.nativeEvent.layout.y }))}>
             <AnimatedSectionHeader 
               title="Featured" 
               icon="star"
               scrollY={scrollY}
-              turnStart={80}
+              sectionY={sectionYs.featured}
               onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'featured' })}
             />
             <FlatList
@@ -391,12 +399,12 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ TOP VIEWED ═══════════ */}
         {finalTopViewed.length > 0 && (
-          <View style={st.section}>
+          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, topViewed: e.nativeEvent.layout.y }))}>
             <AnimatedSectionHeader 
               title="Top Viewed" 
               icon="trending-up"
               scrollY={scrollY}
-              turnStart={150}
+              sectionY={sectionYs.topViewed}
               onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}
             />
             {finalTopViewed.map(item => (
