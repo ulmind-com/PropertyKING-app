@@ -343,7 +343,6 @@ export default function FiltersScreen({ navigation, route }) {
         <TouchableOpacity style={s.applyBtn} onPress={applyFilters}>
           <Ionicons name="search" size={18} color="#FFF" />
           <Text style={s.applyText}>Show Results</Text>
-          {filterCount > 0 && <View style={s.applyBadge}><Text style={s.applyBadgeText}>{filterCount}</Text></View>}
         </TouchableOpacity>
       </View>
     </View>
