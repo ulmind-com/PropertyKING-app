@@ -1,17 +1,39 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, Dimensions, Animated, StatusBar, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, Dimensions, Animated, StatusBar, RefreshControl, Image, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
 import Shimmer, { HomeSkeleton } from '../../components/SkeletonLoader';
+import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 const CACHE_KEY = 'pk_home_cache';
 
+// Icon map for property types
+const TYPE_ICONS = {
+  'house': 'home-outline',
+  'condo': 'business-outline',
+  'apartment': 'grid-outline',
+  'townhouse': 'albums-outline',
+  'villa': 'home-outline',
+  'hotel': 'bed-outline',
+  'studio': 'cube-outline',
+  'land': 'map-outline',
+  'commercial': 'storefront-outline',
+  'office': 'briefcase-outline',
+};
+
+const getTypeIcon = (name) => {
+  const key = (name || '').toLowerCase();
+  return TYPE_ICONS[key] || 'home-outline';
+};
+
 export default function HomeScreen({ navigation }) {
+  const { user } = useAuth();
   const [propertyTypes, setPropertyTypes] = useState([]);
   const [selectedType, setSelectedType] = useState(null);
   const [nearbyProps, setNearbyProps] = useState([]);
@@ -147,86 +169,147 @@ export default function HomeScreen({ navigation }) {
   };
 
   // --- FRONTEND DEDUPLICATION ---
-  // Sequence: Near You -> Featured -> Top Viewed
-
-  // 1. Near You uses all its items
   const finalNearby = nearbyProps.slice(0, 5);
   const nearbyIds = new Set(finalNearby.map(p => p.id));
-
-  // 2. Featured excludes Near You items
   const finalFeatured = featuredProps.filter(p => !nearbyIds.has(p.id)).slice(0, 5);
   const featuredIds = new Set(finalFeatured.map(p => p.id));
-
-  // 3. Top Viewed excludes both Near You and Featured items
   const finalTopViewed = topViewedProps.filter(p => !nearbyIds.has(p.id) && !featuredIds.has(p.id)).slice(0, 5);
+
+  // Greeting based on time
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const firstName = user?.full_name?.split(' ')[0] || 'User';
 
   if (loading) return (
     <View style={st.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      <View style={st.headerArea}>
-        <View style={st.topRow}><Ionicons name="menu" size={24} color={COLORS.text} /><View style={{flex:1,alignItems:'center'}}><Text style={st.locLabel}>Location</Text><Text style={st.locText}>Detecting...</Text></View><Ionicons name="notifications-outline" size={24} color={COLORS.text} /></View>
-      </View>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientMid, COLORS.gradientEnd]} style={st.headerGradient}>
+        <View style={st.greetRow}>
+          <View style={st.avatarWrap}>
+            <Ionicons name="person" size={20} color="#FFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={st.greetLabel}>{getGreeting()}</Text>
+            <Text style={st.greetName}>Loading...</Text>
+          </View>
+        </View>
+      </LinearGradient>
       <HomeSkeleton />
     </View>
   );
 
   return (
     <View style={st.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
-      {/* Header */}
-      <View style={st.headerArea}>
-        <View style={st.topRow}>
-          <TouchableOpacity><Ionicons name="menu" size={24} color={COLORS.text} /></TouchableOpacity>
-          <TouchableOpacity style={st.locBtn} onPress={openLocationPicker}>
-            <Text style={st.locLabel}>Location</Text>
-            <View style={{flexDirection:'row',alignItems:'center',gap:4}}>
-              <Ionicons name="location" size={16} color={COLORS.primary} />
-              {locationName === 'Detecting...' ? (
-                <Shimmer w={100} h={16} r={4} />
-              ) : (
-                <Text style={st.locText}>{locationName}</Text>
-              )}
-              <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
-            </View>
+      {/* ─── GRADIENT HEADER ─── */}
+      <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientMid, COLORS.gradientEnd]} style={st.headerGradient}>
+        {/* Greeting Row */}
+        <View style={st.greetRow}>
+          <TouchableOpacity style={st.avatarWrap}>
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={st.avatarImg} />
+            ) : (
+              <Ionicons name="person" size={20} color="#FFF" />
+            )}
           </TouchableOpacity>
-          <TouchableOpacity><Ionicons name="notifications-outline" size={24} color={COLORS.text} /></TouchableOpacity>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={st.greetLabel}>{getGreeting()}</Text>
+            <Text style={st.greetName}>{firstName}</Text>
+          </View>
+          <TouchableOpacity style={st.notifBtn} onPress={openLocationPicker}>
+            <Ionicons name="location-outline" size={20} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity style={st.notifBtn}>
+            <Ionicons name="notifications-outline" size={20} color="#FFF" />
+          </TouchableOpacity>
         </View>
-        {/* Search */}
+
+        {/* Search Bar */}
         <View style={st.searchBar}>
           <Ionicons name="search" size={18} color={COLORS.textMuted} />
-          <TextInput style={st.searchInput} placeholder="Search properties..." placeholderTextColor={COLORS.textMuted} value={searchText} onChangeText={setSearchText} onSubmitEditing={handleSearch} returnKeyType="search" />
+          <TextInput
+            style={st.searchInput}
+            placeholder="Search"
+            placeholderTextColor={COLORS.textMuted}
+            value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {locationName !== 'Detecting...' && (
+            <TouchableOpacity style={st.locChip} onPress={openLocationPicker}>
+              <Ionicons name="location" size={12} color={COLORS.text} />
+              <Text style={st.locChipText} numberOfLines={1}>{locationName?.split(',')[0]}</Text>
+              <Ionicons name="chevron-down" size={12} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={st.filterBtn} onPress={() => navigation.navigate('Filters')}>
-            <Ionicons name="options-outline" size={18} color={COLORS.primary} />
+            <Ionicons name="options" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{nativeEvent:{contentOffset:{y:scrollY}}}],{useNativeDriver:true})}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
       >
-        {/* Property Types */}
+        {/* ─── CATEGORY GRID ─── */}
         {propertyTypes.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,gap:10,paddingVertical:12}}>
+          <View style={st.categoryCard}>
+            <View style={st.categoryGrid}>
+              {propertyTypes.slice(0, 4).map(t => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={st.categoryItem}
+                  onPress={() => { setSelectedType(t.id); navigation.navigate('PropertyListing', { property_type_id: t.id, typeName: t.name }); }}
+                  activeOpacity={0.7}
+                >
+                  <View style={st.categoryIconWrap}>
+                    <Ionicons name={getTypeIcon(t.name)} size={22} color={COLORS.text} />
+                  </View>
+                  <Text style={st.categoryLabel} numberOfLines={1}>{t.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {propertyTypes.length > 4 && (
+              <TouchableOpacity 
+                style={st.allCategoryBtn}
+                onPress={() => navigation.navigate('PropertyListing')}
+              >
+                <Text style={st.allCategoryText}>All Category</Text>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* ─── HORIZONTAL TYPE CHIPS ─── */}
+        {propertyTypes.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.typeChipsScroll}>
             {propertyTypes.map(t => (
-              <TouchableOpacity key={t.id} style={[st.typeChip, selectedType===t.id && st.typeChipActive]}
-                onPress={() => { setSelectedType(selectedType===t.id?null:t.id); navigation.navigate('PropertyListing',{property_type_id:t.id}); }}>
-                <Text style={st.typeIcon}>{t.icon||'🏠'}</Text>
-                <Text style={[st.typeText, selectedType===t.id && st.typeTextActive]}>{t.name}</Text>
+              <TouchableOpacity key={t.id} style={[st.typeChip, selectedType === t.id && st.typeChipActive]}
+                onPress={() => { setSelectedType(selectedType === t.id ? null : t.id); navigation.navigate('PropertyListing', { property_type_id: t.id }); }}>
+                <Text style={st.typeIcon}>{t.icon || '🏠'}</Text>
+                <Text style={[st.typeText, selectedType === t.id && st.typeTextActive]}>{t.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         )}
 
-        {/* 1. 📍 Near You */}
+        {/* ─── 1. 📍 Near You ─── */}
         {finalNearby.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
               <View style={st.sectionTitleRow}>
-                <View style={[st.sectionIcon, { backgroundColor: '#EEF2FF' }]}>
-                  <Ionicons name="location" size={16} color={COLORS.primary} />
+                <View style={[st.sectionIcon, { backgroundColor: '#F5F5F5' }]}>
+                  <Ionicons name="location" size={16} color={COLORS.text} />
                 </View>
                 <Text style={FONTS.h3}>Near You</Text>
               </View>
@@ -240,13 +323,13 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* 2. ⭐ Featured */}
+        {/* ─── 2. ⭐ Featured ─── */}
         {finalFeatured.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
               <View style={st.sectionTitleRow}>
-                <View style={[st.sectionIcon, { backgroundColor: '#ECFDF5' }]}>
-                  <Ionicons name="star" size={16} color="#10B981" />
+                <View style={[st.sectionIcon, { backgroundColor: '#F5F5F5' }]}>
+                  <Ionicons name="star" size={16} color={COLORS.text} />
                 </View>
                 <Text style={FONTS.h3}>Featured</Text>
               </View>
@@ -267,13 +350,13 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* 3. 🔥 Top Viewed */}
+        {/* ─── 3. 🔥 Top Viewed ─── */}
         {finalTopViewed.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
               <View style={st.sectionTitleRow}>
-                <View style={[st.sectionIcon, { backgroundColor: '#FEF3C7' }]}>
-                  <Ionicons name="trending-up" size={16} color="#F59E0B" />
+                <View style={[st.sectionIcon, { backgroundColor: '#F5F5F5' }]}>
+                  <Ionicons name="trending-up" size={16} color={COLORS.text} />
                 </View>
                 <Text style={FONTS.h3}>Top Viewed</Text>
               </View>
@@ -297,29 +380,144 @@ export default function HomeScreen({ navigation }) {
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
-  headerArea: { paddingTop: 52, paddingHorizontal: 20, paddingBottom: 8, backgroundColor: COLORS.bg },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  locBtn: { flex: 1, alignItems: 'center' },
-  locLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
-  locText: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.lg, paddingHorizontal: 16, height: 48, marginTop: 16, gap: 10, borderWidth: 1, borderColor: COLORS.borderLight },
-  searchInput: { flex: 1, fontSize: 14, color: COLORS.text },
-  filterBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.primarySoft, alignItems: 'center', justifyContent: 'center' },
 
-  typeChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: SIZES.radius.full, backgroundColor: COLORS.bgAlt, borderWidth: 1, borderColor: COLORS.borderLight },
+  // ─── GRADIENT HEADER ───
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 56 : 48,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  greetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: 44, height: 44, borderRadius: 22 },
+  greetLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
+  greetName: { fontSize: 18, color: '#FFF', fontWeight: '800', marginTop: 2 },
+  notifBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+
+  // ─── SEARCH BAR ───
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    height: 50,
+    marginTop: 20,
+    gap: 10,
+    ...SHADOWS.md,
+  },
+  searchInput: { flex: 1, fontSize: 15, color: COLORS.text, fontWeight: '500' },
+  locChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.bgDark,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  locChipText: { fontSize: 11, fontWeight: '700', color: COLORS.text, maxWidth: 60 },
+  filterBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ─── CATEGORY GRID ───
+  categoryCard: {
+    margin: 20,
+    marginTop: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    ...SHADOWS.md,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  categoryItem: {
+    alignItems: 'center',
+    width: (width - 80) / 4,
+    gap: 8,
+  },
+  categoryIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: COLORS.bgDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  allCategoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  allCategoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+
+  // ─── TYPE CHIPS ───
+  typeChipsScroll: { paddingHorizontal: 20, gap: 10, paddingVertical: 4, marginBottom: 8 },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: SIZES.radius.full,
+    backgroundColor: '#FFF',
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+  },
   typeChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   typeIcon: { fontSize: 16 },
   typeText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   typeTextActive: { color: '#FFF' },
 
+  // ─── SECTIONS ───
   section: { marginTop: 24, paddingHorizontal: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  seeAll: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
-
-  // Top Viewed card overlay
-  topViewedCard: { position: 'relative' },
-  viewsBadge: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  viewsBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFF' },
+  seeAll: { fontSize: 14, fontWeight: '600', color: COLORS.text, textDecorationLine: 'underline' },
 });
