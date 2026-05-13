@@ -11,20 +11,27 @@ export default function MyListingsScreen({ navigation }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [togglingId, setTogglingId] = useState(null);
-  const [stats, setStats] = useState({ totalProps: 0, totalViews: 0, totalInquiries: 0 });
+  const [stats, setStats] = useState({ totalProps: '-', totalViews: '-', totalInquiries: '-' });
+
+  // Fetch stats from dedicated lightweight endpoint
+  const fetchStats = async () => {
+    try {
+      const res = await propertyAPI.myListingsStats();
+      setStats({
+        totalProps: res.data.total_properties || 0,
+        totalViews: res.data.total_views || 0,
+        totalInquiries: res.data.total_inquiries || 0,
+      });
+    } catch (e) {
+      console.log('Fetch stats error:', e);
+    }
+  };
 
   const fetchListings = async (pageNum = 1, isRefresh = false) => {
     try {
       if (pageNum > 1) setLoadingMore(true);
-      const res = await propertyAPI.myListings({ page: pageNum, limit: 5 });
+      const res = await propertyAPI.myListings({ page: pageNum, limit: 10 });
       const newProps = res.data.properties || [];
-
-      setStats({
-        totalProps: res.data.total || 0,
-        totalViews: res.data.total_views || 0,
-        totalInquiries: res.data.total_inquiries || 0
-      });
 
       if (isRefresh || pageNum === 1) {
         setListings(newProps);
@@ -42,10 +49,15 @@ export default function MyListingsScreen({ navigation }) {
     }
   };
 
-  useEffect(() => { fetchListings(1); }, []);
+  useEffect(() => {
+    // Fire both in parallel — stats loads fast, listings load separately
+    fetchStats();
+    fetchListings(1);
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    fetchStats();
     fetchListings(1, true);
   }, []);
 
@@ -55,24 +67,28 @@ export default function MyListingsScreen({ navigation }) {
     }
   };
 
+  // ── OPTIMISTIC UI TOGGLE ──
   const handleToggleStatus = async (item) => {
-    if (togglingId) return; // prevent double tap
-    setTogglingId(item.id);
+    const oldStatus = item.status;
+    const newStatus = oldStatus === 'inactive' ? 'active' : 'inactive';
+
+    // 1. Instantly update UI (optimistic)
+    setListings(prev => prev.map(p =>
+      p.id === item.id ? { ...p, status: newStatus } : p
+    ));
+
+    // 2. Fire API in background
     try {
-      console.log('Toggling property:', item.id, 'current status:', item.status);
-      const res = await propertyAPI.toggleStatus(item.id);
-      console.log('Toggle response:', res.data);
-      const newStatus = res.data.status;
-      setListings(prev => prev.map(p =>
-        p.id === item.id ? { ...p, status: newStatus } : p
-      ));
-      // Also refresh stats
-      setStats(prev => ({ ...prev }));
+      await propertyAPI.toggleStatus(item.id);
+      // Refresh stats since active/inactive count changed
+      fetchStats();
     } catch (e) {
-      console.log('Toggle error:', e?.response?.data || e.message);
-      Alert.alert('Error', e?.response?.data?.detail || 'Failed to update status. Try again.');
+      // 3. REVERT on failure
+      setListings(prev => prev.map(p =>
+        p.id === item.id ? { ...p, status: oldStatus } : p
+      ));
+      Alert.alert('Error', 'Failed to update. Please try again.');
     }
-    setTogglingId(null);
   };
 
   const getImg = (property) => {
@@ -87,7 +103,6 @@ export default function MyListingsScreen({ navigation }) {
 
   const renderItem = ({ item }) => {
     const isActive = item.status !== 'inactive';
-    const isToggling = togglingId === item.id;
 
     return (
       <View style={[styles.card, !isActive && styles.cardInactive]}>
@@ -122,12 +137,11 @@ export default function MyListingsScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} style={{ alignSelf: 'center', marginRight: 12 }} />
         </TouchableOpacity>
 
-        {/* Active/Inactive Toggle — using TouchableOpacity instead of Switch for reliability */}
+        {/* Active/Inactive Toggle — Optimistic UI */}
         <TouchableOpacity
           style={styles.toggleRow}
           activeOpacity={0.7}
           onPress={() => handleToggleStatus(item)}
-          disabled={isToggling}
         >
           <View style={styles.toggleLeft}>
             <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
@@ -135,13 +149,9 @@ export default function MyListingsScreen({ navigation }) {
               {isActive ? 'Active' : 'Inactive'}
             </Text>
           </View>
-          {isToggling ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
-          ) : (
-            <View style={[styles.toggleTrack, isActive && styles.toggleTrackActive]}>
-              <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
-            </View>
-          )}
+          <View style={[styles.toggleTrack, isActive && styles.toggleTrackActive]}>
+            <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
+          </View>
         </TouchableOpacity>
       </View>
     );
@@ -160,21 +170,21 @@ export default function MyListingsScreen({ navigation }) {
         <View style={{ width: 44 }} />
       </View>
 
-      {/* Summary */}
+      {/* Summary — loads from separate API */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Ionicons name="home" size={22} color={COLORS.primary} />
-          {loading && page === 1 ? <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalProps}</Text>}
+          <Text style={styles.summaryValue}>{stats.totalProps}</Text>
           <Text style={styles.summaryLabel}>Properties</Text>
         </View>
         <View style={styles.summaryCard}>
           <Ionicons name="eye" size={22} color="#8B5CF6" />
-          {loading && page === 1 ? <ActivityIndicator size="small" color="#8B5CF6" style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalViews}</Text>}
+          <Text style={styles.summaryValue}>{stats.totalViews}</Text>
           <Text style={styles.summaryLabel}>Total Views</Text>
         </View>
         <View style={styles.summaryCard}>
           <Ionicons name="chatbubbles" size={22} color="#10B981" />
-          {loading && page === 1 ? <ActivityIndicator size="small" color="#10B981" style={{ marginVertical: 2 }} /> : <Text style={styles.summaryValue}>{stats.totalInquiries}</Text>}
+          <Text style={styles.summaryValue}>{stats.totalInquiries}</Text>
           <Text style={styles.summaryLabel}>Inquiries</Text>
         </View>
       </View>

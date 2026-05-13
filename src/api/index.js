@@ -42,6 +42,7 @@ export const propertyAPI = {
   recommendations: (params) => api.get('/properties/recommendations', { params }),
   topViewed: (params) => api.get('/properties/top-viewed', { params }),
   myListings: (params) => api.get('/properties/my-listings', { params }),
+  myListingsStats: () => api.get('/properties/my-listings/stats'),
   getViewers: (id, params) => api.get(`/properties/${id}/viewers`, { params }),
 };
 
