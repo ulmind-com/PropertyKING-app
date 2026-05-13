@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, StatusBar, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES } from '../../theme';
@@ -12,12 +12,20 @@ export default function PropertyListingScreen({ navigation, route }) {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const params = route?.params || {};
   const mode = params.mode; // 'nearby' | 'top-viewed' | 'featured' | undefined
 
-  useEffect(() => { load(1, true); }, [JSON.stringify(params)]);
+  // Use refs for pagination state so onEndReached always reads the latest values
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    pageRef.current = 1;
+    hasMoreRef.current = true;
+    loadingMoreRef.current = false;
+    load(1, true);
+  }, [JSON.stringify(params)]);
 
   const load = async (p = 1, fresh = false) => {
     if (fresh) setLoading(true);
@@ -34,41 +42,40 @@ export default function PropertyListingScreen({ navigation, route }) {
         res = await propertyAPI.list({ page: p, limit: 10, ...filterParams });
       }
       const newProps = res.data?.properties || [];
-      const totalPages = res.data?.total_pages || 1;
-      console.log('API Response -> total_pages:', totalPages, 'p:', p, 'total:', res.data?.total, 'fetched:', newProps.length);
       setTotal(res.data?.total || 0);
-      setHasMore(newProps.length >= 10);
+      hasMoreRef.current = newProps.length >= 10;
       if (fresh || p === 1) {
         setProperties(newProps);
       } else {
         setProperties(prev => {
-          // Prevent duplicates by checking IDs
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNewProps = newProps.filter(p => !existingIds.has(p.id));
-          return [...prev, ...uniqueNewProps];
+          const existingIds = new Set(prev.map(item => item.id));
+          const unique = newProps.filter(item => !existingIds.has(item.id));
+          return [...prev, ...unique];
         });
       }
-    } catch(e) { console.log(e); }
+    } catch(e) { console.log('Load error:', e); }
     setLoading(false);
     setLoadingMore(false);
+    loadingMoreRef.current = false;
     setRefreshing(false);
   };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setPage(1);
+    pageRef.current = 1;
+    hasMoreRef.current = true;
+    loadingMoreRef.current = false;
     load(1, true);
   }, []);
 
-  const onEndReached = () => {
-    console.log('onEndReached triggered. page:', page, 'loadingMore:', loadingMore, 'hasMore:', hasMore);
-    if (loadingMore || !hasMore) return;
+  const onEndReached = useCallback(() => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
-    const nextPage = page + 1;
-    setPage(nextPage);
-    console.log('Loading next page:', nextPage);
+    const nextPage = pageRef.current + 1;
+    pageRef.current = nextPage;
     load(nextPage, false);
-  };
+  }, [mode, JSON.stringify(params)]);
 
   const title = mode === 'nearby' ? 'Near You' : mode === 'top-viewed' ? 'Top Viewed' : mode === 'featured' ? 'Featured' : (params.typeName || 'Properties');
 
@@ -88,12 +95,12 @@ export default function PropertyListingScreen({ navigation, route }) {
 
       <FlatList
         data={loading ? [] : properties}
-        keyExtractor={(i, idx) => loading ? 'skel_' + idx : i.id ? i.id.toString() : idx.toString()}
+        keyExtractor={(item, idx) => item.id ? item.id.toString() : `prop_${idx}`}
         style={{ flex: 1 }}
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
         onEndReached={onEndReached}
-        onEndReachedThreshold={0.2}
+        onEndReachedThreshold={0.3}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         renderItem={({ item }) => (
           <PropertyCard property={item}
@@ -102,8 +109,13 @@ export default function PropertyListingScreen({ navigation, route }) {
           />
         )}
         ListFooterComponent={
-          loadingMore ? <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View> :
-          !hasMore && properties.length > 0 && !loading ? <Text style={s.endText}>You've seen all properties</Text> : <View style={{height: 20}} />
+          loadingMore ? (
+            <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View>
+          ) : !hasMoreRef.current && properties.length > 0 && !loading ? (
+            <Text style={s.endText}>You've seen all properties</Text>
+          ) : (
+            <View style={{height: 20}} />
+          )
         }
         ListEmptyComponent={
           loading ? (
