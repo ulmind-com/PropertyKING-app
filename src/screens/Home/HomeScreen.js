@@ -233,22 +233,15 @@ export default function HomeScreen({ navigation }) {
                 <Text style={st.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={finalTopViewed}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{gap:16}}
-              keyExtractor={i => i.id}
-              renderItem={({item}) => (
-                <View style={st.topViewedCard}>
-                  <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
-                  <View style={st.viewsBadge}>
-                    <Ionicons name="eye" size={12} color="#FFF" />
-                    <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
-                  </View>
+            {finalTopViewed.map(item => (
+              <View key={item.id} style={[st.topViewedCard, { marginBottom: 12 }]}>
+                <PropertyCard property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} />
+                <View style={st.viewsBadge}>
+                  <Ionicons name="eye" size={12} color="#FFF" />
+                  <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
                 </View>
-              )}
-            />
+              </View>
+            ))}
           </View>
         )}
 
