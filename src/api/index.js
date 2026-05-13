@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'https://propertyking-backend.onrender.com/api/v1';
 
-const api = axios.create({ baseURL: API_BASE_URL, headers: { 'Content-Type': 'application/json' }, timeout: 15000 });
+const api = axios.create({ baseURL: API_BASE_URL, headers: { 'Content-Type': 'application/json' }, timeout: 30000 });
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('pk_token');

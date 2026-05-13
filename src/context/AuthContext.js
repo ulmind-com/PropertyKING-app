@@ -15,8 +15,22 @@ export function AuthProvider({ children }) {
   const loadStoredUser = async () => {
     try {
       const token = await AsyncStorage.getItem('pk_token');
-      const savedUser = await AsyncStorage.getItem('pk_user');
-      if (token && savedUser) { setUser(JSON.parse(savedUser)); setIsAuthenticated(true); }
+      if (token) {
+        // Verify token is still valid by calling /users/me
+        try {
+          const res = await userAPI.getMe();
+          const freshUser = res.data;
+          await AsyncStorage.setItem('pk_user', JSON.stringify(freshUser));
+          setUser(freshUser);
+          setIsAuthenticated(true);
+        } catch (e) {
+          // Token expired or invalid — clear everything
+          console.log('Token expired, clearing session');
+          await AsyncStorage.multiRemove(['pk_token', 'pk_refresh_token', 'pk_user']);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
     } catch (e) { console.log('Auth load error', e); }
     setLoading(false);
   };
