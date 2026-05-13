@@ -34,12 +34,19 @@ export default function PropertyListingScreen({ navigation, route }) {
         res = await propertyAPI.list({ page: p, limit: 10, ...filterParams });
       }
       const newProps = res.data?.properties || [];
+      const totalPages = res.data?.total_pages || 1;
+      console.log('API Response -> total_pages:', totalPages, 'p:', p, 'total:', res.data?.total, 'fetched:', newProps.length);
       setTotal(res.data?.total || 0);
-      setHasMore(p < (res.data?.total_pages || 1));
+      setHasMore(newProps.length >= 10);
       if (fresh || p === 1) {
         setProperties(newProps);
       } else {
-        setProperties(prev => [...prev, ...newProps]);
+        setProperties(prev => {
+          // Prevent duplicates by checking IDs
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNewProps = newProps.filter(p => !existingIds.has(p.id));
+          return [...prev, ...uniqueNewProps];
+        });
       }
     } catch(e) { console.log(e); }
     setLoading(false);
@@ -54,10 +61,12 @@ export default function PropertyListingScreen({ navigation, route }) {
   }, []);
 
   const onEndReached = () => {
+    console.log('onEndReached triggered. page:', page, 'loadingMore:', loadingMore, 'hasMore:', hasMore);
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     const nextPage = page + 1;
     setPage(nextPage);
+    console.log('Loading next page:', nextPage);
     load(nextPage, false);
   };
 
@@ -84,7 +93,7 @@ export default function PropertyListingScreen({ navigation, route }) {
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
         onEndReached={onEndReached}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.2}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         renderItem={({ item }) => (
           <PropertyCard property={item}
@@ -94,7 +103,7 @@ export default function PropertyListingScreen({ navigation, route }) {
         )}
         ListFooterComponent={
           loadingMore ? <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View> :
-          !hasMore && properties.length > 0 && !loading ? <Text style={s.endText}>You've seen all properties</Text> : null
+          !hasMore && properties.length > 0 && !loading ? <Text style={s.endText}>You've seen all properties</Text> : <View style={{height: 20}} />
         }
         ListEmptyComponent={
           loading ? (
