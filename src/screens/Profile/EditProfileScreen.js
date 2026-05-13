@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, StatusBar, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, StatusBar, Alert, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
@@ -60,11 +60,18 @@ export default function EditProfileScreen({ navigation }) {
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-      const fileToUpload = {
-        uri: asset.uri,
-        name: filename,
-        type,
-      };
+      let fileToUpload;
+      if (Platform.OS === 'web') {
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+        fileToUpload = new File([blob], filename, { type });
+      } else {
+        fileToUpload = {
+          uri: asset.uri,
+          name: filename,
+          type,
+        };
+      }
 
       const res = await userAPI.updateAvatar(fileToUpload);
       await updateUser(res.data);
