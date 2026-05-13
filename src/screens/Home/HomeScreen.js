@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
-import { HomeSkeleton } from '../../components/SkeletonLoader';
+import Shimmer, { HomeSkeleton } from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 const CACHE_KEY = 'pk_home_cache';
@@ -182,7 +182,11 @@ export default function HomeScreen({ navigation }) {
             <Text style={st.locLabel}>Location</Text>
             <View style={{flexDirection:'row',alignItems:'center',gap:4}}>
               <Ionicons name="location" size={16} color={COLORS.primary} />
-              <Text style={st.locText}>{locationName}</Text>
+              {locationName === 'Detecting...' ? (
+                <Shimmer w={100} h={16} r={4} />
+              ) : (
+                <Text style={st.locText}>{locationName}</Text>
+              )}
               <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
             </View>
           </TouchableOpacity>
