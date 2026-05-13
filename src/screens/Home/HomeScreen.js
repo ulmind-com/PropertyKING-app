@@ -386,7 +386,7 @@ const st = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 320, // Enough height to go behind the category card and fade out
+    height: 420, // Increased height to stretch the gradient further down
   },
 
   // ─── HEADER CONTENT ───
