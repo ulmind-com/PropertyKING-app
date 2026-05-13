@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, StatusBar, ActivityIndicator, RefreshControl, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { propertyAPI } from '../../api';
@@ -11,6 +11,7 @@ export default function MyListingsScreen({ navigation }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   const fetchListings = async (pageNum = 1, isRefresh = false) => {
     try {
@@ -47,6 +48,36 @@ export default function MyListingsScreen({ navigation }) {
     }
   };
 
+  const handleToggleStatus = async (item) => {
+    const isActive = item.status === 'active';
+    Alert.alert(
+      isActive ? 'Deactivate Listing?' : 'Activate Listing?',
+      isActive
+        ? 'This property will be hidden from all feeds. You can reactivate it anytime.'
+        : 'This property will be visible in feeds again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: isActive ? 'Deactivate' : 'Activate',
+          style: isActive ? 'destructive' : 'default',
+          onPress: async () => {
+            setTogglingId(item.id);
+            try {
+              const res = await propertyAPI.toggleStatus(item.id);
+              const newStatus = res.data.status;
+              setListings(prev => prev.map(p =>
+                p.id === item.id ? { ...p, status: newStatus } : p
+              ));
+            } catch (e) {
+              Alert.alert('Error', 'Failed to update status. Try again.');
+            }
+            setTogglingId(null);
+          }
+        }
+      ]
+    );
+  };
+
   const getImg = (property) => {
     const imgs = property.images || [];
     const primary = imgs.find(i => i.is_primary);
@@ -57,34 +88,65 @@ export default function MyListingsScreen({ navigation }) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p || 0);
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.card} 
-      activeOpacity={0.9}
-      onPress={() => navigation.navigate('PropertyLeads', { property: item })}
-    >
-      <Image source={{ uri: getImg(item) }} style={styles.cardImg} />
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
-        
-        <View style={styles.statsRow}>
-          <View style={styles.statBadge}>
-            <Ionicons name="eye-outline" size={14} color={COLORS.primary} />
-            <Text style={styles.statText}>{item.views_count || 0} views</Text>
+  const renderItem = ({ item }) => {
+    const isActive = item.status === 'active';
+    const isToggling = togglingId === item.id;
+
+    return (
+      <View style={[styles.card, !isActive && styles.cardInactive]}>
+        <TouchableOpacity
+          style={styles.cardTouchable}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('PropertyLeads', { property: item })}
+        >
+          <View style={styles.imgWrap}>
+            <Image source={{ uri: getImg(item) }} style={styles.cardImg} />
+            {!isActive && (
+              <View style={styles.inactiveOverlay}>
+                <Text style={styles.inactiveOverlayText}>INACTIVE</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.statBadge}>
-            <Ionicons name="chatbubble-outline" size={14} color="#10B981" />
-            <Text style={styles.statText}>{item.inquiries_count || 0} inquiries</Text>
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+            <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statBadge}>
+                <Ionicons name="eye-outline" size={14} color={COLORS.primary} />
+                <Text style={styles.statText}>{item.views_count || 0} views</Text>
+              </View>
+              <View style={styles.statBadge}>
+                <Ionicons name="chatbubble-outline" size={14} color="#10B981" />
+                <Text style={styles.statText}>{item.inquiries_count || 0} inquiries</Text>
+              </View>
+            </View>
           </View>
-          <View style={[styles.statusBadge, item.status === 'approved' ? styles.statusApproved : item.status === 'pending' ? styles.statusPending : styles.statusRejected]}>
-            <Text style={styles.statusText}>{item.status}</Text>
+          <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} style={{ alignSelf: 'center', marginRight: 12 }} />
+        </TouchableOpacity>
+
+        {/* Active/Inactive Toggle */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLeft}>
+            <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
+            <Text style={[styles.toggleLabel, !isActive && { color: COLORS.textMuted }]}>
+              {isActive ? 'Active' : 'Inactive'}
+            </Text>
           </View>
+          {isToggling ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Switch
+              value={isActive}
+              onValueChange={() => handleToggleStatus(item)}
+              trackColor={{ false: '#D1D5DB', true: '#BBF7D0' }}
+              thumbColor={isActive ? '#10B981' : '#9CA3AF'}
+            />
+          )}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} style={{ alignSelf: 'center', marginRight: 12 }} />
-    </TouchableOpacity>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -97,7 +159,7 @@ export default function MyListingsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -152,7 +214,7 @@ export default function MyListingsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
-  
+
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12 },
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
@@ -162,8 +224,13 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 20, fontWeight: '800', color: COLORS.text },
   summaryLabel: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted },
 
-  card: { flexDirection: 'row', backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, marginBottom: 12, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
+  card: { backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, marginBottom: 14, borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden' },
+  cardInactive: { opacity: 0.7, borderColor: '#D1D5DB' },
+  cardTouchable: { flexDirection: 'row' },
+  imgWrap: { position: 'relative' },
   cardImg: { width: 100, height: 100 },
+  inactiveOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  inactiveOverlayText: { fontSize: 10, fontWeight: '800', color: '#FFF', letterSpacing: 1 },
   cardBody: { flex: 1, padding: 12, justifyContent: 'center', gap: 4 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text },
   cardPrice: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
@@ -172,11 +239,12 @@ const styles = StyleSheet.create({
   statBadge: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   statText: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
 
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 100 },
-  statusApproved: { backgroundColor: '#D1FAE5' },
-  statusPending: { backgroundColor: '#FEF3C7' },
-  statusRejected: { backgroundColor: '#FEE2E2' },
-  statusText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.borderLight, backgroundColor: COLORS.bgAlt },
+  toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  dotActive: { backgroundColor: '#10B981' },
+  dotInactive: { backgroundColor: '#9CA3AF' },
+  toggleLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text },
 
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingBottom: 100 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },

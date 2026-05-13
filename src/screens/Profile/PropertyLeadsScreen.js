@@ -47,6 +47,49 @@ export default function PropertyLeadsScreen({ route, navigation }) {
     return `${Math.floor(diff / 86400)}d ago`;
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    try {
+      const [h, m] = timeStr.split(':');
+      const hour = parseInt(h);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      return `${displayHour}:${m || '00'} ${ampm}`;
+    } catch {
+      return timeStr;
+    }
+  };
+
+  const getContactIcon = (pref) => {
+    switch(pref) {
+      case 'call': return 'call';
+      case 'whatsapp': return 'logo-whatsapp';
+      case 'video_call': return 'videocam';
+      case 'in_person': return 'people';
+      default: return 'chatbubble';
+    }
+  };
+
+  const getContactLabel = (pref) => {
+    switch(pref) {
+      case 'call': return 'Phone Call';
+      case 'whatsapp': return 'WhatsApp';
+      case 'video_call': return 'Video Call';
+      case 'in_person': return 'In Person';
+      default: return pref || 'Not specified';
+    }
+  };
+
   const getInitial = (name) => (name || 'U')[0].toUpperCase();
 
   const renderViewer = ({ item }) => (
@@ -60,7 +103,7 @@ export default function PropertyLeadsScreen({ route, navigation }) {
       </View>
       <View style={styles.leadBody}>
         <Text style={styles.leadName}>{item.user_name || 'Anonymous'}</Text>
-        <Text style={styles.leadDetail}>{item.user_email}</Text>
+        {item.user_email && <Text style={styles.leadDetail}>✉️ {item.user_email}</Text>}
         {item.user_phone && <Text style={styles.leadDetail}>📱 {item.user_phone}</Text>}
         <View style={styles.viewMeta}>
           <Ionicons name="eye-outline" size={12} color={COLORS.textMuted} />
@@ -85,6 +128,7 @@ export default function PropertyLeadsScreen({ route, navigation }) {
 
   const renderInquiry = ({ item }) => (
     <View style={styles.inquiryCard}>
+      {/* Header with user info */}
       <View style={styles.inquiryHeader}>
         <View style={styles.leadAvatar}>
           {item.user_avatar ? (
@@ -101,28 +145,66 @@ export default function PropertyLeadsScreen({ route, navigation }) {
           <Text style={styles.inquiryStatusText}>{item.status}</Text>
         </View>
       </View>
-      
-      <Text style={styles.inquiryMsg} numberOfLines={3}>{item.message}</Text>
-      
-      {(item.preferred_date || item.preferred_time) && (
-        <View style={styles.scheduleRow}>
-          <Ionicons name="calendar-outline" size={14} color={COLORS.primary} />
-          <Text style={styles.scheduleText}>
-            {item.preferred_date}{item.preferred_time ? ` at ${item.preferred_time}` : ''}
-          </Text>
-          {item.contact_preference && (
-            <>
-              <Ionicons name={
-                item.contact_preference === 'call' ? 'call-outline' :
-                item.contact_preference === 'whatsapp' ? 'logo-whatsapp' :
-                item.contact_preference === 'video_call' ? 'videocam-outline' : 'people-outline'
-              } size={14} color="#10B981" style={{ marginLeft: 10 }} />
-              <Text style={[styles.scheduleText, { color: '#10B981' }]}>{item.contact_preference?.replace('_', ' ')}</Text>
-            </>
-          )}
+
+      {/* Message */}
+      <Text style={styles.inquiryMsg}>{item.message}</Text>
+
+      {/* Full Details Section */}
+      <View style={styles.detailsBox}>
+        {/* User Email */}
+        {item.user_email && (
+          <View style={styles.detailRow}>
+            <Ionicons name="mail-outline" size={15} color={COLORS.primary} />
+            <Text style={styles.detailLabel}>Email:</Text>
+            <Text style={styles.detailValue}>{item.user_email}</Text>
+          </View>
+        )}
+
+        {/* Contact Phone */}
+        {item.contact_phone && (
+          <View style={styles.detailRow}>
+            <Ionicons name="call-outline" size={15} color={COLORS.primary} />
+            <Text style={styles.detailLabel}>Phone:</Text>
+            <Text style={styles.detailValue}>{item.contact_phone}</Text>
+          </View>
+        )}
+
+        {/* Preferred Date */}
+        {item.preferred_date && (
+          <View style={styles.detailRow}>
+            <Ionicons name="calendar-outline" size={15} color="#F59E0B" />
+            <Text style={styles.detailLabel}>Date:</Text>
+            <Text style={styles.detailValue}>{formatDate(item.preferred_date)}</Text>
+          </View>
+        )}
+
+        {/* Preferred Time */}
+        {item.preferred_time && (
+          <View style={styles.detailRow}>
+            <Ionicons name="time-outline" size={15} color="#8B5CF6" />
+            <Text style={styles.detailLabel}>Time:</Text>
+            <Text style={styles.detailValue}>{formatTime(item.preferred_time)}</Text>
+          </View>
+        )}
+
+        {/* Contact Preference */}
+        {item.contact_preference && (
+          <View style={styles.detailRow}>
+            <Ionicons name={getContactIcon(item.contact_preference)} size={15} color="#10B981" />
+            <Text style={styles.detailLabel}>Contact via:</Text>
+            <Text style={[styles.detailValue, { color: '#10B981', fontWeight: '700' }]}>{getContactLabel(item.contact_preference)}</Text>
+          </View>
+        )}
+
+        {/* Inquiry Type */}
+        <View style={styles.detailRow}>
+          <Ionicons name="pricetag-outline" size={15} color={COLORS.textMuted} />
+          <Text style={styles.detailLabel}>Type:</Text>
+          <Text style={styles.detailValue}>{(item.inquiry_type || 'general').replace('_', ' ')}</Text>
         </View>
-      )}
-      
+      </View>
+
+      {/* Action Buttons */}
       {item.contact_phone && (
         <View style={styles.contactRow}>
           <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${item.contact_phone}`)}>
@@ -149,7 +231,7 @@ export default function PropertyLeadsScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -232,7 +314,7 @@ export default function PropertyLeadsScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
-  
+
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12 },
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
@@ -262,16 +344,19 @@ const styles = StyleSheet.create({
   leadActions: { gap: 6 },
   actionBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: COLORS.primaryLight || '#EEF2FF', alignItems: 'center', justifyContent: 'center' },
 
-  inquiryCard: { padding: 16, marginBottom: 12, backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight },
+  inquiryCard: { padding: 16, marginBottom: 14, backgroundColor: COLORS.bg, borderRadius: SIZES.radius.lg, borderWidth: 1, borderColor: COLORS.borderLight },
   inquiryHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   inquiryStatus: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 100 },
   statusPendingInq: { backgroundColor: '#FEF3C7' },
   statusResponded: { backgroundColor: '#D1FAE5' },
   inquiryStatusText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
-  inquiryMsg: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 10 },
-  
-  scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, marginBottom: 10 },
-  scheduleText: { fontSize: 12, fontWeight: '600', color: COLORS.text },
+  inquiryMsg: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 12, backgroundColor: COLORS.bgAlt, padding: 12, borderRadius: SIZES.radius.md },
+
+  // Detailed info box
+  detailsBox: { backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.md, padding: 14, marginBottom: 12, gap: 10 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  detailLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted, minWidth: 75 },
+  detailValue: { fontSize: 13, fontWeight: '600', color: COLORS.text, flex: 1 },
 
   contactRow: { flexDirection: 'row', gap: 10 },
   contactBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: SIZES.radius.md, backgroundColor: COLORS.primary },
