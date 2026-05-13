@@ -75,7 +75,7 @@ export default function PropertyListingScreen({ navigation, route }) {
           <Ionicons name="options-outline" size={22} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
-      {!loading && <Text style={s.count}>{properties.length} properties found</Text>}
+      {!loading && <Text style={s.count}>{total} properties found</Text>}
 
       <FlatList
         data={loading ? [] : properties}
@@ -84,9 +84,6 @@ export default function PropertyListingScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
-        initialNumToRender={4}
-        maxToRenderPerBatch={4}
-        windowSize={5}
         removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         renderItem={({ item }) => (
