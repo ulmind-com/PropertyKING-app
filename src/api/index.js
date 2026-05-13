@@ -38,6 +38,7 @@ export const propertyAPI = {
   create: (data) => api.post('/properties', data),
   nearby: (params) => api.get('/properties/nearby', { params }),
   recommendations: (params) => api.get('/properties/recommendations', { params }),
+  topViewed: (params) => api.get('/properties/top-viewed', { params }),
   myListings: (params) => api.get('/properties/my-listings', { params }),
   getViewers: (id, params) => api.get(`/properties/${id}/viewers`, { params }),
 };

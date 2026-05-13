@@ -12,8 +12,9 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen({ navigation }) {
   const [propertyTypes, setPropertyTypes] = useState([]);
   const [selectedType, setSelectedType] = useState(null);
-  const [featuredProps, setFeaturedProps] = useState([]);
   const [nearbyProps, setNearbyProps] = useState([]);
+  const [topViewedProps, setTopViewedProps] = useState([]);
+  const [featuredProps, setFeaturedProps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -21,17 +22,29 @@ export default function HomeScreen({ navigation }) {
   const [userCoords, setUserCoords] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // Track IDs already used in previous sections to prevent duplicates
+  const usedIdsRef = useRef(new Set());
+
   useEffect(() => { initialLoad(); }, []);
 
   const initialLoad = async () => {
     setLoading(true);
-    await Promise.all([loadTypes(), loadNearby(), loadFeatured()]);
+    usedIdsRef.current = new Set();
+    await loadTypes();
+    // Load sequentially so each section can exclude previous section's IDs
+    await loadNearby();
+    await loadTopViewed();
+    await loadFeatured();
     setLoading(false);
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([loadTypes(), loadNearby(), loadFeatured()]);
+    usedIdsRef.current = new Set();
+    await loadTypes();
+    await loadNearby(userCoords ? userCoords : null);
+    await loadTopViewed();
+    await loadFeatured();
     setRefreshing(false);
   }, [userCoords]);
 
@@ -54,14 +67,31 @@ export default function HomeScreen({ navigation }) {
       }
       setUserCoords(coords);
       const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 12.4, limit: 10 });
-      setNearbyProps(res.data?.properties || []);
+      const props = res.data?.properties || [];
+      setNearbyProps(props);
+      // Track these IDs so Top Viewed and Featured don't repeat them
+      props.forEach(p => usedIdsRef.current.add(p.id));
     } catch(e) { setLocationName('Unknown'); }
+  };
+
+  const loadTopViewed = async () => {
+    try {
+      const excludeStr = Array.from(usedIdsRef.current).join(',');
+      const r = await propertyAPI.topViewed({ limit: 10, exclude_ids: excludeStr || undefined });
+      const props = r.data?.properties || [];
+      setTopViewedProps(props);
+      // Track these IDs so Featured doesn't repeat them
+      props.forEach(p => usedIdsRef.current.add(p.id));
+    } catch(e) {}
   };
 
   const loadFeatured = async () => {
     try {
-      const r = await propertyAPI.recommendations({ limit: 10 });
-      setFeaturedProps(r.data?.properties || []);
+      const excludeStr = Array.from(usedIdsRef.current).join(',');
+      const r = await propertyAPI.recommendations({ limit: 10, exclude_ids: excludeStr || undefined });
+      const props = r.data?.properties || [];
+      setFeaturedProps(props);
+      props.forEach(p => usedIdsRef.current.add(p.id));
     } catch(e) {}
   };
 
@@ -69,15 +99,14 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('LocationPicker', {
       currentLat: userCoords?.lat,
       currentLng: userCoords?.lng,
-      onSelectLocation: (loc) => {
-        loadNearby({ lat: loc.lat, lng: loc.lng }, loc.address);
+      onSelectLocation: async (loc) => {
+        usedIdsRef.current = new Set();
+        await loadNearby({ lat: loc.lat, lng: loc.lng }, loc.address);
+        await loadTopViewed();
+        await loadFeatured();
       }
     });
   };
-
-  // Dedup: featured should not show items already in nearby
-  const nearbyIds = new Set(nearbyProps.map(p => p.id));
-  const filteredFeatured = featuredProps.filter(p => !nearbyIds.has(p.id));
 
   const handleSearch = () => {
     if (searchText.trim()) navigation.navigate('PropertyListing', { search: searchText });
@@ -144,11 +173,16 @@ export default function HomeScreen({ navigation }) {
           </ScrollView>
         )}
 
-        {/* Near You */}
+        {/* 📍 Near You */}
         {nearbyProps.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
-              <Text style={FONTS.h3}>Near You</Text>
+              <View style={st.sectionTitleRow}>
+                <View style={[st.sectionIcon, { backgroundColor: '#EEF2FF' }]}>
+                  <Ionicons name="location" size={16} color={COLORS.primary} />
+                </View>
+                <Text style={FONTS.h3}>Near You</Text>
+              </View>
               <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'nearby', userCoords })}>
                 <Text style={st.seeAll}>See all</Text>
               </TouchableOpacity>
@@ -159,20 +193,58 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* Featured - only if has items after dedup */}
-        {filteredFeatured.length > 0 && (
+        {/* 🔥 Top Viewed */}
+        {topViewedProps.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
-              <Text style={FONTS.h3}>Featured</Text>
+              <View style={st.sectionTitleRow}>
+                <View style={[st.sectionIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Ionicons name="trending-up" size={16} color="#F59E0B" />
+                </View>
+                <Text style={FONTS.h3}>Top Viewed</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}>
+                <Text style={st.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={topViewedProps}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{gap:16}}
+              keyExtractor={i => i.id}
+              renderItem={({item}) => (
+                <View style={st.topViewedCard}>
+                  <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
+                  <View style={st.viewsBadge}>
+                    <Ionicons name="eye" size={12} color="#FFF" />
+                    <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
+        )}
+
+        {/* ⭐ Featured */}
+        {featuredProps.length > 0 && (
+          <View style={st.section}>
+            <View style={st.sectionHeader}>
+              <View style={st.sectionTitleRow}>
+                <View style={[st.sectionIcon, { backgroundColor: '#ECFDF5' }]}>
+                  <Ionicons name="star" size={16} color="#10B981" />
+                </View>
+                <Text style={FONTS.h3}>Featured</Text>
+              </View>
               <TouchableOpacity onPress={() => navigation.navigate('PropertyListing')}>
                 <Text style={st.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
             <FlatList
-              data={filteredFeatured}
+              data={featuredProps}
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{paddingLeft:20,gap:16}}
+              contentContainerStyle={{gap:16}}
               keyExtractor={i => i.id}
               renderItem={({item}) => (
                 <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
@@ -204,9 +276,16 @@ const st = StyleSheet.create({
   typeText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   typeTextActive: { color: '#FFF' },
 
-  section: { marginTop: 20, paddingHorizontal: 20 },
+  section: { marginTop: 24, paddingHorizontal: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sectionIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   seeAll: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
+
+  // Top Viewed card overlay
+  topViewedCard: { position: 'relative' },
+  viewsBadge: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  viewsBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFF' },
 
   // Near You card (horizontal list item)
   nearCard: { flexDirection: 'row', backgroundColor: COLORS.card, borderRadius: SIZES.radius.md, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.sm, position: 'relative' },
