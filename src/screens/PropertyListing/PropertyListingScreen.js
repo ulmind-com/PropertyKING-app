@@ -79,12 +79,12 @@ export default function PropertyListingScreen({ navigation, route }) {
 
       <FlatList
         data={loading ? [] : properties}
-        keyExtractor={(i, idx) => loading ? 'skel_' + idx : i.id + '_' + idx}
+        keyExtractor={(i, idx) => loading ? 'skel_' + idx : i.id ? i.id.toString() : idx.toString()}
+        style={{ flex: 1 }}
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.5}
-        removeClippedSubviews={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         renderItem={({ item }) => (
           <PropertyCard property={item}
