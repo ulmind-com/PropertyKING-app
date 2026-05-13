@@ -68,6 +68,10 @@ export default function PropertyCard({ property, onPress, style }) {
               <Text style={s.statText}>{d.total_sqft.toLocaleString()} sqft</Text>
             </View>
           )}
+          <View style={s.statItem}>
+            <Ionicons name="eye-outline" size={14} color={COLORS.textMuted} />
+            <Text style={s.statText}>{property?.views_count || 0} views</Text>
+          </View>
         </View>
 
         {/* Price */}
