@@ -56,33 +56,23 @@ export default function MyListingsScreen({ navigation }) {
   };
 
   const handleToggleStatus = async (item) => {
-    const isActive = item.status === 'active';
-    Alert.alert(
-      isActive ? 'Deactivate Listing?' : 'Activate Listing?',
-      isActive
-        ? 'This property will be hidden from all feeds. You can reactivate it anytime.'
-        : 'This property will be visible in feeds again.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: isActive ? 'Deactivate' : 'Activate',
-          style: isActive ? 'destructive' : 'default',
-          onPress: async () => {
-            setTogglingId(item.id);
-            try {
-              const res = await propertyAPI.toggleStatus(item.id);
-              const newStatus = res.data.status;
-              setListings(prev => prev.map(p =>
-                p.id === item.id ? { ...p, status: newStatus } : p
-              ));
-            } catch (e) {
-              Alert.alert('Error', 'Failed to update status. Try again.');
-            }
-            setTogglingId(null);
-          }
-        }
-      ]
-    );
+    if (togglingId) return; // prevent double tap
+    setTogglingId(item.id);
+    try {
+      console.log('Toggling property:', item.id, 'current status:', item.status);
+      const res = await propertyAPI.toggleStatus(item.id);
+      console.log('Toggle response:', res.data);
+      const newStatus = res.data.status;
+      setListings(prev => prev.map(p =>
+        p.id === item.id ? { ...p, status: newStatus } : p
+      ));
+      // Also refresh stats
+      setStats(prev => ({ ...prev }));
+    } catch (e) {
+      console.log('Toggle error:', e?.response?.data || e.message);
+      Alert.alert('Error', e?.response?.data?.detail || 'Failed to update status. Try again.');
+    }
+    setTogglingId(null);
   };
 
   const getImg = (property) => {
