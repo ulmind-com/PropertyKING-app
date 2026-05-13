@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, StatusBar, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import CountryPicker from 'react-native-country-picker-modal';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../api';
 import Toast from 'react-native-toast-message';
+
+const COUNTRIES = [
+  { code: 'US', callingCode: '1', flag: '🇺🇸', name: 'United States' },
+  { code: 'IN', callingCode: '91', flag: '🇮🇳', name: 'India' },
+  { code: 'GB', callingCode: '44', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'AU', callingCode: '61', flag: '🇦🇺', name: 'Australia' },
+  { code: 'CA', callingCode: '1', flag: '🇨🇦', name: 'Canada' },
+  { code: 'AE', callingCode: '971', flag: '🇦🇪', name: 'United Arab Emirates' },
+  { code: 'SG', callingCode: '65', flag: '🇸🇬', name: 'Singapore' },
+];
 
 export default function EditProfileScreen({ navigation }) {
   const { user, updateUser } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [countryModalVisible, setCountryModalVisible] = useState(false);
   
   const initialPhone = user?.phone || '';
   const isIN = initialPhone.startsWith('+91');
@@ -144,18 +154,15 @@ export default function EditProfileScreen({ navigation }) {
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Phone Number</Text>
               <View style={styles.phoneInputWrap}>
-                <CountryPicker
-                  countryCode={countryCode}
-                  withFilter
-                  withFlag
-                  withCallingCode
-                  withCallingCodeButton
-                  onSelect={(country) => {
-                    setCountryCode(country.cca2);
-                    setCallingCode(country.callingCode[0]);
-                  }}
-                  containerButtonStyle={styles.countryPickerBtn}
-                />
+                <TouchableOpacity 
+                  style={styles.countryPickerBtn}
+                  onPress={() => setCountryModalVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.flagText}>{COUNTRIES.find(c => c.code === countryCode)?.flag || '🌍'}</Text>
+                  <Text style={styles.callingCodeText}>+{callingCode}</Text>
+                  <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+                </TouchableOpacity>
                 <TextInput 
                   style={[styles.inputRaw, { flex: 1 }]} 
                   value={rawPhone} 
@@ -210,6 +217,37 @@ export default function EditProfileScreen({ navigation }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      <Modal visible={countryModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Country</Text>
+              <TouchableOpacity onPress={() => setCountryModalVisible(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {COUNTRIES.map((c) => (
+                <TouchableOpacity 
+                  key={c.code} 
+                  style={styles.countryOption}
+                  onPress={() => {
+                    setCountryCode(c.code);
+                    setCallingCode(c.callingCode);
+                    setCountryModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.countryOptionFlag}>{c.flag}</Text>
+                  <Text style={styles.countryOptionName}>{c.name}</Text>
+                  <Text style={styles.countryOptionCode}>+{c.callingCode}</Text>
+                </TouchableOpacity>
+              ))}
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.footer}>
         <TouchableOpacity style={styles.saveBtnBottom} onPress={handleSave} disabled={loading}>
           {loading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
@@ -244,11 +282,23 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   inputRaw: { fontSize: 16, fontWeight: '600', color: COLORS.text, padding: 0, margin: 0 },
   phoneInputWrap: { flexDirection: 'row', alignItems: 'center' },
-  countryPickerBtn: { marginRight: 8, paddingVertical: 4 },
+  countryPickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bgAlt, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, marginRight: 12, gap: 6 },
+  flagText: { fontSize: 18 },
+  callingCodeText: { fontSize: 14, fontWeight: '700', color: COLORS.text },
   textArea: { height: 70, paddingTop: 4 },
   divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 70 },
 
   footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 30, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   saveBtnBottom: { backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center', ...SHADOWS.md },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: COLORS.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20, maxHeight: '80%' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
+  modalCloseBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.bgAlt, alignItems: 'center', justifyContent: 'center' },
+  countryOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight },
+  countryOptionFlag: { fontSize: 24, marginRight: 16 },
+  countryOptionName: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.text },
+  countryOptionCode: { fontSize: 16, fontWeight: '700', color: COLORS.textSecondary },
 });
