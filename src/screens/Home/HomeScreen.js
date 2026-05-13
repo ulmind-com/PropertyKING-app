@@ -369,7 +369,7 @@ export default function HomeScreen({ navigation }) {
               title="Featured" 
               icon="star"
               scrollY={scrollY}
-              turnStart={310} // Featured enters dark zone later
+              turnStart={80}
               onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'featured' })}
             />
             <FlatList
@@ -396,7 +396,7 @@ export default function HomeScreen({ navigation }) {
               title="Top Viewed" 
               icon="trending-up"
               scrollY={scrollY}
-              turnStart={560} // Top Viewed enters dark zone even later
+              turnStart={150}
               onSeeAll={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}
             />
             {finalTopViewed.map(item => (
