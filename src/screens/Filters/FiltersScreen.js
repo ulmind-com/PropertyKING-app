@@ -88,6 +88,9 @@ export default function FiltersScreen({ navigation, route }) {
       max_sqft: maxSqft ? parseInt(maxSqft) : undefined,
       city: city || undefined,
       state: state || undefined,
+      amenities: Object.keys(selectedAmenities).filter(k => selectedAmenities[k]).length > 0 
+        ? Object.keys(selectedAmenities).filter(k => selectedAmenities[k]).join(',') 
+        : undefined,
       sort_by: sort.sort_by,
       sort_order: sort.sort_order,
     };
