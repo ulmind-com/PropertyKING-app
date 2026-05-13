@@ -179,13 +179,23 @@ function MainStack() {
 
 export default function AppNavigator() {
   const { isAuthenticated, loading } = useAuth();
+  const navigationRef = React.useRef(null);
+  const [routeName, setRouteName] = React.useState();
 
   if (loading) return null;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        setRouteName(navigationRef.current?.getCurrentRoute()?.name);
+      }}
+      onStateChange={() => {
+        setRouteName(navigationRef.current?.getCurrentRoute()?.name);
+      }}
+    >
       {isAuthenticated ? <MainStack /> : <AuthStack />}
-      {isAuthenticated && <FloatingCompareButton />}
+      {isAuthenticated && routeName !== 'CompareScreen' && <FloatingCompareButton />}
     </NavigationContainer>
   );
 }
