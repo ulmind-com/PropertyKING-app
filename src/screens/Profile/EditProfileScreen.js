@@ -81,12 +81,10 @@ export default function EditProfileScreen({ navigation }) {
           <Ionicons name="chevron-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave} disabled={loading} style={styles.saveBtn}>
-          {loading ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Text style={styles.saveText}>Save</Text>}
-        </TouchableOpacity>
+        <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
           <TouchableOpacity style={styles.avatarWrap} onPress={pickImage} activeOpacity={0.8}>
@@ -105,84 +103,124 @@ export default function EditProfileScreen({ navigation }) {
             )}
             
             <View style={styles.editBadge}>
-              <Ionicons name="camera" size={14} color="#FFF" />
+              <Ionicons name="camera" size={16} color="#FFF" />
             </View>
           </TouchableOpacity>
           <Text style={styles.changePhotoText}>Change Profile Photo</Text>
         </View>
 
-        {/* Form Fields */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput 
-            style={styles.input} 
-            value={formData.full_name} 
-            onChangeText={(t) => setFormData({...formData, full_name: t})} 
-            placeholder="John Doe" 
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput 
-            style={styles.input} 
-            value={formData.phone} 
-            onChangeText={(t) => setFormData({...formData, phone: t})} 
-            placeholder="+1 234 567 8900" 
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Bio</Text>
-          <TextInput 
-            style={[styles.input, styles.textArea]} 
-            value={formData.bio} 
-            onChangeText={(t) => setFormData({...formData, bio: t})} 
-            placeholder="Tell us about yourself..." 
-            multiline 
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {user?.role === 'lister' && (
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Company Name</Text>
-            <TextInput 
-              style={styles.input} 
-              value={formData.company_name} 
-              onChangeText={(t) => setFormData({...formData, company_name: t})} 
-              placeholder="Your Agency / Company" 
-            />
+        {/* Form Fields Card */}
+        <View style={styles.formContainer}>
+          <View style={styles.inputRow}>
+            <View style={styles.iconBox}><Ionicons name="person-outline" size={18} color={COLORS.primary} /></View>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput 
+                style={styles.inputRaw} 
+                value={formData.full_name} 
+                onChangeText={(t) => setFormData({...formData, full_name: t})} 
+                placeholder="John Doe" 
+                placeholderTextColor={COLORS.textMuted}
+              />
+            </View>
           </View>
-        )}
+
+          <View style={styles.divider} />
+
+          <View style={styles.inputRow}>
+            <View style={styles.iconBox}><Ionicons name="call-outline" size={18} color={COLORS.primary} /></View>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput 
+                style={styles.inputRaw} 
+                value={formData.phone} 
+                onChangeText={(t) => setFormData({...formData, phone: t})} 
+                placeholder="+1 234 567 8900" 
+                keyboardType="phone-pad"
+                placeholderTextColor={COLORS.textMuted}
+              />
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={[styles.inputRow, { alignItems: 'flex-start' }]}>
+            <View style={[styles.iconBox, { marginTop: 4 }]}><Ionicons name="information-circle-outline" size={18} color={COLORS.primary} /></View>
+            <View style={styles.inputContent}>
+              <Text style={styles.inputLabel}>Bio</Text>
+              <TextInput 
+                style={[styles.inputRaw, styles.textArea]} 
+                value={formData.bio} 
+                onChangeText={(t) => setFormData({...formData, bio: t})} 
+                placeholder="Tell us about yourself..." 
+                multiline 
+                numberOfLines={3}
+                textAlignVertical="top"
+                placeholderTextColor={COLORS.textMuted}
+              />
+            </View>
+          </View>
+
+          {user?.role === 'lister' && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.inputRow}>
+                <View style={styles.iconBox}><Ionicons name="business-outline" size={18} color={COLORS.primary} /></View>
+                <View style={styles.inputContent}>
+                  <Text style={styles.inputLabel}>Company Name</Text>
+                  <TextInput 
+                    style={styles.inputRaw} 
+                    value={formData.company_name} 
+                    onChangeText={(t) => setFormData({...formData, company_name: t})} 
+                    placeholder="Your Agency / Company" 
+                    placeholderTextColor={COLORS.textMuted}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.saveBtnBottom} onPress={handleSave} disabled={loading}>
+          {loading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bgDark },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight },
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
-  saveBtn: { paddingHorizontal: 12, paddingVertical: 8 },
-  saveText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
   
-  content: { padding: 20 },
+  content: { padding: 20, paddingBottom: 100 },
   
-  avatarSection: { alignItems: 'center', marginBottom: 32 },
-  avatarWrap: { position: 'relative', width: 100, height: 100, borderRadius: 50, marginBottom: 12, ...SHADOWS.md },
-  avatarImg: { width: 100, height: 100, borderRadius: 50, backgroundColor: COLORS.bg },
-  avatarPlaceholder: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  avatarPlaceholderText: { fontSize: 40, fontWeight: '800', color: COLORS.primary },
-  uploadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
-  editBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: COLORS.bg },
-  changePhotoText: { fontSize: 15, fontWeight: '600', color: COLORS.primary },
+  avatarSection: { alignItems: 'center', marginBottom: 36, marginTop: 10 },
+  avatarWrap: { position: 'relative', width: 110, height: 110, borderRadius: 55, marginBottom: 16, ...SHADOWS.md },
+  avatarImg: { width: 110, height: 110, borderRadius: 55, backgroundColor: COLORS.bgAlt },
+  avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  avatarPlaceholderText: { fontSize: 44, fontWeight: '800', color: COLORS.primary },
+  uploadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 55, alignItems: 'center', justifyContent: 'center' },
+  editBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: COLORS.bg },
+  changePhotoText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
-  formGroup: { marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 8, marginLeft: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.borderLight, borderRadius: 16, paddingHorizontal: 16, height: 56, fontSize: 15, color: COLORS.text, ...SHADOWS.sm },
-  textArea: { height: 120, paddingTop: 16 },
+  formContainer: { backgroundColor: COLORS.bg, borderRadius: 24, borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.sm },
+  inputRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+  iconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.bgAlt, alignItems: 'center', justifyContent: 'center' },
+  inputContent: { flex: 1, justifyContent: 'center' },
+  inputLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  inputRaw: { fontSize: 16, fontWeight: '600', color: COLORS.text, padding: 0, margin: 0 },
+  textArea: { height: 70, paddingTop: 4 },
+  divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 70 },
+
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 30, backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
+  saveBtnBottom: { backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center', ...SHADOWS.md },
+  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.5 },
 });
