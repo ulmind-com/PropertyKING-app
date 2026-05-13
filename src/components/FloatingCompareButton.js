@@ -1,15 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { useCompare } from '../context/CompareContext';
 import { COLORS, FONTS, SHADOWS } from '../theme';
 
 export default function FloatingCompareButton() {
   const { compareList } = useCompare();
   const navigation = useNavigation();
+  
+  // Get root state to check if CompareScreen is active
+  const isCompareScreen = useNavigationState(state => {
+    if (!state) return false;
+    const currentRoute = state.routes[state.index];
+    return currentRoute?.name === 'CompareScreen';
+  });
 
-  if (compareList.length === 0) return null;
+  if (compareList.length === 0 || isCompareScreen) return null;
 
   return (
     <View style={styles.container}>
