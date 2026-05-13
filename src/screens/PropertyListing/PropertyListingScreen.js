@@ -89,6 +89,10 @@ export default function PropertyListingScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           onEndReached={onEndReached}
           onEndReachedThreshold={0.5}
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          removeClippedSubviews={true}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
           renderItem={({ item }) => (
             <PropertyCard property={item}
