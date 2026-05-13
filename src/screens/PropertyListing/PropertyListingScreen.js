@@ -75,7 +75,7 @@ export default function PropertyListingScreen({ navigation, route }) {
           <Ionicons name="options-outline" size={22} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
-      {!loading && <Text style={s.count}>{total} properties found</Text>}
+      {!loading && <Text style={s.count}>{properties.length} properties found</Text>}
 
       <FlatList
         data={loading ? [] : properties}
