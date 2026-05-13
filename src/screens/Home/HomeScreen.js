@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, FlatList, Dimensions, Animated, StatusBar, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, FlatList, Dimensions, Animated, StatusBar, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
-import { HomeSkeleton, NearbyCardSkeleton } from '../../components/SkeletonLoader';
+import { HomeSkeleton } from '../../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -22,29 +22,41 @@ export default function HomeScreen({ navigation }) {
   const [userCoords, setUserCoords] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // Track IDs already used in previous sections to prevent duplicates
-  const usedIdsRef = useRef(new Set());
-
   useEffect(() => { initialLoad(); }, []);
 
   const initialLoad = async () => {
     setLoading(true);
-    usedIdsRef.current = new Set();
-    await loadTypes();
-    // Load sequentially so each section can exclude previous section's IDs
-    await loadNearby();
-    await loadTopViewed();
-    await loadFeatured();
+    // Start all requests in parallel to make it FAST
+    const typesPromise = loadTypes();
+    const featuredPromise = propertyAPI.recommendations({ limit: 15 });
+    const topViewedPromise = propertyAPI.topViewed({ limit: 15 });
+    
+    // Don't wait for location to finish before showing other data
+    loadNearby(); 
+
+    try {
+      const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
+      setFeaturedProps(featRes.data?.properties || []);
+      setTopViewedProps(topRes.data?.properties || []);
+    } catch (e) {
+      console.log('Error fetching initial data:', e);
+    }
+    
     setLoading(false);
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    usedIdsRef.current = new Set();
-    await loadTypes();
-    await loadNearby(userCoords ? userCoords : null);
-    await loadTopViewed();
-    await loadFeatured();
+    const featuredPromise = propertyAPI.recommendations({ limit: 15 });
+    const topViewedPromise = propertyAPI.topViewed({ limit: 15 });
+    loadNearby(userCoords ? userCoords : null);
+    
+    try {
+      const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
+      setFeaturedProps(featRes.data?.properties || []);
+      setTopViewedProps(topRes.data?.properties || []);
+    } catch (e) {}
+    
     setRefreshing(false);
   }, [userCoords]);
 
@@ -58,7 +70,12 @@ export default function HomeScreen({ navigation }) {
       if (!coords) {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') { setLocationName('Location denied'); return; }
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        
+        // Use last known first for speed, then get current
+        let loc = await Location.getLastKnownPositionAsync();
+        if (!loc) {
+          loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        }
         coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
         const [geo] = await Location.reverseGeocodeAsync({ latitude: coords.lat, longitude: coords.lng });
         if (geo) setLocationName(`${geo.city || ''}, ${geo.region || ''}`);
@@ -66,33 +83,9 @@ export default function HomeScreen({ navigation }) {
         if (customName) setLocationName(customName.split(',')[0]);
       }
       setUserCoords(coords);
-      const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 12.4, limit: 10 });
-      const props = res.data?.properties || [];
-      setNearbyProps(props);
-      // Track these IDs so Top Viewed and Featured don't repeat them
-      props.forEach(p => usedIdsRef.current.add(p.id));
+      const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 25, limit: 15 });
+      setNearbyProps(res.data?.properties || []);
     } catch(e) { setLocationName('Unknown'); }
-  };
-
-  const loadTopViewed = async () => {
-    try {
-      const excludeStr = Array.from(usedIdsRef.current).join(',');
-      const r = await propertyAPI.topViewed({ limit: 10, exclude_ids: excludeStr || undefined });
-      const props = r.data?.properties || [];
-      setTopViewedProps(props);
-      // Track these IDs so Featured doesn't repeat them
-      props.forEach(p => usedIdsRef.current.add(p.id));
-    } catch(e) {}
-  };
-
-  const loadFeatured = async () => {
-    try {
-      const excludeStr = Array.from(usedIdsRef.current).join(',');
-      const r = await propertyAPI.recommendations({ limit: 10, exclude_ids: excludeStr || undefined });
-      const props = r.data?.properties || [];
-      setFeaturedProps(props);
-      props.forEach(p => usedIdsRef.current.add(p.id));
-    } catch(e) {}
   };
 
   const openLocationPicker = () => {
@@ -100,10 +93,7 @@ export default function HomeScreen({ navigation }) {
       currentLat: userCoords?.lat,
       currentLng: userCoords?.lng,
       onSelectLocation: async (loc) => {
-        usedIdsRef.current = new Set();
         await loadNearby({ lat: loc.lat, lng: loc.lng }, loc.address);
-        await loadTopViewed();
-        await loadFeatured();
       }
     });
   };
@@ -112,10 +102,19 @@ export default function HomeScreen({ navigation }) {
     if (searchText.trim()) navigation.navigate('PropertyListing', { search: searchText });
   };
 
-  const formatPrice = (p, u) => {
-    const f = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p || 0);
-    return u === 'per_month' ? `${f}/mo` : f;
-  };
+  // --- FRONTEND DEDUPLICATION ---
+  // Sequence: Near You -> Featured -> Top Viewed
+  
+  // 1. Near You uses all its items
+  const finalNearby = nearbyProps.slice(0, 5);
+  const nearbyIds = new Set(finalNearby.map(p => p.id));
+  
+  // 2. Featured excludes Near You items
+  const finalFeatured = featuredProps.filter(p => !nearbyIds.has(p.id)).slice(0, 5);
+  const featuredIds = new Set(finalFeatured.map(p => p.id));
+  
+  // 3. Top Viewed excludes both Near You and Featured items
+  const finalTopViewed = topViewedProps.filter(p => !nearbyIds.has(p.id) && !featuredIds.has(p.id)).slice(0, 5);
 
   if (loading) return (
     <View style={st.container}>
@@ -173,8 +172,8 @@ export default function HomeScreen({ navigation }) {
           </ScrollView>
         )}
 
-        {/* 📍 Near You */}
-        {nearbyProps.length > 0 && (
+        {/* 1. 📍 Near You */}
+        {finalNearby.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
               <View style={st.sectionTitleRow}>
@@ -187,47 +186,14 @@ export default function HomeScreen({ navigation }) {
                 <Text style={st.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
-            {nearbyProps.slice(0, 5).map(item => (
+            {finalNearby.map(item => (
               <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} />
             ))}
           </View>
         )}
 
-        {/* 🔥 Top Viewed */}
-        {topViewedProps.length > 0 && (
-          <View style={st.section}>
-            <View style={st.sectionHeader}>
-              <View style={st.sectionTitleRow}>
-                <View style={[st.sectionIcon, { backgroundColor: '#FEF3C7' }]}>
-                  <Ionicons name="trending-up" size={16} color="#F59E0B" />
-                </View>
-                <Text style={FONTS.h3}>Top Viewed</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}>
-                <Text style={st.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={topViewedProps}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{gap:16}}
-              keyExtractor={i => i.id}
-              renderItem={({item}) => (
-                <View style={st.topViewedCard}>
-                  <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
-                  <View style={st.viewsBadge}>
-                    <Ionicons name="eye" size={12} color="#FFF" />
-                    <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
-                  </View>
-                </View>
-              )}
-            />
-          </View>
-        )}
-
-        {/* ⭐ Featured */}
-        {featuredProps.length > 0 && (
+        {/* 2. ⭐ Featured */}
+        {finalFeatured.length > 0 && (
           <View style={st.section}>
             <View style={st.sectionHeader}>
               <View style={st.sectionTitleRow}>
@@ -241,13 +207,46 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={featuredProps}
+              data={finalFeatured}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{gap:16}}
               keyExtractor={i => i.id}
               renderItem={({item}) => (
                 <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
+              )}
+            />
+          </View>
+        )}
+
+        {/* 3. 🔥 Top Viewed */}
+        {finalTopViewed.length > 0 && (
+          <View style={st.section}>
+            <View style={st.sectionHeader}>
+              <View style={st.sectionTitleRow}>
+                <View style={[st.sectionIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Ionicons name="trending-up" size={16} color="#F59E0B" />
+                </View>
+                <Text style={FONTS.h3}>Top Viewed</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('PropertyListing', { mode: 'top-viewed' })}>
+                <Text style={st.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={finalTopViewed}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{gap:16}}
+              keyExtractor={i => i.id}
+              renderItem={({item}) => (
+                <View style={st.topViewedCard}>
+                  <PropertyCard key={item.id} property={item} onPress={() => navigation.navigate('PropertyDetails', { slug: item.slug || item.id, property: item, userCoords })} style={{width:width*0.72}} />
+                  <View style={st.viewsBadge}>
+                    <Ionicons name="eye" size={12} color="#FFF" />
+                    <Text style={st.viewsBadgeText}>{item.views_count || 0} views</Text>
+                  </View>
+                </View>
               )}
             />
           </View>
@@ -286,17 +285,4 @@ const st = StyleSheet.create({
   topViewedCard: { position: 'relative' },
   viewsBadge: { position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   viewsBadgeText: { fontSize: 11, fontWeight: '700', color: '#FFF' },
-
-  // Near You card (horizontal list item)
-  nearCard: { flexDirection: 'row', backgroundColor: COLORS.card, borderRadius: SIZES.radius.md, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.sm, position: 'relative' },
-  nearImg: { width: 115, height: 115 },
-  nearInfo: { flex: 1, padding: 12, justifyContent: 'center', gap: 4 },
-  nearTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text, lineHeight: 18 },
-  nearLocRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  nearLoc: { fontSize: 11, color: COLORS.textMuted },
-  nearStats: { flexDirection: 'row', gap: 10, marginTop: 2 },
-  nearStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  nearStatTxt: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
-  nearPrice: { fontSize: 16, fontWeight: '800', color: COLORS.primary, marginTop: 2 },
-  nearHeart: { position: 'absolute', top: 8, right: 8 },
 });
