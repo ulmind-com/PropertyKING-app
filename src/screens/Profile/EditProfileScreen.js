@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import CountryPicker from 'react-native-country-picker-modal';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../api';
@@ -12,9 +13,19 @@ export default function EditProfileScreen({ navigation }) {
   
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  
+  const initialPhone = user?.phone || '';
+  const isIN = initialPhone.startsWith('+91');
+  const initialCallingCode = isIN ? '91' : '1';
+  const initialCountry = isIN ? 'IN' : 'US';
+  const initialRawPhone = initialPhone.replace(`+${initialCallingCode}`, '').trim();
+
+  const [countryCode, setCountryCode] = useState(initialCountry);
+  const [callingCode, setCallingCode] = useState(initialCallingCode);
+  const [rawPhone, setRawPhone] = useState(initialRawPhone);
+
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
-    phone: user?.phone || '',
     bio: user?.bio || '',
     company_name: user?.company_name || '',
   });
@@ -61,7 +72,8 @@ export default function EditProfileScreen({ navigation }) {
     
     setLoading(true);
     try {
-      const res = await userAPI.updateMe(formData);
+      const dataToSave = { ...formData, phone: `+${callingCode}${rawPhone}` };
+      const res = await userAPI.updateMe(dataToSave);
       await updateUser(res.data);
       Toast.show({ type: 'success', text1: 'Profile updated successfully!' });
       navigation.goBack();
@@ -131,14 +143,28 @@ export default function EditProfileScreen({ navigation }) {
             <View style={styles.iconBox}><Ionicons name="call-outline" size={18} color={COLORS.primary} /></View>
             <View style={styles.inputContent}>
               <Text style={styles.inputLabel}>Phone Number</Text>
-              <TextInput 
-                style={styles.inputRaw} 
-                value={formData.phone} 
-                onChangeText={(t) => setFormData({...formData, phone: t})} 
-                placeholder="+1 234 567 8900" 
-                keyboardType="phone-pad"
-                placeholderTextColor={COLORS.textMuted}
-              />
+              <View style={styles.phoneInputWrap}>
+                <CountryPicker
+                  countryCode={countryCode}
+                  withFilter
+                  withFlag
+                  withCallingCode
+                  withCallingCodeButton
+                  onSelect={(country) => {
+                    setCountryCode(country.cca2);
+                    setCallingCode(country.callingCode[0]);
+                  }}
+                  containerButtonStyle={styles.countryPickerBtn}
+                />
+                <TextInput 
+                  style={[styles.inputRaw, { flex: 1 }]} 
+                  value={rawPhone} 
+                  onChangeText={setRawPhone} 
+                  placeholder="234 567 8900" 
+                  keyboardType="phone-pad"
+                  placeholderTextColor={COLORS.textMuted}
+                />
+              </View>
             </View>
           </View>
 
@@ -217,6 +243,8 @@ const styles = StyleSheet.create({
   inputContent: { flex: 1, justifyContent: 'center' },
   inputLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   inputRaw: { fontSize: 16, fontWeight: '600', color: COLORS.text, padding: 0, margin: 0 },
+  phoneInputWrap: { flexDirection: 'row', alignItems: 'center' },
+  countryPickerBtn: { marginRight: 8, paddingVertical: 4 },
   textArea: { height: 70, paddingTop: 4 },
   divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 70 },
 
