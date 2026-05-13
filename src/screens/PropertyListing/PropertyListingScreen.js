@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, StatusBar, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES } from '../../theme';
@@ -13,19 +13,13 @@ export default function PropertyListingScreen({ navigation, route }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [total, setTotal] = useState(0);
   const params = route?.params || {};
-  const mode = params.mode; // 'nearby' | 'top-viewed' | 'featured' | undefined
+  const mode = params.mode;
 
-  // Use refs for pagination state so onEndReached always reads the latest values
+  // All mutable pagination state lives in refs so scroll handlers always see latest values
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
   const loadingMoreRef = useRef(false);
-
-  useEffect(() => {
-    pageRef.current = 1;
-    hasMoreRef.current = true;
-    loadingMoreRef.current = false;
-    load(1, true);
-  }, [JSON.stringify(params)]);
+  const loadRef = useRef(null); // Always points to the latest load function
 
   const load = async (p = 1, fresh = false) => {
     if (fresh) setLoading(true);
@@ -53,29 +47,49 @@ export default function PropertyListingScreen({ navigation, route }) {
           return [...prev, ...unique];
         });
       }
-    } catch(e) { console.log('Load error:', e); }
+    } catch (e) {
+      console.log('Load error:', e);
+    }
     setLoading(false);
     setLoadingMore(false);
     loadingMoreRef.current = false;
     setRefreshing(false);
   };
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
+  // Keep loadRef always pointing to the latest load function
+  loadRef.current = load;
+
+  useEffect(() => {
     pageRef.current = 1;
     hasMoreRef.current = true;
     loadingMoreRef.current = false;
     load(1, true);
-  }, []);
+  }, [JSON.stringify(params)]);
 
-  const onEndReached = useCallback(() => {
-    if (loadingMoreRef.current || !hasMoreRef.current) return;
-    loadingMoreRef.current = true;
-    setLoadingMore(true);
-    const nextPage = pageRef.current + 1;
-    pageRef.current = nextPage;
-    load(nextPage, false);
-  }, [mode, JSON.stringify(params)]);
+  const onRefresh = () => {
+    setRefreshing(true);
+    pageRef.current = 1;
+    hasMoreRef.current = true;
+    loadingMoreRef.current = false;
+    loadRef.current(1, true);
+  };
+
+  // Use onScroll to manually detect when user is near bottom — 100% reliable unlike onEndReached
+  const handleScroll = (event) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
+
+    if (distanceFromBottom < 300) {
+      // User is within 300px of bottom — trigger load
+      if (!loadingMoreRef.current && hasMoreRef.current) {
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+        const nextPage = pageRef.current + 1;
+        pageRef.current = nextPage;
+        loadRef.current(nextPage, false);
+      }
+    }
+  };
 
   const title = mode === 'nearby' ? 'Near You' : mode === 'top-viewed' ? 'Top Viewed' : mode === 'featured' ? 'Featured' : (params.typeName || 'Properties');
 
@@ -99,8 +113,8 @@ export default function PropertyListingScreen({ navigation, route }) {
         style={{ flex: 1 }}
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={0.3}
+        onScroll={handleScroll}
+        scrollEventThrottle={200}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         renderItem={({ item }) => (
           <PropertyCard property={item}
@@ -110,17 +124,20 @@ export default function PropertyListingScreen({ navigation, route }) {
         )}
         ListFooterComponent={
           loadingMore ? (
-            <View style={{padding:20,alignItems:'center'}}><ActivityIndicator color={COLORS.primary} /></View>
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator color={COLORS.primary} size="small" />
+              <Text style={[FONTS.caption, { marginTop: 8 }]}>Loading more...</Text>
+            </View>
           ) : !hasMoreRef.current && properties.length > 0 && !loading ? (
-            <Text style={s.endText}>You've seen all properties</Text>
+            <Text style={s.endText}>You've seen all {total} properties</Text>
           ) : (
-            <View style={{height: 20}} />
+            <View style={{ height: 20 }} />
           )
         }
         ListEmptyComponent={
           loading ? (
-            <View style={{padding:20,gap:12}}>
-              {[1,2,3].map(i => <PropertyCardSkeleton key={i} />)}
+            <View style={{ padding: 20, gap: 12 }}>
+              {[1, 2, 3].map(i => <PropertyCardSkeleton key={i} />)}
             </View>
           ) : (
             <View style={s.empty}>
