@@ -5,7 +5,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { WebView } from '../../components/WebView/WebViewComponent';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
-import { inquiryAPI, favoriteAPI } from '../../api';
+import { inquiryAPI, favoriteAPI, propertyAPI } from '../../api';
 
 // Extract YouTube video ID from any YT URL format
 const getYouTubeId = (url) => {
@@ -98,6 +98,14 @@ export default function PropertyDetailsScreen({ route, navigation }) {
         }
       }
     })();
+  }, []);
+
+  // Fetch full property to increment view count and record the viewer
+  useEffect(() => {
+    if (property.slug || property.id) {
+      propertyAPI.getBySlug(property.slug || property.id)
+        .catch(e => console.log('Error recording view:', e));
+    }
   }, []);
 
   const openMap = () => {
