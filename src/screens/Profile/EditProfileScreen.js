@@ -56,9 +56,15 @@ export default function EditProfileScreen({ navigation }) {
   const handleAvatarUpload = async (asset) => {
     setUploadingAvatar(true);
     try {
-      const filename = asset.uri.split('/').pop() || 'avatar.jpg';
+      let filename = asset.uri.split('/').pop() || 'avatar.jpg';
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      let type = 'image/jpeg';
+      
+      if (match) {
+        type = `image/${match[1]}`;
+      } else {
+        filename = `${filename}.jpg`;
+      }
 
       let fileToUpload;
       if (Platform.OS === 'web') {
