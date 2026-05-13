@@ -96,7 +96,7 @@ export default function MyListingsScreen({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
-    const isActive = item.status === 'active';
+    const isActive = item.status !== 'inactive';
     const isToggling = togglingId === item.id;
 
     return (
