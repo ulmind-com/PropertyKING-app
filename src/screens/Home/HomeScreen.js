@@ -4,6 +4,7 @@ import {
   FlatList, Dimensions, Animated, StatusBar, RefreshControl, Image, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
@@ -149,8 +150,8 @@ export default function HomeScreen({ navigation }) {
 
   if (loading) return (
     <View style={st.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
-      <View style={st.header}>
+      <StatusBar barStyle="light-content" backgroundColor="#4A4A4A" />
+      <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
         <View style={st.headerRow}>
           <View style={st.avatarCircle}>
             <Ionicons name="person" size={18} color="#FFF" />
@@ -166,17 +167,17 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
           </View>
         </View>
-      </View>
+      </LinearGradient>
       <HomeSkeleton />
     </View>
   );
 
   return (
     <View style={st.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="light-content" backgroundColor="#4A4A4A" />
 
       {/* ═══════════ DARK HEADER ═══════════ */}
-      <View style={st.header}>
+      <LinearGradient colors={HEADER_GRADIENT} style={st.header}>
         {/* Row 1: Avatar | Location | Bell */}
         <View style={st.headerRow}>
           {/* Avatar */}
@@ -226,7 +227,7 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="options-outline" size={18} color={COLORS.text} />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
@@ -370,14 +371,13 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const HEADER_BG = '#1C1C1E'; // Apple dark
+const HEADER_GRADIENT = ['#4A4A4A', '#2A2A2A']; // Very light black/grey gradient
 
 const st = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
 
   // ─── DARK HEADER ───
   header: {
-    backgroundColor: HEADER_BG,
     paddingTop: Platform.OS === 'ios' ? 54 : 42,
     paddingHorizontal: 20,
     paddingBottom: 20,
