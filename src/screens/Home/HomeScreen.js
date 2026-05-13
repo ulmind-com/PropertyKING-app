@@ -422,7 +422,7 @@ const st = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#10B981',
     borderWidth: 1.5,
-    borderColor: HEADER_BG,
+    borderColor: '#2A2A2A',
   },
 
   // ─── SEARCH ───
