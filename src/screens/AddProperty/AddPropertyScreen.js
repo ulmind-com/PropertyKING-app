@@ -197,7 +197,6 @@ export default function AddPropertyScreen({ navigation }) {
       <Text style={s.stepTitle}>{titles[step-1]}</Text>
       {error?<View style={s.errBox}><Ionicons name="alert-circle" size={16} color={COLORS.error}/><Text style={s.errText}>{error}</Text></View>:null}
 
-      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}} keyboardShouldPersistTaps="handled">
         {step===1&&<View style={s.sc}>
           <View style={s.ig}><Text style={s.lb}>Property Title *</Text><TextInput style={s.inp} placeholder="e.g. Beautiful 3BR House" placeholderTextColor={COLORS.textMuted} value={title} onChangeText={setTitle}/></View>
@@ -313,7 +312,7 @@ export default function AddPropertyScreen({ navigation }) {
         </View>}
         <View style={{height:120}}/>
       </ScrollView>
-    </KeyboardAvoidingView>
+
 
       <View style={s.bottomBar}>{step<4?
         <TouchableOpacity style={s.nextBtn} onPress={validate}><Text style={s.nextTxt}>Continue</Text><Ionicons name="arrow-forward" size={20} color="#FFF"/></TouchableOpacity>:
@@ -344,6 +343,7 @@ export default function AddPropertyScreen({ navigation }) {
             </TouchableOpacity>}/>
         </View></View>
       </Modal>
+      </KeyboardAvoidingView>
     </View>
   );
 }
