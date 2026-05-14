@@ -25,6 +25,7 @@ import AllInquiriesScreen from '../screens/Profile/AllInquiriesScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
 import MapExploreScreen from '../screens/Map/MapExploreScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
+import SplashScreenComponent from '../screens/SplashScreen';
 import { PushNotificationService } from '../services/PushNotificationService';
 import FloatingCompareButton from '../components/FloatingCompareButton';
 const Tab = createBottomTabNavigator();
@@ -202,7 +203,7 @@ export default function AppNavigator() {
     };
   }, [isAuthenticated]);
 
-  if (loading) return null;
+  if (loading) return <SplashScreenComponent />;
 
   return (
     <NavigationContainer

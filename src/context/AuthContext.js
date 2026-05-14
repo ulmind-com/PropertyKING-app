@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
   useEffect(() => { loadStoredUser(); }, []);
 
   const loadStoredUser = async () => {
+    const start = Date.now();
     try {
       const token = await AsyncStorage.getItem('pk_token');
       if (token) {
@@ -36,6 +37,13 @@ export function AuthProvider({ children }) {
         }
       }
     } catch (e) { console.log('Auth load error', e); }
+
+    // Enforce minimum 2500ms display time for the custom OP Splash Screen
+    const elapsed = Date.now() - start;
+    if (elapsed < 2500) {
+      await new Promise(resolve => setTimeout(resolve, 2500 - elapsed));
+    }
+
     setLoading(false);
   };
 
