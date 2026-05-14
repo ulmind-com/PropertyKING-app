@@ -187,137 +187,138 @@ export default function AddPropertyScreen({ navigation }) {
 
   return (
     <View style={s.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => step > 1 ? setStep(step-1) : navigation.goBack()} style={s.backBtn}><Ionicons name="chevron-back" size={24} color={COLORS.text} /></TouchableOpacity>
-        <Text style={FONTS.h3}>Add Property</Text>
-        <Text style={s.stepLabel}>Step {step}/4</Text>
-      </View>
-      <View style={s.progBar}>{[1,2,3,4].map(i=><View key={i} style={[s.progDot, i<=step&&s.progDotActive]}/>)}</View>
-      <Text style={s.stepTitle}>{titles[step-1]}</Text>
-      {error?<View style={s.errBox}><Ionicons name="alert-circle" size={16} color={COLORS.error}/><Text style={s.errText}>{error}</Text></View>:null}
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => step > 1 ? setStep(step-1) : navigation.goBack()} style={s.backBtn}><Ionicons name="chevron-back" size={24} color={COLORS.text} /></TouchableOpacity>
+          <Text style={FONTS.h3}>Add Property</Text>
+          <Text style={s.stepLabel}>Step {step}/4</Text>
+        </View>
+        <View style={s.progBar}>{[1,2,3,4].map(i=><View key={i} style={[s.progDot, i<=step&&s.progDotActive]}/>)}</View>
+        <Text style={s.stepTitle}>{titles[step-1]}</Text>
+        {error?<View style={s.errBox}><Ionicons name="alert-circle" size={16} color={COLORS.error}/><Text style={s.errText}>{error}</Text></View>:null}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}} keyboardShouldPersistTaps="handled">
-        {step===1&&<View style={s.sc}>
-          <View style={s.ig}><Text style={s.lb}>Property Title *</Text><TextInput style={s.inp} placeholder="e.g. Beautiful 3BR House" placeholderTextColor={COLORS.textMuted} value={title} onChangeText={setTitle}/></View>
-          <View style={s.ig}><Text style={s.lb}>Description *</Text><TextInput style={[s.inp,{height:120,paddingTop:14}]} placeholder="Describe your property..." placeholderTextColor={COLORS.textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top"/></View>
-          <View style={s.ig}><Text style={s.lb}>Property Type *</Text>
-            <TouchableOpacity style={s.selBtn} onPress={()=>setShowTypePicker(true)}><Text style={propertyTypeName?s.selTxt:s.selPh}>{propertyTypeName||'Select type'}</Text><Ionicons name="chevron-down" size={20} color={COLORS.textMuted}/></TouchableOpacity>
-          </View>
-          <View style={s.ig}><Text style={s.lb}>Listing Type *</Text>
-            <View style={s.togRow}>{[{k:'sale',l:'For Sale',i:'pricetag'},{k:'rent',l:'For Rent',i:'key'}].map(t=>
-              <TouchableOpacity key={t.k} style={[s.togBtn,listingType===t.k&&s.togBtnA]} onPress={()=>{setListingType(t.k);setPriceUnit(t.k==='rent'?'per_month':'total');}}>
-                <Ionicons name={t.i} size={16} color={listingType===t.k?'#FFF':COLORS.textSecondary}/>
-                <Text style={[s.togTxt,listingType===t.k&&s.togTxtA]}>{t.l}</Text>
-              </TouchableOpacity>)}</View>
-          </View>
-          <View style={s.ig}><Text style={s.lb}>Price (USD) *</Text>
-            <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{fontSize:20,fontFamily: 'Raleway_700Bold',color:COLORS.primary}}>$</Text>
-              <TextInput style={[s.inp,{flex:1}]} placeholder="0" placeholderTextColor={COLORS.textMuted} value={price} onChangeText={setPrice} keyboardType="numeric"/>
-              {listingType==='rent'&&<Text style={{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.textMuted}}>/month</Text>}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}} keyboardShouldPersistTaps="handled">
+          {step===1&&<View style={s.sc}>
+            <View style={s.ig}><Text style={s.lb}>Property Title *</Text><TextInput style={s.inp} placeholder="e.g. Beautiful 3BR House" placeholderTextColor={COLORS.textMuted} value={title} onChangeText={setTitle}/></View>
+            <View style={s.ig}><Text style={s.lb}>Description *</Text><TextInput style={[s.inp,{height:120,paddingTop:14}]} placeholder="Describe your property..." placeholderTextColor={COLORS.textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top"/></View>
+            <View style={s.ig}><Text style={s.lb}>Property Type *</Text>
+              <TouchableOpacity style={s.selBtn} onPress={()=>setShowTypePicker(true)}><Text style={propertyTypeName?s.selTxt:s.selPh}>{propertyTypeName||'Select type'}</Text><Ionicons name="chevron-down" size={20} color={COLORS.textMuted}/></TouchableOpacity>
             </View>
-          </View>
-        </View>}
-
-        {step===2&&<View style={s.sc}>
-          <TouchableOpacity style={s.gpsBtn} onPress={getGPS} disabled={gpsLoading}>
-            {gpsLoading?<ActivityIndicator color={COLORS.primary}/>:<><Ionicons name="locate" size={20} color={COLORS.primary}/><Text style={s.gpsTxt}>Use Current GPS Location</Text></>}
-          </TouchableOpacity>
-          {gpsCoords&&<Text style={s.gpsInfo}>📍 {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</Text>}
-          <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
-          <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
-          <View style={{flexDirection:'row'}}>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>State *</Text>
-              <TouchableOpacity style={s.selBtn} onPress={()=>setShowStatePicker(true)}><Text style={stateSel?s.selTxt:s.selPh}>{stateSel||'Select'}</Text><Ionicons name="chevron-down" size={18} color={COLORS.textMuted}/></TouchableOpacity>
+            <View style={s.ig}><Text style={s.lb}>Listing Type *</Text>
+              <View style={s.togRow}>{[{k:'sale',l:'For Sale',i:'pricetag'},{k:'rent',l:'For Rent',i:'key'}].map(t=>
+                <TouchableOpacity key={t.k} style={[s.togBtn,listingType===t.k&&s.togBtnA]} onPress={()=>{setListingType(t.k);setPriceUnit(t.k==='rent'?'per_month':'total');}}>
+                  <Ionicons name={t.i} size={16} color={listingType===t.k?'#FFF':COLORS.textSecondary}/>
+                  <Text style={[s.togTxt,listingType===t.k&&s.togTxtA]}>{t.l}</Text>
+                </TouchableOpacity>)}</View>
             </View>
-            <View style={{width:12}}/>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>ZIP Code *</Text><TextInput style={s.inp} placeholder="10001" placeholderTextColor={COLORS.textMuted} value={zipCode} onChangeText={setZipCode} keyboardType="numeric" maxLength={10}/></View>
-          </View>
-          <View style={s.ig}><Text style={s.lb}>County</Text><TextInput style={s.inp} placeholder="e.g. Kings County" placeholderTextColor={COLORS.textMuted} value={county} onChangeText={setCounty}/></View>
-        </View>}
-
-        {step===3&&<View style={s.sc}>
-          <View style={{flexDirection:'row'}}>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Bedrooms</Text><TextInput style={s.inp} placeholder="3" placeholderTextColor={COLORS.textMuted} value={bedrooms} onChangeText={setBedrooms} keyboardType="numeric"/></View>
-            <View style={{width:12}}/>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Bathrooms</Text><TextInput style={s.inp} placeholder="2" placeholderTextColor={COLORS.textMuted} value={bathrooms} onChangeText={setBathrooms} keyboardType="numeric"/></View>
-          </View>
-          <View style={{flexDirection:'row'}}>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Total Sqft</Text><TextInput style={s.inp} placeholder="1500" placeholderTextColor={COLORS.textMuted} value={sqft} onChangeText={setSqft} keyboardType="numeric"/></View>
-            <View style={{width:12}}/>
-            <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Year Built</Text><TextInput style={s.inp} placeholder="2020" placeholderTextColor={COLORS.textMuted} value={yearBuilt} onChangeText={setYearBuilt} keyboardType="numeric" maxLength={4}/></View>
-          </View>
-
-          {/* ── AMENITIES MULTI-SELECT ── */}
-          <View style={s.ig}>
-            <Text style={s.lb}>Amenities</Text>
-            <Text style={{fontSize:11,color:COLORS.textMuted,fontFamily:'Raleway_400Regular',marginBottom:6}}>Tap to select amenities</Text>
-            {allAmenities.length > 0 ? (
-              <View style={s.chipGrid}>
-                {allAmenities.map(am => {
-                  const selected = selectedAmenities.includes(am.id);
-                  return (
-                    <TouchableOpacity key={am.id} style={[s.chip, selected && s.chipActive]} onPress={() => toggleAmenity(am.id)}>
-                      <Text style={{fontSize:12,marginRight:4}}>{am.icon || '✦'}</Text>
-                      <Text style={[s.chipTxt, selected && s.chipTxtActive]}>{am.name}</Text>
-                      {selected && <Ionicons name="checkmark-circle" size={14} color="#FFF" style={{marginLeft:2}}/>}
-                    </TouchableOpacity>
-                  );
-                })}
+            <View style={s.ig}><Text style={s.lb}>Price (USD) *</Text>
+              <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{fontSize:20,fontFamily: 'Raleway_700Bold',color:COLORS.primary}}>$</Text>
+                <TextInput style={[s.inp,{flex:1}]} placeholder="0" placeholderTextColor={COLORS.textMuted} value={price} onChangeText={setPrice} keyboardType="numeric"/>
+                {listingType==='rent'&&<Text style={{fontSize:14,fontFamily: 'Raleway_600SemiBold',color:COLORS.textMuted}}>/month</Text>}
               </View>
+            </View>
+          </View>}
+
+          {step===2&&<View style={s.sc}>
+            <TouchableOpacity style={s.gpsBtn} onPress={getGPS} disabled={gpsLoading}>
+              {gpsLoading?<ActivityIndicator color={COLORS.primary}/>:<><Ionicons name="locate" size={20} color={COLORS.primary}/><Text style={s.gpsTxt}>Use Current GPS Location</Text></>}
+            </TouchableOpacity>
+            {gpsCoords&&<Text style={s.gpsInfo}>📍 {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</Text>}
+            <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
+            <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
+            <View style={{flexDirection:'row'}}>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>State *</Text>
+                <TouchableOpacity style={s.selBtn} onPress={()=>setShowStatePicker(true)}><Text style={stateSel?s.selTxt:s.selPh}>{stateSel||'Select'}</Text><Ionicons name="chevron-down" size={18} color={COLORS.textMuted}/></TouchableOpacity>
+              </View>
+              <View style={{width:12}}/>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>ZIP Code *</Text><TextInput style={s.inp} placeholder="10001" placeholderTextColor={COLORS.textMuted} value={zipCode} onChangeText={setZipCode} keyboardType="numeric" maxLength={10}/></View>
+            </View>
+            <View style={s.ig}><Text style={s.lb}>County</Text><TextInput style={s.inp} placeholder="e.g. Kings County" placeholderTextColor={COLORS.textMuted} value={county} onChangeText={setCounty}/></View>
+          </View>}
+
+          {step===3&&<View style={s.sc}>
+            <View style={{flexDirection:'row'}}>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Bedrooms</Text><TextInput style={s.inp} placeholder="3" placeholderTextColor={COLORS.textMuted} value={bedrooms} onChangeText={setBedrooms} keyboardType="numeric"/></View>
+              <View style={{width:12}}/>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Bathrooms</Text><TextInput style={s.inp} placeholder="2" placeholderTextColor={COLORS.textMuted} value={bathrooms} onChangeText={setBathrooms} keyboardType="numeric"/></View>
+            </View>
+            <View style={{flexDirection:'row'}}>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Total Sqft</Text><TextInput style={s.inp} placeholder="1500" placeholderTextColor={COLORS.textMuted} value={sqft} onChangeText={setSqft} keyboardType="numeric"/></View>
+              <View style={{width:12}}/>
+              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Year Built</Text><TextInput style={s.inp} placeholder="2020" placeholderTextColor={COLORS.textMuted} value={yearBuilt} onChangeText={setYearBuilt} keyboardType="numeric" maxLength={4}/></View>
+            </View>
+
+            {/* ── AMENITIES MULTI-SELECT ── */}
+            <View style={s.ig}>
+              <Text style={s.lb}>Amenities</Text>
+              <Text style={{fontSize:11,color:COLORS.textMuted,fontFamily:'Raleway_400Regular',marginBottom:6}}>Tap to select amenities</Text>
+              {allAmenities.length > 0 ? (
+                <View style={s.chipGrid}>
+                  {allAmenities.map(am => {
+                    const selected = selectedAmenities.includes(am.id);
+                    return (
+                      <TouchableOpacity key={am.id} style={[s.chip, selected && s.chipActive]} onPress={() => toggleAmenity(am.id)}>
+                        <Text style={{fontSize:12,marginRight:4}}>{am.icon || '✦'}</Text>
+                        <Text style={[s.chipTxt, selected && s.chipTxtActive]}>{am.name}</Text>
+                        {selected && <Ionicons name="checkmark-circle" size={14} color="#FFF" style={{marginLeft:2}}/>}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text style={{fontSize:12,color:COLORS.textMuted,fontFamily:'Raleway_400Regular'}}>No amenities available</Text>
+              )}
+            </View>
+          </View>}
+
+          {step===4&&<View style={s.sc}>
+            {/* ── PHOTOS ── */}
+            <Text style={[FONTS.h4,{marginBottom:8}]}>Photos *</Text>
+            <TouchableOpacity style={s.addBox} onPress={pickImages} disabled={uploadingImages}>
+              {uploadingImages ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading photos...</Text></> : <><Ionicons name="camera-outline" size={32} color={COLORS.primary}/><Text style={s.addTxt}>Add Photos</Text></>}
+            </TouchableOpacity>
+            {images.length>0&&<View style={s.imgGrid}>{images.map((img,i)=>
+              <View key={i} style={s.thumb}><Image source={{uri:img.url}} style={s.thumbImg}/>
+                {img.is_primary&&<View style={s.coverBadge}><Text style={s.coverTxt}>Cover</Text></View>}
+                <TouchableOpacity style={s.rmBtn} onPress={()=>removeImage(i)}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
+                {!img.is_primary&&<TouchableOpacity style={s.setPrimBtn} onPress={()=>setPrimary(i)}><Text style={s.setPrimTxt}>Set cover</Text></TouchableOpacity>}
+              </View>)}</View>}
+
+            {/* ── VIDEO ── */}
+            <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Video (Optional)</Text>
+            {videoUrl ? (
+              <View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontFamily:'Raleway_600SemiBold'}}>Video uploaded</Text>
+                <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
+            ) : uploadingVideo ? (
+              <View style={s.uploadingBox}><ActivityIndicator color={COLORS.primary} size="small"/><Text style={s.uploadingTxt}>Uploading video...</Text><View style={s.uploadBar}><View style={[s.uploadBarFill,{width:'60%'}]}/></View></View>
             ) : (
-              <Text style={{fontSize:12,color:COLORS.textMuted,fontFamily:'Raleway_400Regular'}}>No amenities available</Text>
+              <TouchableOpacity style={s.addBox} onPress={pickVideo}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Upload Video</Text></TouchableOpacity>
             )}
-          </View>
-        </View>}
 
-        {step===4&&<View style={s.sc}>
-          {/* ── PHOTOS ── */}
-          <Text style={[FONTS.h4,{marginBottom:8}]}>Photos *</Text>
-          <TouchableOpacity style={s.addBox} onPress={pickImages} disabled={uploadingImages}>
-            {uploadingImages ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading photos...</Text></> : <><Ionicons name="camera-outline" size={32} color={COLORS.primary}/><Text style={s.addTxt}>Add Photos</Text></>}
-          </TouchableOpacity>
-          {images.length>0&&<View style={s.imgGrid}>{images.map((img,i)=>
-            <View key={i} style={s.thumb}><Image source={{uri:img.url}} style={s.thumbImg}/>
-              {img.is_primary&&<View style={s.coverBadge}><Text style={s.coverTxt}>Cover</Text></View>}
-              <TouchableOpacity style={s.rmBtn} onPress={()=>removeImage(i)}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
-              {!img.is_primary&&<TouchableOpacity style={s.setPrimBtn} onPress={()=>setPrimary(i)}><Text style={s.setPrimTxt}>Set cover</Text></TouchableOpacity>}
-            </View>)}</View>}
+            {/* ── YOUTUBE URL ── */}
+            <Text style={{fontSize:12,fontFamily:'Raleway_500Medium',color:COLORS.textMuted,textAlign:'center',marginVertical:8}}>— OR paste a YouTube URL —</Text>
+            <TextInput style={s.inp} placeholder="https://youtube.com/watch?v=..." placeholderTextColor={COLORS.textMuted} value={youtubeUrl} onChangeText={setYoutubeUrl} autoCapitalize="none" keyboardType="url"/>
+            {youtubeUrl.length > 0 && <Text style={{fontSize:11,color:COLORS.success,fontFamily:'Raleway_500Medium',marginTop:4}}>✓ YouTube URL will be used for property video</Text>}
 
-          {/* ── VIDEO ── */}
-          <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Video (Optional)</Text>
-          {videoUrl ? (
-            <View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontFamily:'Raleway_600SemiBold'}}>Video uploaded</Text>
-              <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
-          ) : uploadingVideo ? (
-            <View style={s.uploadingBox}><ActivityIndicator color={COLORS.primary} size="small"/><Text style={s.uploadingTxt}>Uploading video...</Text><View style={s.uploadBar}><View style={[s.uploadBarFill,{width:'60%'}]}/></View></View>
-          ) : (
-            <TouchableOpacity style={s.addBox} onPress={pickVideo}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Upload Video</Text></TouchableOpacity>
-          )}
+            {/* ── FLOOR PLANS ── */}
+            <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Floor Plans (Optional)</Text>
+            <TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploadingFloorPlan}>
+              {uploadingFloorPlan ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading floor plans...</Text></> : <><Ionicons name="map-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Floor Plans</Text></>}
+            </TouchableOpacity>
+            {floorPlanUrls.length>0&&<View style={s.imgGrid}>{floorPlanUrls.map((url,i)=>
+              <View key={i} style={s.fpDone}><Image source={{uri:url}} style={s.fpImg}/>
+                <TouchableOpacity style={s.rmBtn} onPress={()=>setFloorPlanUrls(floorPlanUrls.filter((_,idx)=>idx!==i))}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
+              </View>)}</View>}
+          </View>}
+          <View style={{height:120}}/>
+        </ScrollView>
 
-          {/* ── YOUTUBE URL ── */}
-          <Text style={{fontSize:12,fontFamily:'Raleway_500Medium',color:COLORS.textMuted,textAlign:'center',marginVertical:8}}>— OR paste a YouTube URL —</Text>
-          <TextInput style={s.inp} placeholder="https://youtube.com/watch?v=..." placeholderTextColor={COLORS.textMuted} value={youtubeUrl} onChangeText={setYoutubeUrl} autoCapitalize="none" keyboardType="url"/>
-          {youtubeUrl.length > 0 && <Text style={{fontSize:11,color:COLORS.success,fontFamily:'Raleway_500Medium',marginTop:4}}>✓ YouTube URL will be used for property video</Text>}
-
-          {/* ── FLOOR PLANS ── */}
-          <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Floor Plans (Optional)</Text>
-          <TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploadingFloorPlan}>
-            {uploadingFloorPlan ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading floor plans...</Text></> : <><Ionicons name="map-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Floor Plans</Text></>}
-          </TouchableOpacity>
-          {floorPlanUrls.length>0&&<View style={s.imgGrid}>{floorPlanUrls.map((url,i)=>
-            <View key={i} style={s.fpDone}><Image source={{uri:url}} style={s.fpImg}/>
-              <TouchableOpacity style={s.rmBtn} onPress={()=>setFloorPlanUrls(floorPlanUrls.filter((_,idx)=>idx!==i))}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
-            </View>)}</View>}
-        </View>}
-        <View style={{height:120}}/>
-      </ScrollView>
-
-
-      <View style={s.bottomBar}>{step<4?
-        <TouchableOpacity style={s.nextBtn} onPress={validate}><Text style={s.nextTxt}>Continue</Text><Ionicons name="arrow-forward" size={20} color="#FFF"/></TouchableOpacity>:
-        <TouchableOpacity style={[s.submitBtn,loading&&{opacity:0.7}]} onPress={handleSubmit} disabled={loading}><Text style={s.submitTxt}>{loading?'Submitting...':'Submit Property'}</Text></TouchableOpacity>}
-      </View>
+        <View style={s.bottomBar}>{step<4?
+          <TouchableOpacity style={s.nextBtn} onPress={validate}><Text style={s.nextTxt}>Continue</Text><Ionicons name="arrow-forward" size={20} color="#FFF"/></TouchableOpacity>:
+          <TouchableOpacity style={[s.submitBtn,loading&&{opacity:0.7}]} onPress={handleSubmit} disabled={loading}><Text style={s.submitTxt}>{loading?'Submitting...':'Submit Property'}</Text></TouchableOpacity>}
+        </View>
+      </KeyboardAvoidingView>
 
       {/* Property Type Modal */}
       <Modal visible={showTypePicker} transparent animationType="slide">
@@ -343,7 +344,6 @@ export default function AddPropertyScreen({ navigation }) {
             </TouchableOpacity>}/>
         </View></View>
       </Modal>
-      </KeyboardAvoidingView>
     </View>
   );
 }
