@@ -214,7 +214,7 @@ export default function AddPropertyScreen({ navigation }) {
 
   return (
     <View style={s.container}>
-      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
         <View style={s.header}>
           <TouchableOpacity onPress={() => step > 1 ? setStep(step-1) : navigation.goBack()} style={s.backBtn}><Ionicons name="chevron-back" size={24} color={COLORS.text} /></TouchableOpacity>
