@@ -44,25 +44,28 @@ export default function AddPropertyScreen({ navigation }) {
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
   // Amenities
-  const [allAmenities, setAllAmenities] = useState([]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [customAmenity, setCustomAmenity] = useState('');
   // Map Picker
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [tempCoords, setTempCoords] = useState(null);
   const [mapRegion, setMapRegion] = useState({ latitude: 39.8283, longitude: -98.5795, latitudeDelta: 40, longitudeDelta: 40 }); // Default: USA Center zoomed out
 
-  useEffect(() => { loadPropertyTypes(); loadAmenities(); }, []);
+  useEffect(() => { loadPropertyTypes(); }, []);
 
   const loadPropertyTypes = async () => {
     try { const r = await propertyTypeAPI.list(); setPropertyTypes(r.data || []); } catch(e) {}
   };
 
-  const loadAmenities = async () => {
-    try { const r = await amenityAPI.list(); setAllAmenities(r.data || []); } catch(e) {}
+  const addAmenity = () => {
+    if (customAmenity.trim() && !selectedAmenities.includes(customAmenity.trim())) {
+      setSelectedAmenities([...selectedAmenities, customAmenity.trim()]);
+      setCustomAmenity('');
+    }
   };
 
-  const toggleAmenity = (id) => {
-    setSelectedAmenities(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
+  const removeAmenity = (am) => {
+    setSelectedAmenities(selectedAmenities.filter(a => a !== am));
   };
 
   const getGPS = async () => {
@@ -282,22 +285,38 @@ export default function AddPropertyScreen({ navigation }) {
             {/* ── AMENITIES MULTI-SELECT ── */}
             <View style={s.ig}>
               <Text style={s.lb}>Amenities</Text>
-              <Text style={{fontSize:11,color:COLORS.textMuted,fontFamily:'Raleway_400Regular',marginBottom:6}}>Tap to select amenities</Text>
-              {allAmenities.length > 0 ? (
+              <Text style={{fontSize:11,color:COLORS.textMuted,fontFamily:'Raleway_400Regular',marginBottom:6}}>Add amenities one by one (e.g. Swimming Pool, Gym)</Text>
+              
+              <View style={{flexDirection: 'row', gap: 8, marginBottom: 12}}>
+                <TextInput 
+                  style={[s.inp, {flex: 1}]} 
+                  placeholder="Type an amenity..." 
+                  placeholderTextColor={COLORS.textMuted} 
+                  value={customAmenity} 
+                  onChangeText={setCustomAmenity} 
+                  onSubmitEditing={addAmenity}
+                />
+                <TouchableOpacity 
+                  style={{backgroundColor: COLORS.primary, borderRadius: SIZES.radius.md, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center'}} 
+                  onPress={addAmenity}
+                >
+                  <Text style={{color: '#FFF', fontFamily: 'Raleway_700Bold'}}>Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {selectedAmenities.length > 0 ? (
                 <View style={s.chipGrid}>
-                  {allAmenities.map(am => {
-                    const selected = selectedAmenities.includes(am.id);
-                    return (
-                      <TouchableOpacity key={am.id} style={[s.chip, selected && s.chipActive]} onPress={() => toggleAmenity(am.id)}>
-                        <Text style={{fontSize:12,marginRight:4}}>{am.icon || '✦'}</Text>
-                        <Text style={[s.chipTxt, selected && s.chipTxtActive]}>{am.name}</Text>
-                        {selected && <Ionicons name="checkmark-circle" size={14} color="#FFF" style={{marginLeft:2}}/>}
+                  {selectedAmenities.map((am, i) => (
+                    <View key={i} style={[s.chip, s.chipActive]}>
+                      <Text style={[s.chipTxt, s.chipTxtActive]}>{am}</Text>
+                      <TouchableOpacity onPress={() => removeAmenity(am)} style={{marginLeft: 6}}>
+                        <Ionicons name="close-circle" size={16} color="#FFF"/>
                       </TouchableOpacity>
-                    );
-                  })}
+                    </View>
+                  ))}
                 </View>
               ) : (
-                <Text style={{fontSize:12,color:COLORS.textMuted,fontFamily:'Raleway_400Regular'}}>No amenities available</Text>
+                <Text style={{fontSize:12,color:COLORS.textMuted,fontFamily:'Raleway_400Regular'}}>No amenities added yet</Text>
               )}
             </View>
           </View>}
