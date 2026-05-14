@@ -49,13 +49,14 @@ export const PushNotificationService = {
           token = tokenData.data;
           console.log('Got Expo Push Token:', token);
 
-        // Send to backend
-        if (token) {
-          try {
-            await userAPI.updateFCMToken(token);
-            console.log('Successfully synced token with backend');
-          } catch (e) {
-            console.log('Failed to sync token with backend:', e);
+          // Send to backend
+          if (token) {
+            try {
+              await userAPI.updateFCMToken(token);
+              console.log('Successfully synced token with backend');
+            } catch (e) {
+              console.log('Failed to sync token with backend:', e);
+            }
           }
         }
       } catch (e) {
