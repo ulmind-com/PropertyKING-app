@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { notificationAPI } from '../../api';
-import { formatDistanceToNow } from 'date-fns';
+
 
 export default function NotificationsScreen({ navigation }) {
   const [notifications, setNotifications] = useState([]);
@@ -68,6 +68,21 @@ export default function NotificationsScreen({ navigation }) {
     }
   };
 
+  const formatTimeAgo = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[s.item, !item.is_read && s.itemUnread]}
@@ -80,7 +95,7 @@ export default function NotificationsScreen({ navigation }) {
       <View style={s.content}>
         <Text style={[s.title, !item.is_read && s.titleUnread]} numberOfLines={1}>{item.title}</Text>
         <Text style={s.body} numberOfLines={2}>{item.body}</Text>
-        <Text style={s.time}>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</Text>
+        <Text style={s.time}>{formatTimeAgo(item.created_at)}</Text>
       </View>
       {!item.is_read && <View style={s.dot} />}
     </TouchableOpacity>
