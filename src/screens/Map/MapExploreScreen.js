@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Image, Dimensions,
+  View, Text, StyleSheet, TouchableOpacity, Image as RNImage, Dimensions,
   StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { Image } from 'expo-image';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
 import { MapView, Marker } from '../../components/Map/MapViewComponent.native';
@@ -53,9 +54,8 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   const [canFreeze, setCanFreeze] = useState(false);
 
   const handleImageLoad = useCallback(() => {
-    // Wait 500ms AFTER image loads before freezing the marker bitmap.
-    // This gives Android Maps time to rasterize the clipped view correctly.
-    setTimeout(() => setCanFreeze(true), 500);
+    // Give Android Maps 600ms to rasterize the correctly-clipped bitmap
+    setTimeout(() => setCanFreeze(true), 600);
   }, []);
 
   return (
@@ -64,16 +64,13 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
       onPress={onPress}
       tracksViewChanges={!canFreeze}
     >
-      {/* Outer View = white border ring */}
       <View style={st.markerBorderRing}>
-        {/* Inner View = clip container (overflow: hidden makes the image circular) */}
-        <View style={st.markerClip}>
-          <Image
-            source={{ uri: getImage }}
-            style={st.markerImg}
-            onLoad={handleImageLoad}
-          />
-        </View>
+        <Image
+          source={{ uri: getImage }}
+          style={st.markerImg}
+          contentFit="cover"
+          onLoad={handleImageLoad}
+        />
       </View>
     </Marker>
   );
@@ -309,6 +306,7 @@ export default function MapExploreScreen({ navigation }) {
             <Image
               source={{ uri: getMarkerImage(selectedProperty) }}
               style={st.cardImage}
+              contentFit="cover"
             />
 
             {/* Card Info */}
@@ -447,8 +445,7 @@ const st = StyleSheet.create({
   },
 
   // ─── MARKERS ───
-  // Outer ring acts as the white border. Using padding instead of borderWidth
-  // so the border doesn't interfere with image clipping on Android.
+  // White ring as the border, expo-image handles its own borderRadius clipping natively
   markerBorderRing: {
     width: 52,
     height: 52,
@@ -458,18 +455,12 @@ const st = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // This View clips the image into a circle via overflow: hidden.
-  markerClip: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    overflow: 'hidden',
-    backgroundColor: '#333',
-  },
-  // Image fills the clip container. No borderRadius here — the parent clips it.
+  // expo-image natively clips with borderRadius — no overflow:hidden hack needed
   markerImg: {
     width: 46,
     height: 46,
+    borderRadius: 23,
+    backgroundColor: '#333',
   },
 
   // ─── BOTTOM PROPERTY CARD ───
