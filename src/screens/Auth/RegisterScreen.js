@@ -1,69 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
+import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '../../context/AuthContext';
 
-const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// Custom animated Input component
-const AnimatedInput = ({ icon, label, password, phone, value, onChangeText, ...props }) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [showPass, setShowPass] = useState(false);
-  
-  const focusAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(focusAnim, {
-      toValue: isFocused ? 1 : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [isFocused]);
-
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [COLORS.borderLight, COLORS.primary]
-  });
-
-  const borderWidth = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.5]
-  });
-
+// Gradient Border Button Component
+const GradientBorderButton = ({ title, icon, onPress, loading }) => {
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <Animated.View style={[styles.inputBox, { borderColor, borderWidth }]}>
-        
-        {phone ? (
-          <View style={styles.countryCode}>
-            <Text style={styles.flag}>🇺🇸</Text>
-            <Text style={styles.codeText}>+1</Text>
-            <View style={styles.phoneDivider} />
-          </View>
-        ) : (
-          <Ionicons name={icon} size={20} color={isFocused ? COLORS.primary : COLORS.textMuted} />
-        )}
-        
-        <TextInput 
-          style={styles.input} 
-          placeholderTextColor={COLORS.textMuted} 
-          secureTextEntry={password && !showPass}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          value={value}
-          onChangeText={onChangeText}
-          {...props} 
-        />
-        {password && (
-          <TouchableOpacity onPress={() => setShowPass(!showPass)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
-            <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
-          </TouchableOpacity>
-        )}
-      </Animated.View>
-    </View>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} disabled={loading} style={styles.gradientBtnWrapper}>
+      <LinearGradient
+        colors={['#8B5CF6', '#EC4899', '#F59E0B']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientBorder}
+      >
+        <View style={styles.gradientBtnInner}>
+          {loading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              {icon && <Ionicons name={icon} size={20} color="#FFF" />}
+              <Text style={styles.gradientBtnText}>{title}</Text>
+            </View>
+          )}
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 };
 
@@ -76,15 +41,10 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Entrance Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true })
-    ]).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, []);
 
   const handleRegister = async () => {
@@ -98,107 +58,125 @@ export default function RegisterScreen({ navigation }) {
       await register({ full_name: fullName, email, phone: cleanPhone, password });
     } catch (e) { 
       const detail = e.response?.data?.detail;
-      setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed. Please try again.')); 
+      setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed.')); 
     }
     setLoading(false);
   };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      {/* Premium Gradient Header Background */}
-      <View style={styles.headerBackground}>
-        <LinearGradient
-          colors={['#1E1B4B', '#4C1D95', COLORS.bg]}
-          locations={[0, 0.6, 1]}
-          style={StyleSheet.absoluteFillObject}
-        />
+      {/* Top Wavy White Section */}
+      <View style={styles.headerArea}>
+        <View style={styles.headerContent}>
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            {/* Back Button / Logo Box style */}
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.logoBox}>
+              <Ionicons name="chevron-back" size={20} color="#FFF" style={{ transform: [{ rotate: '-45deg' }] }} />
+            </TouchableOpacity>
+            
+            {/* Sign In Link */}
+            <TouchableOpacity style={styles.signinLink} onPress={() => navigation.navigate('Login')}>
+              <Ionicons name="log-in-outline" size={22} color="#000" />
+              <Text style={styles.signinText}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={styles.mainTitle}>Sign Up</Text>
+        </View>
+
+        {/* The Wave SVG */}
+        <View style={styles.waveContainer}>
+          <Svg height={100} width={width} viewBox={`0 0 ${width} 100`} preserveAspectRatio="none">
+            <Path 
+              d={`M0,0 L0,50 Q${width * 0.25},100 ${width * 0.5},50 T${width},0 L${width},0 Z`}
+              fill="#FFFFFF"
+            />
+          </Svg>
+        </View>
       </View>
 
       <Animated.ScrollView 
         contentContainerStyle={styles.scroll} 
         showsVerticalScrollIndicator={false}
         bounces={false}
-        style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+        style={{ opacity: fadeAnim }}
       >
-        <View style={styles.topNav}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join PropertyKING to unlock premium real estate deals.</Text>
-
+        <View style={styles.formContainer}>
+          
           {error ? (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={18} color={COLORS.error} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
+            <Text style={styles.errorText}>{error}</Text>
           ) : null}
 
-          <View style={styles.form}>
-            <AnimatedInput 
-              icon="person-outline" 
-              label="Full Name" 
-              placeholder="e.g. John Doe" 
-              value={fullName} 
-              onChangeText={setFullName} 
-              autoCapitalize="words" 
+          {/* Full Name Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput 
+              style={styles.input}
+              placeholder="John Doe"
+              placeholderTextColor="#666"
+              value={fullName}
+              onChangeText={setFullName}
+              autoCapitalize="words"
+              textAlign="center"
             />
+          </View>
 
-            <AnimatedInput 
-              icon="mail-outline" 
-              label="Email Address" 
-              placeholder="e.g. john@propertyking.com" 
-              value={email} 
-              onChangeText={setEmail} 
-              keyboardType="email-address" 
-              autoCapitalize="none" 
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput 
+              style={styles.input}
+              placeholder="john@example.com"
+              placeholderTextColor="#666"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              textAlign="center"
             />
+          </View>
 
-            <AnimatedInput 
-              phone 
-              label="Phone Number" 
-              placeholder="(555) 123-4567" 
-              value={phone} 
-              onChangeText={setPhone} 
+          {/* Phone Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Phone</Text>
+            <TextInput 
+              style={styles.input}
+              placeholder="+1 (555) 123-4567"
+              placeholderTextColor="#666"
+              value={phone}
+              onChangeText={setPhone}
               keyboardType="phone-pad"
-              maxLength={15}
+              textAlign="center"
             />
-
-            <AnimatedInput 
-              icon="lock-closed-outline" 
-              label="Password" 
-              placeholder="Create a secure password" 
-              value={password} 
-              onChangeText={setPassword} 
-              password 
-            />
-
-            <View style={{ marginTop: 10 }}>
-              <TouchableOpacity activeOpacity={0.8} onPress={handleRegister} disabled={loading}>
-                <LinearGradient
-                  colors={[COLORS.primary, '#6D28D9']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={[styles.signupBtn, loading && { opacity: 0.7 }]}
-                >
-                  <Text style={styles.signupBtnText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
-                  {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" style={{marginLeft: 8}}/>}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
           </View>
 
-          <View style={styles.bottomText}>
-            <Text style={styles.bottomTextNormal}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.signInLink}>Sign In now</Text>
-            </TouchableOpacity>
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput 
+              style={styles.input}
+              placeholder="••••••••••••"
+              placeholderTextColor="#666"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              textAlign="center"
+            />
           </View>
 
+          {/* Sign Up Button */}
+          <View style={{ marginTop: 20 }}>
+            <GradientBorderButton 
+              title="Create Account" 
+              icon="person-add-outline"
+              onPress={handleRegister}
+              loading={loading}
+            />
+          </View>
+          
         </View>
       </Animated.ScrollView>
     </KeyboardAvoidingView>
@@ -206,86 +184,114 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, backgroundColor: '#050505' },
   
-  headerBackground: {
-    height: height * 0.35,
-    width: '100%',
-    position: 'absolute',
-    top: 0,
-    zIndex: 0,
+  headerArea: {
+    backgroundColor: '#050505',
+    zIndex: 1,
   },
-  
-  topNav: {
+  headerContent: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
     paddingHorizontal: 24,
     paddingBottom: 20,
   },
-  backBtn: { 
-    width: 44, 
-    height: 44, 
-    borderRadius: 14, 
-    backgroundColor: 'rgba(255,255,255,0.15)', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    borderWidth: 1, 
-    borderColor: 'rgba(255,255,255,0.2)' 
-  },
-
-  scroll: { 
-    flexGrow: 1, 
-    paddingTop: height * 0.12,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 28,
-    paddingTop: 36,
-    paddingBottom: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-
-  title: { fontSize: 30, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, letterSpacing: -0.5 },
-  subtitle: { fontSize: 15, fontFamily: 'Raleway_500Medium', color: COLORS.textSecondary, marginTop: 8, marginBottom: 10, lineHeight: 22 },
-
-  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.errorLight, padding: 14, borderRadius: SIZES.radius.md, marginTop: 15, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' },
-  errorText: { flex: 1, fontSize: 13, color: COLORS.error, fontFamily: 'Raleway_600SemiBold', lineHeight: 18 },
-
-  form: { marginTop: 24, gap: 20 },
-  inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.text, paddingLeft: 4 },
-  inputBox: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 12, 
-    backgroundColor: COLORS.bgAlt, 
-    borderRadius: SIZES.radius.lg, 
-    paddingHorizontal: 18, 
-    height: 58,
-  },
-  input: { flex: 1, fontSize: 15, color: COLORS.text, fontFamily: 'Raleway_500Medium', height: '100%' },
-
-  countryCode: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  flag: { fontSize: 20 },
-  codeText: { fontSize: 15, fontFamily: 'Raleway_700Bold', color: COLORS.text },
-  phoneDivider: { width: 1.5, height: 26, backgroundColor: COLORS.borderLight, marginLeft: 4, marginRight: 4 },
-
-  signupBtn: { 
+  topBar: {
     flexDirection: 'row',
-    height: 60, 
-    borderRadius: SIZES.radius.xl, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    ...SHADOWS.primary 
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
   },
-  signupBtnText: { color: '#FFF', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 },
+  logoBox: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#000',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '45deg' }]
+  },
+  signinLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  signinText: {
+    fontSize: 16,
+    fontFamily: 'Raleway_700Bold',
+    color: '#000',
+  },
+  mainTitle: {
+    fontSize: 42,
+    fontFamily: 'Raleway_800ExtraBold',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: -10,
+  },
+  waveContainer: {
+    width: width,
+    height: 100,
+    backgroundColor: '#050505',
+    marginTop: -1,
+  },
+  
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 32,
+    paddingTop: 10,
+    paddingBottom: 60,
+  },
+  formContainer: {
+    gap: 24,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontFamily: 'Raleway_600SemiBold',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: -10,
+  },
+  inputGroup: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  label: {
+    color: '#888',
+    fontSize: 14,
+    fontFamily: 'Raleway_600SemiBold',
+  },
+  input: {
+    width: '100%',
+    height: 56,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 30,
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Raleway_500Medium',
+    paddingHorizontal: 24,
+  },
 
-  bottomText: { flexDirection: 'row', justifyContent: 'center', marginTop: 32, paddingBottom: 20 },
-  bottomTextNormal: { color: COLORS.textSecondary, fontFamily: 'Raleway_500Medium', fontSize: 15 },
-  signInLink: { color: COLORS.primary, fontFamily: 'Raleway_800ExtraBold', fontSize: 15 },
+  gradientBtnWrapper: {
+    width: '100%',
+    height: 56,
+    borderRadius: 30,
+    overflow: 'hidden',
+  },
+  gradientBorder: {
+    flex: 1,
+    padding: 2, // Width of the gradient border
+    borderRadius: 30,
+  },
+  gradientBtnInner: {
+    flex: 1,
+    backgroundColor: '#050505',
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradientBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Raleway_700Bold',
+  },
 });
