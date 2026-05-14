@@ -56,17 +56,17 @@ export default function NotificationsScreen({ navigation }) {
     const type = item.type;
     
     if (type === 'new_inquiry') {
-      navigation.navigate('Profile', { screen: 'PropertyLeads' });
+      navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'PropertyLeads' } });
       return;
     }
     
     if (type === 'inquiry_response') {
-      navigation.navigate('Profile', { screen: 'Inquiries' });
+      navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'Inquiries' } });
       return;
     }
     
     if (type === 'property_approved' || type === 'property_rejected') {
-      navigation.navigate('Profile', { screen: 'MyListings' });
+      navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'MyListings' } });
       return;
     }
 
