@@ -76,11 +76,11 @@ export default function AddPropertyScreen({ navigation }) {
       // Reverse geocode
       const [geo] = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       if (geo) {
-        if (!address && geo.street) setAddress(`${geo.streetNumber || ''} ${geo.street}`.trim());
-        if (!city && geo.city) setCity(geo.city);
-        if (!stateSel && geo.region) setStateSel(geo.region.length === 2 ? geo.region : '');
-        if (!zipCode && geo.postalCode) setZipCode(geo.postalCode);
-        if (!county && geo.subregion) setCounty(geo.subregion);
+        setAddress(`${geo.streetNumber || ''} ${geo.street || ''}`.trim());
+        setCity(geo.city || '');
+        setStateSel(geo.region?.length === 2 ? geo.region : '');
+        setZipCode(geo.postalCode || '');
+        setCounty(geo.subregion || '');
       }
     } catch(e) { Alert.alert('Error', 'Could not get location'); }
     setGpsLoading(false);
