@@ -47,10 +47,10 @@ const DARK_MAP_STYLE = [
 ];
 
 // ──────────────────────────────────────────────────────────────
-// The Ultimate Android Map Marker Fix (Masking Hack)
-// Since Android Map snapshotter fails to clip images with borderRadius,
-// we instead render a SQUARE image and overlay a THICK WHITE RING 
-// over it to hide the square corners! 100% Guaranteed to be round!
+// Ultimate Stable Android Map Marker
+// Removing ALL elevation and shadows! Android Map's snapshot
+// engine severely crops markers if they have elevation or shadows.
+// A simple strict-sized view guarantees it will not be cropped.
 // ──────────────────────────────────────────────────────────────
 const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   const [loaded, setLoaded] = useState(false);
@@ -60,50 +60,26 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
       coordinate={{ latitude: coords.lat, longitude: coords.lng }}
       onPress={onPress}
       tracksViewChanges={!loaded}
-      anchor={{ x: 0.5, y: 1 }}
+      anchor={{ x: 0.5, y: 0.5 }}
     >
       <View style={{ 
-        width: 60, height: 70, alignItems: 'center', 
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 
+        width: 44, 
+        height: 44, 
+        borderRadius: 22,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}>
-        
-        {/* Base Image (Square) */}
-        <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
-          <RNImage
-            source={{ uri: getImage }}
-            style={{ width: 40, height: 40, backgroundColor: '#333' }}
-            resizeMode="cover"
-            onLoad={() => {
-              if (!loaded) setTimeout(() => setLoaded(true), 100);
-            }}
-          />
-          
-          {/* Overlay Mask Ring - Paints thick white over the square corners */}
-          <View style={{
-            position: 'absolute',
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            borderWidth: 10,
-            borderColor: '#FFFFFF'
-          }} />
-        </View>
-
-        {/* Pin Bottom Triangle */}
-        <View style={{
-          width: 0,
-          height: 0,
-          borderLeftWidth: 8,
-          borderRightWidth: 8,
-          borderTopWidth: 10,
-          borderStyle: 'solid',
-          backgroundColor: 'transparent',
-          borderLeftColor: 'transparent',
-          borderRightColor: 'transparent',
-          borderTopColor: '#FFFFFF',
-          marginTop: -2,
-        }} />
-
+        <RNImage
+          source={{ uri: getImage }}
+          style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+          onLoad={() => {
+            if (!loaded) setLoaded(true);
+          }}
+        />
       </View>
     </Marker>
   );
