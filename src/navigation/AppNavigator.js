@@ -25,6 +25,7 @@ import AllInquiriesScreen from '../screens/Profile/AllInquiriesScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
 import MapExploreScreen from '../screens/Map/MapExploreScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
+import { PushNotificationService } from '../services/PushNotificationService';
 import FloatingCompareButton from '../components/FloatingCompareButton';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -187,6 +188,19 @@ export default function AppNavigator() {
   const { isAuthenticated, loading } = useAuth();
   const navigationRef = React.useRef(null);
   const [routeName, setRouteName] = React.useState();
+
+  React.useEffect(() => {
+    let unsubs;
+    if (isAuthenticated) {
+      // Small timeout to ensure NavigationContainer is ready
+      setTimeout(() => {
+        unsubs = PushNotificationService.setupNotificationListeners(navigationRef.current);
+      }, 1000);
+    }
+    return () => {
+      if (unsubs) unsubs();
+    };
+  }, [isAuthenticated]);
 
   if (loading) return null;
 

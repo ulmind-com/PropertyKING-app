@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI, userAPI } from '../api';
+import { PushNotificationService } from '../services/PushNotificationService';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -23,6 +24,9 @@ export function AuthProvider({ children }) {
           await AsyncStorage.setItem('pk_user', JSON.stringify(freshUser));
           setUser(freshUser);
           setIsAuthenticated(true);
+          
+          // Setup push notifications
+          PushNotificationService.registerForPushNotificationsAsync();
         } catch (e) {
           // Token expired or invalid — clear everything
           console.log('Token expired, clearing session');
@@ -42,6 +46,10 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('pk_refresh_token', refresh_token);
     await AsyncStorage.setItem('pk_user', JSON.stringify(u));
     setUser(u); setIsAuthenticated(true);
+    
+    // Setup push notifications
+    PushNotificationService.registerForPushNotificationsAsync();
+    
     return u;
   };
 
@@ -52,6 +60,10 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('pk_refresh_token', refresh_token);
     await AsyncStorage.setItem('pk_user', JSON.stringify(u));
     setUser(u); setIsAuthenticated(true);
+    
+    // Setup push notifications
+    PushNotificationService.registerForPushNotificationsAsync();
+    
     return u;
   };
 
