@@ -52,12 +52,29 @@ export default function NotificationsScreen({ navigation }) {
       } catch (e) {}
     }
 
-    // Handle navigation based on type and data
+    // Context-aware Navigation
+    const type = item.type;
+    
+    if (type === 'new_inquiry') {
+      navigation.navigate('Profile', { screen: 'PropertyLeads' });
+      return;
+    }
+    
+    if (type === 'inquiry_response') {
+      navigation.navigate('Profile', { screen: 'Inquiries' });
+      return;
+    }
+    
+    if (type === 'property_approved' || type === 'property_rejected') {
+      navigation.navigate('Profile', { screen: 'MyListings' });
+      return;
+    }
+
+    // Default: go to PropertyDetails if property_id is present (e.g. price_drop, new_listing, etc)
     const propId = item.data?.property_id || item.data?.property_slug;
     if (propId) {
       try {
         const { propertyAPI } = require('../../api');
-        const Toast = require('react-native-toast-message').default;
         
         const res = await propertyAPI.getBySlug(propId);
         if (res.data) {
