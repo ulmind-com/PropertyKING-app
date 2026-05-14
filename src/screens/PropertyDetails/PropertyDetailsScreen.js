@@ -311,7 +311,20 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           </View>
 
-
+          {/* Amenities */}
+          {property.amenity_names?.length > 0 && (
+            <View style={styles.section}>
+              <Text style={FONTS.h4}>Amenities</Text>
+              <View style={styles.amenityGrid}>
+                {property.amenity_names.map((name, i) => (
+                  <View key={i} style={styles.amenityChip}>
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.primary} />
+                    <Text style={styles.amenityText}>{name}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* US Specific Details */}
           {(d.mls_number || d.property_tax_annual || d.hoa_fee > 0 || d.zoning) && (
@@ -626,7 +639,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 13, color: COLORS.textMuted },
   infoValue: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.text, textTransform: 'capitalize' },
 
-  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
+  amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
   amenityChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: COLORS.bgAlt, borderRadius: SIZES.radius.full },
   amenityText: { fontSize: 13, fontFamily: 'Raleway_500Medium', color: COLORS.textSecondary },
 
