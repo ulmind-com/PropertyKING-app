@@ -181,7 +181,11 @@ export default function MapExploreScreen({ navigation }) {
   // ─── SEARCH ───
   const handleSearch = () => {
     if (searchText.trim()) {
-      navigation.navigate('PropertyListing', { search: searchText });
+      // Navigate to Explore tab → PropertyListing with search param
+      navigation.navigate('Explore', {
+        screen: 'ExploreMain',
+        params: { search: searchText },
+      });
     }
   };
 
