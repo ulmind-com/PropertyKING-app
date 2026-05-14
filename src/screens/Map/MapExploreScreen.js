@@ -178,15 +178,53 @@ export default function MapExploreScreen({ navigation }) {
     Keyboard.dismiss();
   }, [selectedProperty]);
 
-  // ─── SEARCH ───
-  const handleSearch = () => {
-    if (searchText.trim()) {
-      // Navigate to Explore tab → PropertyListing with search param
-      navigation.navigate('Explore', {
-        screen: 'ExploreMain',
-        params: { search: searchText },
-      });
+  // ─── SEARCH (geocode → pan map → load properties) ───
+  const [searching, setSearching] = useState(false);
+  const handleSearch = async () => {
+    const query = searchText.trim();
+    if (!query) return;
+    Keyboard.dismiss();
+    setSearching(true);
+    try {
+      // Use expo-location to geocode the search text into coordinates
+      const results = await Location.geocodeAsync(query);
+      if (results && results.length > 0) {
+        const { latitude, longitude } = results[0];
+        const newCoords = { lat: latitude, lng: longitude };
+
+        // Pan map to the searched location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.08,
+            longitudeDelta: 0.08,
+          }, 800);
+        }
+
+        // Load properties near the searched location
+        await loadProperties(newCoords, 50);
+      } else {
+        // No geocode result — try loading properties by search text via API
+        setLoading(true);
+        try {
+          const res = await propertyAPI.nearby({
+            lat: userCoords?.lat || 40.7128,
+            lng: userCoords?.lng || -74.006,
+            radius_miles: 500,
+            limit: 50,
+            search: query,
+          });
+          setProperties(res.data?.properties || []);
+        } catch (e) {
+          console.log('[MapExplore] search fallback error:', e);
+        }
+        setLoading(false);
+      }
+    } catch (e) {
+      console.log('[MapExplore] geocode error:', e);
     }
+    setSearching(false);
   };
 
   // ─── REGION CHANGE ───
@@ -261,17 +299,22 @@ export default function MapExploreScreen({ navigation }) {
       {/* ═══════════ SEARCH BAR OVERLAY ═══════════ */}
       <View style={st.searchOverlay}>
         <View style={st.searchBar}>
-          <Ionicons name="search" size={18} color={COLORS.textMuted} />
+          {searching ? (
+            <ActivityIndicator size={18} color={COLORS.primary} />
+          ) : (
+            <Ionicons name="search" size={18} color={COLORS.textMuted} />
+          )}
           <TextInput
             style={st.searchInput}
-            placeholder="Search properties..."
+            placeholder="Search city, e.g. Austin, Miami..."
             placeholderTextColor={COLORS.textMuted}
             value={searchText}
             onChangeText={setSearchText}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
+            editable={!searching}
           />
-          {searchText.length > 0 && (
+          {searchText.length > 0 && !searching && (
             <TouchableOpacity onPress={() => setSearchText('')}>
               <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
