@@ -54,7 +54,7 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   const [canFreeze, setCanFreeze] = useState(false);
 
   const handleImageLoad = useCallback(() => {
-    // Give Android Maps 600ms to rasterize the correctly-clipped bitmap
+    // Give Android Maps time to rasterize the correctly-clipped bitmap
     setTimeout(() => setCanFreeze(true), 600);
   }, []);
 
@@ -65,12 +65,14 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
       tracksViewChanges={!canFreeze}
     >
       <View style={st.markerBorderRing}>
-        <Image
-          source={{ uri: getImage }}
-          style={st.markerImg}
-          contentFit="cover"
-          onLoad={handleImageLoad}
-        />
+        <View style={st.markerImgContainer}>
+          <RNImage
+            source={{ uri: getImage }}
+            style={st.markerImg}
+            resizeMode="cover"
+            onLoad={handleImageLoad}
+          />
+        </View>
       </View>
     </Marker>
   );
@@ -529,12 +531,17 @@ const st = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // expo-image natively clips with borderRadius — no overflow:hidden hack needed
-  markerImg: {
+  // Container to strictly enforce clipping for React Native Maps
+  markerImgContainer: {
     width: 46,
     height: 46,
     borderRadius: 23,
+    overflow: 'hidden',
     backgroundColor: '#333',
+  },
+  markerImg: {
+    width: '100%',
+    height: '100%',
   },
 
   // ─── BOTTOM PROPERTY CARD ───
