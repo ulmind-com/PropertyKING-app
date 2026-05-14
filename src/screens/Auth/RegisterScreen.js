@@ -7,26 +7,24 @@ import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
-// Gradient Border Button Component
-const GradientBorderButton = ({ title, icon, onPress, loading }) => {
+// Glassy White Button Component
+const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
   return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPress} disabled={loading} style={styles.gradientBtnWrapper}>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} disabled={loading} style={styles.glassBtnWrapper}>
       <LinearGradient
-        colors={['#8B5CF6', '#EC4899', '#F59E0B']}
+        colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.03)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.gradientBorder}
+        style={styles.glassBtnInner}
       >
-        <View style={styles.gradientBtnInner}>
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              {icon && <Ionicons name={icon} size={20} color="#FFF" />}
-              <Text style={styles.gradientBtnText}>{title}</Text>
-            </View>
-          )}
-        </View>
+        {loading ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {icon && <Ionicons name={icon} size={20} color="#FFF" />}
+            <Text style={styles.glassBtnText}>{title}</Text>
+          </View>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -178,9 +176,9 @@ export default function RegisterScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Sign Up Button */}
-          <View style={{ marginTop: 20 }}>
-            <GradientBorderButton 
+          {/* Create Account Button */}
+          <View style={{ marginTop: 10 }}>
+            <GlassyWhiteButton 
               title="Create Account" 
               icon="person-add-outline"
               onPress={handleRegister}
@@ -304,28 +302,23 @@ const styles = StyleSheet.create({
     right: 20,
   },
 
-  gradientBtnWrapper: {
+  glassBtnWrapper: {
     width: '100%',
-    height: 54,
+    height: 56,
     borderRadius: 30,
     overflow: 'hidden',
-    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  gradientBorder: {
+  glassBtnInner: {
     flex: 1,
-    padding: 2, // Width of the gradient border
-    borderRadius: 30,
-  },
-  gradientBtnInner: {
-    flex: 1,
-    backgroundColor: '#050505',
-    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gradientBtnText: {
+  glassBtnText: {
     color: '#FFF',
     fontSize: 16,
     fontFamily: 'Raleway_700Bold',
+    letterSpacing: 1,
   },
 });
