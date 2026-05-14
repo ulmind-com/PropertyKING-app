@@ -53,8 +53,25 @@ export default function NotificationsScreen({ navigation }) {
     }
 
     // Handle navigation based on type and data
-    if (item.data?.property_slug) {
-      navigation.navigate('PropertyDetails', { slug: item.data.property_slug });
+    const propId = item.data?.property_id || item.data?.property_slug;
+    if (propId) {
+      try {
+        const { propertyAPI } = require('../../api');
+        const Toast = require('react-native-toast-message').default;
+        
+        const res = await propertyAPI.getBySlug(propId);
+        if (res.data) {
+          navigation.navigate('PropertyDetails', { property: res.data });
+        }
+      } catch (err) {
+        console.log('Error loading property from notification', err);
+        const Toast = require('react-native-toast-message').default;
+        Toast.show({
+          type: 'error',
+          text1: 'Not Found',
+          text2: 'This property may have been removed or is unavailable.'
+        });
+      }
     }
   };
 
