@@ -5,13 +5,15 @@ import Constants from 'expo-constants';
 import { userAPI } from '../api';
 
 // How notifications should be handled when the app is foregrounded
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+if (Constants.appOwnership !== 'expo') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 export const PushNotificationService = {
   async registerForPushNotificationsAsync() {
@@ -77,6 +79,10 @@ export const PushNotificationService = {
   },
 
   setupNotificationListeners(navigation) {
+    if (Constants.appOwnership === 'expo') {
+      return () => {};
+    }
+
     // When a notification is received while app is in foreground
     const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
       console.log('Foreground notification received:', notification.request.content.title);
