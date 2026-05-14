@@ -387,7 +387,8 @@ export default function AddPropertyScreen({ navigation }) {
             <MapView 
               style={{flex:1}} 
               initialRegion={mapRegion}
-              onPress={(e) => setTempCoords(e.nativeEvent.coordinate)}
+              onPress={(e) => { if(e.nativeEvent.coordinate) setTempCoords(e.nativeEvent.coordinate); }}
+              onLongPress={(e) => { if(e.nativeEvent.coordinate) setTempCoords(e.nativeEvent.coordinate); }}
             >
               {tempCoords && <Marker coordinate={tempCoords} pinColor={COLORS.primary} />}
             </MapView>
