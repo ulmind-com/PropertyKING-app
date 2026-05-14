@@ -143,10 +143,9 @@ const darkMapStyle = [
         customMapStyle={darkMapStyle}
       />
 
-      {/* Fixed Pin in Center */}
       <View style={s.centerPinMarker}>
         <View style={s.pin}>
-          <Ionicons name="location" size={40} color={COLORS.primary} />
+          <Ionicons name="location" size={40} color="#FF3B30" />
         </View>
       </View>
 
@@ -156,7 +155,7 @@ const darkMapStyle = [
           <TouchableOpacity onPress={() => navigation.goBack()} style={s.circleBtn}>
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
-          <Text style={[FONTS.h3, { color: '#000', textShadowColor: '#FFF', textShadowRadius: 10 }]}>Select Location</Text>
+          <Text style={[FONTS.h3, { color: '#FFF', textShadowColor: '#000', textShadowRadius: 10 }]}>Select Location</Text>
           <TouchableOpacity onPress={locateUser} style={s.circleBtn}>
             <Ionicons name="locate" size={24} color={COLORS.primary} />
           </TouchableOpacity>
