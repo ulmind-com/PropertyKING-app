@@ -197,15 +197,18 @@ export default function MapExploreScreen({ navigation }) {
               key={prop.id}
               coordinate={{ latitude: coords.lat, longitude: coords.lng }}
               onPress={() => onMarkerPress(prop)}
+              onCalloutPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}
             >
-              <View style={st.markerWrap}>
-                <Image
-                  source={{ uri: getMarkerImage(prop) }}
-                  style={st.markerImg}
-                />
+              <View style={st.markerShadow}>
+                <View style={st.markerWrap}>
+                  <Image
+                    source={{ uri: getMarkerImage(prop) }}
+                    style={st.markerImg}
+                  />
+                </View>
               </View>
 
-              <Callout tooltip onPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}>
+              <Callout tooltip>
                 <View style={st.calloutContainer}>
                   {/* Top Box: Bedrooms */}
                   <View style={st.calloutBox}>
@@ -339,17 +342,30 @@ const st = StyleSheet.create({
   },
 
   // ─── MARKERS ───
-  markerWrap: {
+  markerShadow: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+    // ...SHADOWS.lg, // Removed shadow to avoid Android clipping bugs
   },
-  markerImg: {
+  markerWrap: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 3,
     borderColor: '#FFF',
     backgroundColor: '#333',
+    overflow: 'hidden', // Forces the image to be clipped to a perfect circle
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerImg: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
 
   // ─── CALLOUT ───
