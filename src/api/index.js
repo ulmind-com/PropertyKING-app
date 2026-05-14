@@ -49,7 +49,7 @@ export const propertyAPI = {
 export const propertyTypeAPI = { list: () => api.get('/property-types') };
 export const amenityAPI = { list: (cat) => api.get('/amenities', { params: { category: cat } }) };
 export const favoriteAPI = { list: (p) => api.get('/favorites', { params: p }), add: (id) => api.post(`/favorites/${id}`), remove: (id) => api.delete(`/favorites/${id}`) };
-export const inquiryAPI = { create: (data) => api.post('/inquiries', data), sent: (p) => api.get('/inquiries/sent', { params: p }), received: (p) => api.get('/inquiries/received', { params: p }) };
+export const inquiryAPI = { create: (data) => api.post('/inquiries', data), sent: (p) => api.get('/inquiries/sent', { params: p }), received: (p) => api.get('/inquiries/received', { params: p }), respond: (id, data) => api.put(`/inquiries/${id}/respond`, data) };
 export const reviewAPI = { getForProperty: (id, p) => api.get(`/reviews/property/${id}`, { params: p }), create: (data) => api.post('/reviews', data) };
 export const notificationAPI = { list: (p) => api.get('/notifications', { params: p }), markRead: (id) => api.put(`/notifications/${id}/read`), markAllRead: () => api.put('/notifications/read-all') };
 

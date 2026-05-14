@@ -21,6 +21,7 @@ import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
 import MyListingsScreen from '../screens/Profile/MyListingsScreen';
 import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
+import AllInquiriesScreen from '../screens/Profile/AllInquiriesScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
 import MapExploreScreen from '../screens/Map/MapExploreScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
@@ -67,6 +68,7 @@ function ProfileStack() {
       <Stack.Screen name="PropertyLeads" component={PropertyLeadsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
+      <Stack.Screen name="Inquiries" component={AllInquiriesScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
     </Stack.Navigator>
   );
