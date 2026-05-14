@@ -23,6 +23,7 @@ import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
 import MapExploreScreen from '../screens/Map/MapExploreScreen';
+import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import FloatingCompareButton from '../components/FloatingCompareButton';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -175,6 +176,7 @@ function MainStack() {
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="CompareScreen" component={CompareScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 }

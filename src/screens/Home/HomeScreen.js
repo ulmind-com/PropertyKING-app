@@ -234,9 +234,9 @@ export default function HomeScreen({ navigation }) {
               <Text style={st.headerLocText}>Detecting...</Text>
             </View>
           </View>
-          <View style={st.notifBtn}>
+          <TouchableOpacity style={st.notifBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
       <HomeSkeleton />
@@ -278,10 +278,10 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
 
           {/* Notification bell */}
-          <TouchableOpacity style={st.notifBtn}>
+          <TouchableOpacity style={st.notifBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
             {/* Badge dot */}
-            <View style={st.notifDot} />
+            {/* <View style={st.notifDot} /> */}
           </TouchableOpacity>
         </View>
 
