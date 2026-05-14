@@ -58,8 +58,9 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+    <View style={{ flex: 1, backgroundColor: '#050505' }}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       {/* Top Wavy White Section */}
       <View style={styles.headerArea}>
@@ -145,7 +146,8 @@ export default function LoginScreen({ navigation }) {
           
         </View>
       </Animated.ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
