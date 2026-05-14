@@ -7,15 +7,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
-import { MapView, Marker, Callout } from '../../components/Map/MapViewComponent.native';
-import { TouchableHighlight, ImageBackground } from 'react-native';
+import { MapView, Marker } from '../../components/Map/MapViewComponent.native';
 
 const { width, height } = Dimensions.get('window');
-const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 160;
 const INITIAL_DELTA = { latitudeDelta: 0.12, longitudeDelta: 0.12 };
 
-// Safely extract [lat, lng] from GeoPoint {type, coordinates: [lng, lat]} or raw array
+// Safely extract lat/lng from GeoPoint {type, coordinates: [lng, lat]} or raw array
 const getCoords = (location) => {
   const c = location?.coordinates;
   if (!c) return null;
@@ -46,6 +44,32 @@ const DARK_MAP_STYLE = [
   { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#222222' }] },
 ];
 
+// ──────────────────────────────────────────────────────────────
+// Custom Circular Marker component
+// Uses tracksViewChanges + onLoad to guarantee the image is
+// rendered BEFORE the bitmap snapshot is taken by Android Maps.
+// ──────────────────────────────────────────────────────────────
+const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  return (
+    <Marker
+      key={prop.id}
+      coordinate={{ latitude: coords.lat, longitude: coords.lng }}
+      onPress={onPress}
+      tracksViewChanges={!imageLoaded} // keep true until image loads, then freeze
+    >
+      <View style={st.markerOuter}>
+        <Image
+          source={{ uri: getImage }}
+          style={st.markerImg}
+          onLoad={() => setImageLoaded(true)}
+        />
+      </View>
+    </Marker>
+  );
+});
+
 export default function MapExploreScreen({ navigation }) {
   const mapRef = useRef(null);
   const [region, setRegion] = useState(null);
@@ -54,6 +78,10 @@ export default function MapExploreScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [mapReady, setMapReady] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+
+  // Card slide animation
+  const cardAnim = useRef(new Animated.Value(CARD_HEIGHT + 100)).current;
 
   // ─── LOCATION & INITIAL LOAD ───
   useEffect(() => {
@@ -61,7 +89,6 @@ export default function MapExploreScreen({ navigation }) {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          // Fallback to a default location
           const fallback = { lat: 40.7128, lng: -74.006 };
           setUserCoords(fallback);
           setRegion({ latitude: fallback.lat, longitude: fallback.lng, ...INITIAL_DELTA });
@@ -108,8 +135,16 @@ export default function MapExploreScreen({ navigation }) {
     }, 600);
   }, [userCoords]);
 
-  // ─── MARKER TAP ───
+  // ─── MARKER TAP → show bottom card ───
   const onMarkerPress = useCallback((property) => {
+    setSelectedProperty(property);
+    Animated.spring(cardAnim, {
+      toValue: 0,
+      friction: 8,
+      tension: 65,
+      useNativeDriver: true,
+    }).start();
+
     // Center map on this marker
     const coords = getCoords(property.location);
     if (mapRef.current && coords) {
@@ -122,10 +157,20 @@ export default function MapExploreScreen({ navigation }) {
     }
   }, []);
 
-  // ─── MAP TAP ───
-  const onMapPress = useCallback(() => {
-    Keyboard.dismiss();
+  // ─── DISMISS CARD ───
+  const dismissCard = useCallback(() => {
+    Animated.timing(cardAnim, {
+      toValue: CARD_HEIGHT + 100,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setSelectedProperty(null));
   }, []);
+
+  // ─── MAP TAP (dismiss card) ───
+  const onMapPress = useCallback(() => {
+    if (selectedProperty) dismissCard();
+    Keyboard.dismiss();
+  }, [selectedProperty]);
 
   // ─── SEARCH ───
   const handleSearch = () => {
@@ -136,10 +181,8 @@ export default function MapExploreScreen({ navigation }) {
 
   // ─── REGION CHANGE ───
   const onRegionChangeComplete = useCallback((newRegion) => {
-    // Reload properties when user pans the map significantly
     if (!userCoords) return;
     const newCenter = { lat: newRegion.latitude, lng: newRegion.longitude };
-    // Calculate rough distance moved
     const dLat = Math.abs(newCenter.lat - (userCoords?.lat || 0));
     const dLng = Math.abs(newCenter.lng - (userCoords?.lng || 0));
     if (dLat > 0.05 || dLng > 0.05) {
@@ -194,45 +237,13 @@ export default function MapExploreScreen({ navigation }) {
           if (!coords) return null;
 
           return (
-            <Marker
+            <PropertyMarker
               key={prop.id}
-              coordinate={{ latitude: coords.lat, longitude: coords.lng }}
+              prop={prop}
+              coords={coords}
+              getImage={getMarkerImage(prop)}
               onPress={() => onMarkerPress(prop)}
-              onCalloutPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}
-            >
-              <View style={st.markerShadow}>
-                <Image
-                  source={{ uri: getMarkerImage(prop) }}
-                  style={st.markerImg}
-                  resizeMode="cover"
-                />
-              </View>
-
-              <Callout tooltip onPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}>
-                <View style={st.calloutContainer}>
-                  {/* Top Box: Bedrooms */}
-                  <View style={st.calloutBox}>
-                    <Text style={st.calloutValue}>{prop.details?.bedrooms || 0}</Text>
-                    <Text style={st.calloutLabel}>Bedrooms</Text>
-                  </View>
-                  
-                  {/* Middle Box: Price */}
-                  <View style={st.calloutBox}>
-                    <Text style={st.calloutValue}>{formatPrice(prop.price, prop.price_unit)}</Text>
-                    <Text style={st.calloutLabel}>Estimate House Price</Text>
-                  </View>
-                  
-                  {/* Bottom Box: Year Built */}
-                  <View style={st.calloutBox}>
-                    <Text style={st.calloutValue}>{prop.details?.year_built || 'N/A'}</Text>
-                    <Text style={st.calloutLabel}>Year Built</Text>
-                  </View>
-                  
-                  {/* Arrow Pointing to Marker */}
-                  <View style={st.calloutArrow} />
-                </View>
-              </Callout>
-            </Marker>
+            />
           );
         })}
       </MapView>
@@ -266,10 +277,95 @@ export default function MapExploreScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* Re-center button placed at bottom corner */}
+      {/* ═══════════ RE-CENTER FAB ═══════════ */}
       <TouchableOpacity style={st.recenterBtn} onPress={reCenter} activeOpacity={0.8}>
         <Ionicons name="locate" size={22} color="#FFF" />
       </TouchableOpacity>
+
+      {/* ═══════════ SELECTED PROPERTY BOTTOM CARD ═══════════ */}
+      {selectedProperty && (
+        <Animated.View style={[st.cardContainer, { transform: [{ translateY: cardAnim }] }]}>
+          <TouchableOpacity
+            style={st.card}
+            activeOpacity={0.95}
+            onPress={() => {
+              navigation.navigate('PropertyDetails', {
+                slug: selectedProperty.slug || selectedProperty.id,
+                property: selectedProperty,
+                userCoords,
+              });
+            }}
+          >
+            {/* Card Image */}
+            <Image
+              source={{ uri: getMarkerImage(selectedProperty) }}
+              style={st.cardImage}
+            />
+
+            {/* Card Info */}
+            <View style={st.cardInfo}>
+              {/* Listing Badge */}
+              <View style={[st.cardBadge,
+                selectedProperty.listing_type === 'rent' ? st.cardBadgeRent : st.cardBadgeSale
+              ]}>
+                <Text style={st.cardBadgeText}>
+                  {selectedProperty.listing_type === 'sale' ? 'SALE' : 'RENT'}
+                </Text>
+              </View>
+
+              <Text style={st.cardTitle} numberOfLines={2}>
+                {selectedProperty.title}
+              </Text>
+
+              <View style={st.cardLocRow}>
+                <Ionicons name="location" size={12} color={COLORS.textMuted} />
+                <Text style={st.cardLocText} numberOfLines={1}>
+                  {selectedProperty.location?.city}
+                  {selectedProperty.location?.state ? `, ${selectedProperty.location.state}` : ''}
+                </Text>
+              </View>
+
+              {/* Stats */}
+              <View style={st.cardStats}>
+                {selectedProperty.details?.bedrooms > 0 && (
+                  <View style={st.cardStatItem}>
+                    <Ionicons name="bed-outline" size={12} color={COLORS.textMuted} />
+                    <Text style={st.cardStatText}>{selectedProperty.details.bedrooms}</Text>
+                  </View>
+                )}
+                {selectedProperty.details?.bathrooms > 0 && (
+                  <View style={st.cardStatItem}>
+                    <Ionicons name="water-outline" size={12} color={COLORS.textMuted} />
+                    <Text style={st.cardStatText}>{selectedProperty.details.bathrooms}</Text>
+                  </View>
+                )}
+                {selectedProperty.details?.total_sqft > 0 && (
+                  <View style={st.cardStatItem}>
+                    <Ionicons name="resize-outline" size={12} color={COLORS.textMuted} />
+                    <Text style={st.cardStatText}>{selectedProperty.details.total_sqft.toLocaleString()} sqft</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Price */}
+              <Text style={st.cardPrice}>
+                {formatPrice(selectedProperty.price, selectedProperty.price_unit)}
+              </Text>
+            </View>
+
+            {/* Close button */}
+            <TouchableOpacity
+              style={st.cardClose}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                dismissCard();
+              }}
+            >
+              <Ionicons name="close" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -329,7 +425,7 @@ const st = StyleSheet.create({
   // ─── RE-CENTER ───
   recenterBtn: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 200,
     right: 20,
     width: 48,
     height: 48,
@@ -342,63 +438,106 @@ const st = StyleSheet.create({
   },
 
   // ─── MARKERS ───
-  markerShadow: {
+  markerOuter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerImg: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // ...SHADOWS.lg, // Removed shadow to avoid Android clipping bugs
-  },
-  markerImg: {
-    width: 44,
-    height: 44,
-    borderRadius: 22, // Crucial for Android to make the actual image round
     borderWidth: 3,
-    borderColor: '#FFF',
+    borderColor: '#FFFFFF',
     backgroundColor: '#333',
   },
 
-  // ─── CALLOUT ───
-  calloutContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 5, // space for arrow
-    gap: 4,
+  // ─── BOTTOM PROPERTY CARD ───
+  cardContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 16,
+    right: 16,
+    zIndex: 20,
   },
-  calloutBox: {
-    backgroundColor: '#0a0a0a',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 140,
-    borderWidth: 1,
-    borderColor: '#222',
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...SHADOWS.lg,
   },
-  calloutValue: {
+  cardImage: {
+    width: 130,
+    height: CARD_HEIGHT,
+    backgroundColor: COLORS.bgDark || '#222',
+  },
+  cardInfo: {
+    flex: 1,
+    padding: 14,
+    justifyContent: 'space-between',
+  },
+  cardBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  cardBadgeSale: { backgroundColor: COLORS.primary },
+  cardBadgeRent: { backgroundColor: '#8B5CF6' },
+  cardBadgeText: {
     color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Raleway_700Bold',
-    marginBottom: 2,
+    fontSize: 9,
+    fontFamily: 'Raleway_800ExtraBold',
+    letterSpacing: 0.5,
   },
-  calloutLabel: {
-    color: '#8a8a8a',
-    fontSize: 10,
+  cardTitle: {
+    fontSize: 14,
+    fontFamily: 'Raleway_700Bold',
+    color: COLORS.text,
+    lineHeight: 19,
+  },
+  cardLocRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  },
+  cardLocText: {
+    fontSize: 11,
+    color: COLORS.textMuted,
     fontFamily: 'Raleway_500Medium',
   },
-  calloutArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#0a0a0a',
-    marginTop: -2,
+  cardStats: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 6,
+  },
+  cardStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  cardStatText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontFamily: 'Raleway_600SemiBold',
+  },
+  cardPrice: {
+    fontSize: 18,
+    fontFamily: 'Raleway_800ExtraBold',
+    color: COLORS.primary,
+    marginTop: 4,
+  },
+  cardClose: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
