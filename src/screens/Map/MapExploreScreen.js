@@ -7,12 +7,27 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
-import { MapView, Marker } from '../../components/Map/MapViewComponent.native';
+import { MapView, Marker, Callout } from '../../components/Map/MapViewComponent.native';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 160;
 const INITIAL_DELTA = { latitudeDelta: 0.12, longitudeDelta: 0.12 };
+
+// Safely extract [lat, lng] from GeoPoint {type, coordinates: [lng, lat]} or raw array
+const getCoords = (location) => {
+  const c = location?.coordinates;
+  if (!c) return null;
+  // GeoPoint object: { type: "Point", coordinates: [lng, lat] }
+  if (c.coordinates && Array.isArray(c.coordinates)) {
+    return { lat: c.coordinates[1], lng: c.coordinates[0] };
+  }
+  // Raw array: [lng, lat]
+  if (Array.isArray(c)) {
+    return { lat: c[1], lng: c[0] };
+  }
+  return null;
+};
 
 // Premium dark map style
 const DARK_MAP_STYLE = [
@@ -40,8 +55,7 @@ export default function MapExploreScreen({ navigation }) {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [mapReady, setMapReady] = useState(false);
 
-  // Card slide animation
-  const cardAnim = useRef(new Animated.Value(CARD_HEIGHT + 60)).current;
+  const [mapReady, setMapReady] = useState(false);
 
   // ─── LOCATION & INITIAL LOAD ───
   useEffect(() => {
@@ -98,40 +112,22 @@ export default function MapExploreScreen({ navigation }) {
 
   // ─── MARKER TAP ───
   const onMarkerPress = useCallback((property) => {
-    setSelectedProperty(property);
-    Animated.spring(cardAnim, {
-      toValue: 0,
-      friction: 8,
-      tension: 65,
-      useNativeDriver: true,
-    }).start();
-
     // Center map on this marker
-    if (mapRef.current && property.location?.coordinates) {
-      const [lng, lat] = property.location.coordinates;
+    const coords = getCoords(property.location);
+    if (mapRef.current && coords) {
       mapRef.current.animateToRegion({
-        latitude: lat,
-        longitude: lng,
+        latitude: coords.lat,
+        longitude: coords.lng,
         latitudeDelta: 0.02,
         longitudeDelta: 0.02,
       }, 400);
     }
   }, []);
 
-  // ─── DISMISS CARD ───
-  const dismissCard = useCallback(() => {
-    Animated.timing(cardAnim, {
-      toValue: CARD_HEIGHT + 60,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => setSelectedProperty(null));
-  }, []);
-
-  // ─── MAP TAP (dismiss card) ───
+  // ─── MAP TAP ───
   const onMapPress = useCallback(() => {
-    if (selectedProperty) dismissCard();
     Keyboard.dismiss();
-  }, [selectedProperty]);
+  }, []);
 
   // ─── SEARCH ───
   const handleSearch = () => {
@@ -196,24 +192,46 @@ export default function MapExploreScreen({ navigation }) {
         mapPadding={{ top: 100, right: 0, bottom: 0, left: 0 }}
       >
         {mapReady && properties.map((prop) => {
-          if (!prop.location?.coordinates) return null;
-          const [lng, lat] = prop.location.coordinates;
-          const isSelected = selectedProperty?.id === prop.id;
+          const coords = getCoords(prop.location);
+          if (!coords) return null;
 
           return (
             <Marker
               key={prop.id}
-              coordinate={{ latitude: lat, longitude: lng }}
+              coordinate={{ latitude: coords.lat, longitude: coords.lng }}
               onPress={() => onMarkerPress(prop)}
-              tracksViewChanges={false}
             >
-              <View style={[st.markerWrap, isSelected && st.markerWrapActive]}>
+              <View style={st.markerWrap}>
                 <Image
                   source={{ uri: getMarkerImage(prop) }}
-                  style={[st.markerImg, isSelected && st.markerImgActive]}
+                  style={st.markerImg}
                 />
-                {isSelected && <View style={st.markerArrow} />}
               </View>
+
+              <Callout tooltip onPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}>
+                <View style={st.calloutContainer}>
+                  {/* Top Box: Bedrooms */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{prop.details?.bedrooms || 0}</Text>
+                    <Text style={st.calloutLabel}>Bedrooms</Text>
+                  </View>
+                  
+                  {/* Middle Box: Price */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{formatPrice(prop.price, prop.price_unit)}</Text>
+                    <Text style={st.calloutLabel}>Estimate House Price</Text>
+                  </View>
+                  
+                  {/* Bottom Box: Year Built */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{prop.details?.year_built || 'N/A'}</Text>
+                    <Text style={st.calloutLabel}>Year Built</Text>
+                  </View>
+                  
+                  {/* Arrow Pointing to Marker */}
+                  <View style={st.calloutArrow} />
+                </View>
+              </Callout>
             </Marker>
           );
         })}
@@ -248,87 +266,10 @@ export default function MapExploreScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* ═══════════ RE-CENTER FAB ═══════════ */}
+      {/* Re-center button placed at bottom corner */}
       <TouchableOpacity style={st.recenterBtn} onPress={reCenter} activeOpacity={0.8}>
         <Ionicons name="locate" size={22} color="#FFF" />
       </TouchableOpacity>
-
-      {/* ═══════════ SELECTED PROPERTY CARD ═══════════ */}
-      {selectedProperty && (
-        <Animated.View style={[st.cardContainer, { transform: [{ translateY: cardAnim }] }]}>
-          <TouchableOpacity
-            style={st.card}
-            activeOpacity={0.95}
-            onPress={() => navigation.navigate('PropertyDetails', {
-              slug: selectedProperty.slug || selectedProperty.id,
-              property: selectedProperty,
-              userCoords,
-            })}
-          >
-            {/* Card Image */}
-            <Image
-              source={{ uri: getMarkerImage(selectedProperty) }}
-              style={st.cardImage}
-            />
-
-            {/* Card Info */}
-            <View style={st.cardInfo}>
-              {/* Listing Badge */}
-              <View style={[st.cardBadge,
-                selectedProperty.listing_type === 'rent' ? st.cardBadgeRent : st.cardBadgeSale
-              ]}>
-                <Text style={st.cardBadgeText}>
-                  {selectedProperty.listing_type === 'sale' ? 'SALE' : 'RENT'}
-                </Text>
-              </View>
-
-              <Text style={st.cardTitle} numberOfLines={2}>
-                {selectedProperty.title}
-              </Text>
-
-              <View style={st.cardLocRow}>
-                <Ionicons name="location" size={12} color={COLORS.textMuted} />
-                <Text style={st.cardLocText} numberOfLines={1}>
-                  {selectedProperty.location?.city}
-                  {selectedProperty.location?.state ? `, ${selectedProperty.location.state}` : ''}
-                </Text>
-              </View>
-
-              {/* Stats */}
-              <View style={st.cardStats}>
-                {selectedProperty.details?.bedrooms > 0 && (
-                  <View style={st.cardStatItem}>
-                    <Ionicons name="bed-outline" size={12} color={COLORS.textMuted} />
-                    <Text style={st.cardStatText}>{selectedProperty.details.bedrooms}</Text>
-                  </View>
-                )}
-                {selectedProperty.details?.bathrooms > 0 && (
-                  <View style={st.cardStatItem}>
-                    <Ionicons name="water-outline" size={12} color={COLORS.textMuted} />
-                    <Text style={st.cardStatText}>{selectedProperty.details.bathrooms}</Text>
-                  </View>
-                )}
-                {selectedProperty.details?.total_sqft > 0 && (
-                  <View style={st.cardStatItem}>
-                    <Ionicons name="resize-outline" size={12} color={COLORS.textMuted} />
-                    <Text style={st.cardStatText}>{selectedProperty.details.total_sqft.toLocaleString()}</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Price */}
-              <Text style={st.cardPrice}>
-                {formatPrice(selectedProperty.price, selectedProperty.price_unit)}
-              </Text>
-            </View>
-
-            {/* Dismiss */}
-            <TouchableOpacity style={st.cardClose} onPress={dismissCard}>
-              <Ionicons name="close" size={18} color={COLORS.textMuted} />
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
     </View>
   );
 }
@@ -388,7 +329,7 @@ const st = StyleSheet.create({
   // ─── RE-CENTER ───
   recenterBtn: {
     position: 'absolute',
-    bottom: 200,
+    bottom: 30,
     right: 20,
     width: 48,
     height: 48,
@@ -403,9 +344,7 @@ const st = StyleSheet.create({
   // ─── MARKERS ───
   markerWrap: {
     alignItems: 'center',
-  },
-  markerWrapActive: {
-    transform: [{ scale: 1.2 }],
+    justifyContent: 'center',
   },
   markerImg: {
     width: 44,
@@ -415,112 +354,46 @@ const st = StyleSheet.create({
     borderColor: '#FFF',
     backgroundColor: '#333',
   },
-  markerImgActive: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderColor: COLORS.primary,
-    borderWidth: 3.5,
+
+  // ─── CALLOUT ───
+  calloutContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 5, // space for arrow
+    gap: 4,
   },
-  markerArrow: {
+  calloutBox: {
+    backgroundColor: '#0a0a0a',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 140,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  calloutValue: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Raleway_700Bold',
+    marginBottom: 2,
+  },
+  calloutLabel: {
+    color: '#8a8a8a',
+    fontSize: 10,
+    fontFamily: 'Raleway_500Medium',
+  },
+  calloutArrow: {
     width: 0,
     height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
     borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: COLORS.primary,
-    marginTop: -1,
-  },
-
-  // ─── PROPERTY CARD ───
-  cardContainer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 20,
-    right: 20,
-    zIndex: 20,
-  },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    overflow: 'hidden',
-    ...SHADOWS.lg,
-  },
-  cardImage: {
-    width: 130,
-    height: CARD_HEIGHT,
-    backgroundColor: COLORS.bgDark,
-  },
-  cardInfo: {
-    flex: 1,
-    padding: 14,
-    justifyContent: 'space-between',
-  },
-  cardBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-  cardBadgeSale: { backgroundColor: COLORS.primary },
-  cardBadgeRent: { backgroundColor: '#8B5CF6' },
-  cardBadgeText: {
-    color: '#FFF',
-    fontSize: 9,
-    fontFamily: 'Raleway_800ExtraBold',
-    letterSpacing: 0.5,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontFamily: 'Raleway_700Bold',
-    color: COLORS.text,
-    lineHeight: 19,
-  },
-  cardLocRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginTop: 2,
-  },
-  cardLocText: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    fontFamily: 'Raleway_500Medium',
-  },
-  cardStats: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 6,
-  },
-  cardStatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  cardStatText: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    fontFamily: 'Raleway_600SemiBold',
-  },
-  cardPrice: {
-    fontSize: 18,
-    fontFamily: 'Raleway_800ExtraBold',
-    color: COLORS.primary,
-    marginTop: 4,
-  },
-  cardClose: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderTopColor: '#0a0a0a',
+    marginTop: -2,
   },
 });
+
