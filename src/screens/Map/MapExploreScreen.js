@@ -47,58 +47,44 @@ const DARK_MAP_STYLE = [
 ];
 
 // ──────────────────────────────────────────────────────────────
-// Premium 3D SVG Circular Marker component
-// Uses native SVG ClipPath which is guaranteed to be rasterized
-// flawlessly by Android maps without any "flat bottom" bugs!
+// Robust React Native Map Marker component
+// Uses a known workaround for Android Maps where we force a 
+// complete re-render of the Image after it caches, ensuring 
+// the border-radius is perfectly applied during the snapshot.
 // ──────────────────────────────────────────────────────────────
 const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
-  const [canFreeze, setCanFreeze] = useState(false);
-
-  const handleImageLoad = useCallback(() => {
-    // Give Android Maps time to rasterize the SVG properly
-    setTimeout(() => setCanFreeze(true), 400);
-  }, []);
+  const [loaded, setLoaded] = useState(false);
 
   return (
     <Marker
       coordinate={{ latitude: coords.lat, longitude: coords.lng }}
       onPress={onPress}
-      tracksViewChanges={!canFreeze}
-      anchor={{ x: 0.5, y: 0.95 }}
+      tracksViewChanges={!loaded}
     >
-      <View style={{ width: 60, height: 85, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width="60" height="85" viewBox="0 0 60 85">
-          <Defs>
-            <ClipPath id="clip">
-              <Circle cx="30" cy="30" r="22" />
-            </ClipPath>
-            <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#FFFFFF" />
-              <Stop offset="1" stopColor="#D4D4D4" />
-            </SvgLinearGradient>
-          </Defs>
-          
-          {/* Fake Shadow at the bottom tip */}
-          <Ellipse cx="30" cy="78" rx="10" ry="4" fill="rgba(0,0,0,0.3)" />
-
-          {/* The Teardrop Pin Body */}
-          <Path 
-            d="M 30 2 C 14.536 2 2 14.536 2 30 C 2 50 30 80 30 80 C 30 80 58 50 58 30 C 58 14.536 45.464 2 30 2 Z"
-            fill="url(#grad)"
-          />
-
-          {/* The property image seamlessly clipped */}
-          <SvgImage
-            x="8"
-            y="8"
-            width="44"
-            height="44"
-            preserveAspectRatio="xMidYMid slice"
-            href={{ uri: getImage }}
-            clipPath="url(#clip)"
-            onLoad={handleImageLoad}
-          />
-        </Svg>
+      <View style={{
+        width: 54, 
+        height: 54, 
+        borderRadius: 27, 
+        backgroundColor: '#FFFFFF', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+      }}>
+        {/* The key prop forces a fresh render cycle once the image is in cache, 
+            guaranteeing the borderRadius is captured by Android's bitmap snapshot! */}
+        <RNImage
+          key={loaded ? 'loaded' : 'loading'}
+          source={{ uri: getImage }}
+          style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#333' }}
+          resizeMode="cover"
+          onLoad={() => {
+            if (!loaded) setTimeout(() => setLoaded(true), 100);
+          }}
+        />
       </View>
     </Marker>
   );
