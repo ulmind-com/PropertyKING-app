@@ -54,9 +54,20 @@ export default function NotificationsScreen({ navigation }) {
 
     // Context-aware Navigation
     const type = item.type;
+    const propId = item.data?.property_id || item.data?.property_slug;
     
     if (type === 'new_inquiry') {
-      navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'PropertyLeads' } });
+      if (propId) {
+        try {
+          const res = await require('../../api').propertyAPI.getBySlug(propId);
+          if (res.data) {
+            navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'PropertyLeads', params: { property: res.data } } });
+            return;
+          }
+        } catch (e) { console.log('Error loading property for leads', e); }
+      }
+      // Fallback if property ID is missing or fetch fails
+      navigation.navigate('MainTabs', { screen: 'Profile', params: { screen: 'MyListings' } });
       return;
     }
     
@@ -71,7 +82,6 @@ export default function NotificationsScreen({ navigation }) {
     }
 
     // Default: go to PropertyDetails if property_id is present (e.g. price_drop, new_listing, etc)
-    const propId = item.data?.property_id || item.data?.property_slug;
     if (propId) {
       try {
         const { propertyAPI } = require('../../api');
