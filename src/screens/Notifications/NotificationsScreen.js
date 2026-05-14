@@ -10,27 +10,49 @@ export default function NotificationsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    loadNotifications();
+    loadNotifications(1, false);
   }, []);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (pageNumber = 1, isLoadMore = false) => {
+    if (isLoadMore) setLoadingMore(true);
     try {
-      const res = await notificationAPI.list({ limit: 50 });
-      setNotifications(res.data.notifications || []);
+      const res = await notificationAPI.list({ page: pageNumber, limit: 20 });
+      const newNotifs = res.data.notifications || [];
+      
+      if (isLoadMore) {
+        setNotifications(prev => [...prev, ...newNotifs]);
+      } else {
+        setNotifications(newNotifs);
+      }
+      
+      setHasMore(pageNumber < res.data.total_pages);
+      setPage(pageNumber);
       setUnreadCount(res.data.unread_count || 0);
     } catch (e) {
       console.log('Error loading notifications:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore && !loading && !refreshing) {
+      loadNotifications(page + 1, true);
     }
   };
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadNotifications();
+    loadNotifications(1, false);
   };
 
   const handleMarkAllRead = async () => {
@@ -170,6 +192,15 @@ export default function NotificationsScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={s.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={s.footerLoader}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={s.empty}>
               <Ionicons name="notifications-off-outline" size={64} color={COLORS.border} />
@@ -185,6 +216,7 @@ export default function NotificationsScreen({ navigation }) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
+  footerLoader: { paddingVertical: 20, alignItems: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16,
