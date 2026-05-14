@@ -352,7 +352,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ NEAR YOU ═══════════ */}
         {finalNearby.length > 0 && (
-          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, nearby: e.nativeEvent.layout.y }))}>
+          <View style={st.section} onLayout={(e) => { const y = e.nativeEvent.layout.y; setSectionYs(p => ({ ...p, nearby: y })); }}>
             <AnimatedSectionHeader 
               title="Near You" 
               icon="location"
@@ -371,7 +371,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ FEATURED ═══════════ */}
         {finalFeatured.length > 0 && (
-          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, featured: e.nativeEvent.layout.y }))}>
+          <View style={st.section} onLayout={(e) => { const y = e.nativeEvent.layout.y; setSectionYs(p => ({ ...p, featured: y })); }}>
             <AnimatedSectionHeader 
               title="Featured" 
               icon="star"
@@ -398,7 +398,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* ═══════════ TOP VIEWED ═══════════ */}
         {finalTopViewed.length > 0 && (
-          <View style={st.section} onLayout={(e) => setSectionYs(p => ({ ...p, topViewed: e.nativeEvent.layout.y }))}>
+          <View style={st.section} onLayout={(e) => { const y = e.nativeEvent.layout.y; setSectionYs(p => ({ ...p, topViewed: y })); }}>
             <AnimatedSectionHeader 
               title="Top Viewed" 
               icon="trending-up"
