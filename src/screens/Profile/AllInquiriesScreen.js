@@ -5,18 +5,15 @@ import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { inquiryAPI } from '../../api';
 
 export default function AllInquiriesScreen({ navigation }) {
-  const [inquiries, setInquiries] = useState([]);
+  const [allInquiries, setAllInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
 
   const fetchData = async () => {
     try {
-      const params = { page: 1, limit: 100 };
-      if (activeFilter !== 'all') params.status = activeFilter;
-      
-      const res = await inquiryAPI.received(params);
-      setInquiries(res.data.inquiries || []);
+      const res = await inquiryAPI.received({ page: 1, limit: 100 });
+      setAllInquiries(res.data.inquiries || []);
     } catch (e) {
       console.log('Fetch inquiries error:', e);
     }
@@ -24,23 +21,25 @@ export default function AllInquiriesScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  useEffect(() => { fetchData(); }, [activeFilter]);
+  useEffect(() => { fetchData(); }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchData();
-  }, [activeFilter]);
+  }, []);
 
   const markAsDone = async (id) => {
     try {
-      // In the backend, there's a respond route. Or maybe we just need a status update route?
-      // Wait, backend has PUT /{inquiry_id}/respond which sets status to 'responded'
       await inquiryAPI.respond(id, { response: "Marked as done." });
-      setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'responded' } : inq));
+      setAllInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'responded' } : inq));
     } catch (e) {
       console.log('Error marking as done', e);
     }
   };
+
+  const displayedInquiries = activeFilter === 'all' 
+    ? allInquiries 
+    : allInquiries.filter(i => i.status === activeFilter);
 
   const timeAgo = (date) => {
     if (!date) return '';
@@ -196,7 +195,7 @@ export default function AllInquiriesScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary}/></View>
-      ) : inquiries.length === 0 ? (
+      ) : displayedInquiries.length === 0 ? (
         <View style={styles.center}>
           <Ionicons name="chatbubbles-outline" size={60} color={COLORS.border}/>
           <Text style={{...FONTS.h4, marginTop: 16}}>No Inquiries Found</Text>
@@ -204,7 +203,7 @@ export default function AllInquiriesScreen({ navigation }) {
         </View>
       ) : (
         <FlatList
-          data={inquiries}
+          data={displayedInquiries}
           keyExtractor={i => i.id}
           renderItem={renderInquiry}
           contentContainerStyle={{padding: 16, paddingBottom: 40}}
