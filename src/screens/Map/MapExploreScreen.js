@@ -8,7 +8,7 @@ import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
 import { MapView, Marker, Callout } from '../../components/Map/MapViewComponent.native';
-import { TouchableHighlight } from 'react-native';
+import { TouchableHighlight, ImageBackground } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
@@ -201,42 +201,36 @@ export default function MapExploreScreen({ navigation }) {
               onCalloutPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}
             >
               <View style={st.markerShadow}>
-                <View style={st.markerWrap}>
-                  <Image
-                    source={{ uri: getMarkerImage(prop) }}
-                    style={st.markerImg}
-                  />
-                </View>
+                <Image
+                  source={{ uri: getMarkerImage(prop) }}
+                  style={st.markerImg}
+                  resizeMode="cover"
+                />
               </View>
 
               <Callout tooltip onPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}>
-                <TouchableHighlight 
-                  underlayColor="transparent" 
-                  onPress={() => navigation.navigate('PropertyDetails', { slug: prop.slug || prop.id, property: prop, userCoords })}
-                >
-                  <View style={st.calloutContainer}>
-                    {/* Top Box: Bedrooms */}
-                    <View style={st.calloutBox}>
-                      <Text style={st.calloutValue}>{prop.details?.bedrooms || 0}</Text>
-                      <Text style={st.calloutLabel}>Bedrooms</Text>
-                    </View>
-                    
-                    {/* Middle Box: Price */}
-                    <View style={st.calloutBox}>
-                      <Text style={st.calloutValue}>{formatPrice(prop.price, prop.price_unit)}</Text>
-                      <Text style={st.calloutLabel}>Estimate House Price</Text>
-                    </View>
-                    
-                    {/* Bottom Box: Year Built */}
-                    <View style={st.calloutBox}>
-                      <Text style={st.calloutValue}>{prop.details?.year_built || 'N/A'}</Text>
-                      <Text style={st.calloutLabel}>Year Built</Text>
-                    </View>
-                    
-                    {/* Arrow Pointing to Marker */}
-                    <View style={st.calloutArrow} />
+                <View style={st.calloutContainer}>
+                  {/* Top Box: Bedrooms */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{prop.details?.bedrooms || 0}</Text>
+                    <Text style={st.calloutLabel}>Bedrooms</Text>
                   </View>
-                </TouchableHighlight>
+                  
+                  {/* Middle Box: Price */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{formatPrice(prop.price, prop.price_unit)}</Text>
+                    <Text style={st.calloutLabel}>Estimate House Price</Text>
+                  </View>
+                  
+                  {/* Bottom Box: Year Built */}
+                  <View style={st.calloutBox}>
+                    <Text style={st.calloutValue}>{prop.details?.year_built || 'N/A'}</Text>
+                    <Text style={st.calloutLabel}>Year Built</Text>
+                  </View>
+                  
+                  {/* Arrow Pointing to Marker */}
+                  <View style={st.calloutArrow} />
+                </View>
               </Callout>
             </Marker>
           );
@@ -357,22 +351,13 @@ const st = StyleSheet.create({
     justifyContent: 'center',
     // ...SHADOWS.lg, // Removed shadow to avoid Android clipping bugs
   },
-  markerWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 3,
-    borderColor: '#FFF',
-    backgroundColor: '#333',
-    overflow: 'hidden', // Forces the image to be clipped to a perfect circle
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   markerImg: {
     width: 44,
     height: 44,
-    resizeMode: 'cover',
     borderRadius: 22, // Crucial for Android to make the actual image round
+    borderWidth: 3,
+    borderColor: '#FFF',
+    backgroundColor: '#333',
   },
 
   // ─── CALLOUT ───
