@@ -225,7 +225,7 @@ export default function AddPropertyScreen({ navigation }) {
         <Text style={s.stepTitle}>{titles[step-1]}</Text>
         {error?<View style={s.errBox}><Ionicons name="alert-circle" size={16} color={COLORS.error}/><Text style={s.errText}>{error}</Text></View>:null}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8,paddingBottom:20}} keyboardShouldPersistTaps="handled">
           {step===1&&<View style={s.sc}>
             <View style={s.ig}><Text style={s.lb}>Property Title *</Text><TextInput style={s.inp} placeholder="e.g. Beautiful 3BR House" placeholderTextColor={COLORS.textMuted} value={title} onChangeText={setTitle}/></View>
             <View style={s.ig}><Text style={s.lb}>Description *</Text><TextInput style={[s.inp,{height:120,paddingTop:14}]} placeholder="Describe your property..." placeholderTextColor={COLORS.textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top"/></View>
@@ -360,7 +360,6 @@ export default function AddPropertyScreen({ navigation }) {
                 <TouchableOpacity style={s.rmBtn} onPress={()=>setFloorPlanUrls(floorPlanUrls.filter((_,idx)=>idx!==i))}><Ionicons name="close-circle" size={22} color={COLORS.error}/></TouchableOpacity>
               </View>)}</View>}
           </View>}
-          <View style={{height:120}}/>
         </ScrollView>
 
         <View style={s.bottomBar}>{step<4?
@@ -459,7 +458,7 @@ const s = StyleSheet.create({
   mediaDone:{flexDirection:'row',alignItems:'center',gap:10,padding:16,backgroundColor:COLORS.successLight,borderRadius:SIZES.radius.md},
   fpDone:{width:120,aspectRatio:1,borderRadius:SIZES.radius.md,overflow:'hidden',position:'relative'},
   fpImg:{width:'100%',height:'100%'},
-  bottomBar:{position:'absolute',bottom:0,left:0,right:0,padding:20,paddingBottom:34,backgroundColor:COLORS.bg,borderTopWidth:1,borderTopColor:COLORS.borderLight},
+  bottomBar:{padding:20,paddingBottom:Platform.OS==='ios'?34:20,backgroundColor:COLORS.bg,borderTopWidth:1,borderTopColor:COLORS.borderLight},
   nextBtn:{flexDirection:'row',height:54,backgroundColor:COLORS.primary,borderRadius:SIZES.radius.lg,alignItems:'center',justifyContent:'center',gap:8,...SHADOWS.primary},
   nextTxt:{color:'#FFF',fontSize:16,fontFamily: 'Raleway_700Bold'},
   submitBtn:{height:54,backgroundColor:COLORS.success,borderRadius:SIZES.radius.lg,alignItems:'center',justifyContent:'center',...SHADOWS.sm},
