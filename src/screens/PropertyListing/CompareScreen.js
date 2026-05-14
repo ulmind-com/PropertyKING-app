@@ -30,7 +30,7 @@ export default function CompareScreen({ navigation }) {
           <Ionicons name="git-compare-outline" size={64} color={COLORS.border} />
           <Text style={styles.emptyTitle}>Nothing to Compare</Text>
           <Text style={styles.emptySub}>Add properties to compare them side by side.</Text>
-          <TouchableOpacity style={styles.exploreBtn} onPress={() => navigation.navigate('Home')}>
+          <TouchableOpacity style={styles.exploreBtn} onPress={() => navigation.navigate('Explore')}>
             <Text style={styles.exploreBtnText}>Explore Properties</Text>
           </TouchableOpacity>
         </View>
