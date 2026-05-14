@@ -102,7 +102,7 @@ export default function RegisterScreen({ navigation }) {
         contentContainerStyle={styles.scroll} 
         showsVerticalScrollIndicator={false}
         bounces={false}
-        style={{ opacity: fadeAnim }}
+        style={{ flex: 1, backgroundColor: '#050505', opacity: fadeAnim }}
       >
         <View style={styles.formContainer}>
           
@@ -239,43 +239,44 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 32,
     paddingTop: 10,
-    paddingBottom: 60,
+    paddingBottom: 20,
   },
   formContainer: {
-    gap: 24,
+    gap: 16,
   },
   errorText: {
     color: '#EF4444',
     fontFamily: 'Raleway_600SemiBold',
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: -10,
+    marginBottom: -5,
   },
   inputGroup: {
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   label: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Raleway_600SemiBold',
   },
   input: {
     width: '100%',
-    height: 56,
+    height: 50,
     backgroundColor: '#1E1E1E',
-    borderRadius: 30,
+    borderRadius: 25,
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Raleway_500Medium',
     paddingHorizontal: 24,
   },
 
   gradientBtnWrapper: {
     width: '100%',
-    height: 56,
+    height: 54,
     borderRadius: 30,
     overflow: 'hidden',
+    marginTop: 10,
   },
   gradientBorder: {
     flex: 1,

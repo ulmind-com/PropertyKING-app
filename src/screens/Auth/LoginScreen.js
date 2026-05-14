@@ -96,7 +96,7 @@ export default function LoginScreen({ navigation }) {
         contentContainerStyle={styles.scroll} 
         showsVerticalScrollIndicator={false}
         bounces={false}
-        style={{ opacity: fadeAnim }}
+        style={{ flex: 1, backgroundColor: '#050505', opacity: fadeAnim }}
       >
         <View style={styles.formContainer}>
           
