@@ -49,7 +49,7 @@ export default function AddPropertyScreen({ navigation }) {
   // Map Picker
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [tempCoords, setTempCoords] = useState(null);
-  const [mapRegion, setMapRegion] = useState({ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
+  const [mapRegion, setMapRegion] = useState({ latitude: 39.8283, longitude: -98.5795, latitudeDelta: 40, longitudeDelta: 40 }); // Default: USA Center zoomed out
 
   useEffect(() => { loadPropertyTypes(); loadAmenities(); }, []);
 
