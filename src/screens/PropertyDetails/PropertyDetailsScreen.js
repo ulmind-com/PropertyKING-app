@@ -343,20 +343,6 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </View>
           )}
 
-          {/* Amenities */}
-          {property.amenity_names?.length > 0 && (
-            <View style={styles.section}>
-              <Text style={FONTS.h4}>Amenities</Text>
-              <View style={styles.amenitiesGrid}>
-                {property.amenity_names.map((a, i) => (
-                  <View key={i} style={styles.amenityChip}>
-                    <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-                    <Text style={styles.amenityText}>{a}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
 
           {/* Video Tour */}
           {property.video_url ? (() => {
