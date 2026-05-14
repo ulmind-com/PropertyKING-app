@@ -36,6 +36,7 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -123,15 +124,24 @@ export default function LoginScreen({ navigation }) {
           {/* Password Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="••••••••••••"
-              placeholderTextColor="#666"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              textAlign="center"
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput 
+                style={styles.passwordInput}
+                placeholder="••••••••••••"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPass}
+                textAlign="center"
+              />
+              <TouchableOpacity 
+                style={styles.eyeIcon} 
+                onPress={() => setShowPass(!showPass)}
+                hitSlop={{top:10, bottom:10, left:10, right:10}}
+              >
+                <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Sign In Button */}
@@ -243,6 +253,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Raleway_500Medium',
     paddingHorizontal: 24,
+  },
+  passwordContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E1E',
+    borderRadius: 30,
+    height: 56,
+  },
+  passwordInput: {
+    flex: 1,
+    height: '100%',
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Raleway_500Medium',
+    paddingLeft: 44, // Offset the eye icon to keep text centered visually
+    paddingRight: 10,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 20,
   },
 
   gradientBtnWrapper: {
