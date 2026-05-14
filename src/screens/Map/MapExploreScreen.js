@@ -50,21 +50,30 @@ const DARK_MAP_STYLE = [
 // rendered BEFORE the bitmap snapshot is taken by Android Maps.
 // ──────────────────────────────────────────────────────────────
 const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [canFreeze, setCanFreeze] = useState(false);
+
+  const handleImageLoad = useCallback(() => {
+    // Wait 500ms AFTER image loads before freezing the marker bitmap.
+    // This gives Android Maps time to rasterize the clipped view correctly.
+    setTimeout(() => setCanFreeze(true), 500);
+  }, []);
 
   return (
     <Marker
-      key={prop.id}
       coordinate={{ latitude: coords.lat, longitude: coords.lng }}
       onPress={onPress}
-      tracksViewChanges={!imageLoaded} // keep true until image loads, then freeze
+      tracksViewChanges={!canFreeze}
     >
-      <View style={st.markerOuter}>
-        <Image
-          source={{ uri: getImage }}
-          style={st.markerImg}
-          onLoad={() => setImageLoaded(true)}
-        />
+      {/* Outer View = white border ring */}
+      <View style={st.markerBorderRing}>
+        {/* Inner View = clip container (overflow: hidden makes the image circular) */}
+        <View style={st.markerClip}>
+          <Image
+            source={{ uri: getImage }}
+            style={st.markerImg}
+            onLoad={handleImageLoad}
+          />
+        </View>
       </View>
     </Marker>
   );
@@ -438,17 +447,29 @@ const st = StyleSheet.create({
   },
 
   // ─── MARKERS ───
-  markerOuter: {
+  // Outer ring acts as the white border. Using padding instead of borderWidth
+  // so the border doesn't interfere with image clipping on Android.
+  markerBorderRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    padding: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerImg: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+  // This View clips the image into a circle via overflow: hidden.
+  markerClip: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    overflow: 'hidden',
     backgroundColor: '#333',
+  },
+  // Image fills the clip container. No borderRadius here — the parent clips it.
+  markerImg: {
+    width: 46,
+    height: 46,
   },
 
   // ─── BOTTOM PROPERTY CARD ───
