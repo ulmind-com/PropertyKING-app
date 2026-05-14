@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
@@ -103,6 +104,17 @@ export default function HomeScreen({ navigation }) {
   const [userCoords, setUserCoords] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sectionYs, setSectionYs] = useState({ nearby: 0, featured: 0, topViewed: 0 });
+
+  // Ensure StatusBar is correct when returning to this screen
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle('light-content');
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor('transparent');
+        StatusBar.setTranslucent(true);
+      }
+    }, [])
+  );
 
   useEffect(() => { loadCacheThenFresh(); }, []);
 
