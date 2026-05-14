@@ -1,35 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 // Custom animated Input component
 const AnimatedInput = ({ icon, label, password, phone, value, onChangeText, ...props }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPass, setShowPass] = useState(false);
   
-  const borderColor = useSharedValue(COLORS.borderLight);
-  const borderWidth = useSharedValue(1);
+  const focusAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    borderColor.value = withTiming(isFocused ? COLORS.primary : COLORS.borderLight, { duration: 300 });
-    borderWidth.value = withTiming(isFocused ? 1.5 : 1, { duration: 300 });
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
   }, [isFocused]);
 
-  const animatedContainerStyle = useAnimatedStyle(() => ({
-    borderColor: borderColor.value,
-    borderWidth: borderWidth.value,
-  }));
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [COLORS.borderLight, COLORS.primary]
+  });
+
+  const borderWidth = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.5]
+  });
 
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
-      <Animated.View style={[styles.inputBox, animatedContainerStyle]}>
+      <Animated.View style={[styles.inputBox, { borderColor, borderWidth }]}>
         
         {phone ? (
           <View style={styles.countryCode}>
@@ -70,6 +76,17 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Entrance Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true })
+    ]).start();
+  }, []);
+
   const handleRegister = async () => {
     if (!fullName || !email || !phone || !password) return setError('Please fill out all fields.');
     if (phone.replace(/\D/g, '').length < 10) return setError('Please enter a valid phone number.');
@@ -103,22 +120,23 @@ export default function RegisterScreen({ navigation }) {
         contentContainerStyle={styles.scroll} 
         showsVerticalScrollIndicator={false}
         bounces={false}
+        style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
       >
-        <Animated.View entering={FadeInUp.duration(600).springify()} style={styles.topNav}>
+        <View style={styles.topNav}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#FFF" />
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(200).duration(800).springify()} style={styles.card}>
+        <View style={styles.card}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join PropertyKING to unlock premium real estate deals.</Text>
 
           {error ? (
-            <Animated.View entering={FadeInDown.duration(400)} style={styles.errorBox}>
+            <View style={styles.errorBox}>
               <Ionicons name="alert-circle" size={18} color={COLORS.error} />
               <Text style={styles.errorText}>{error}</Text>
-            </Animated.View>
+            </View>
           ) : null}
 
           <View style={styles.form}>
@@ -160,7 +178,7 @@ export default function RegisterScreen({ navigation }) {
               password 
             />
 
-            <Animated.View entering={FadeInDown.delay(400).duration(800).springify()}>
+            <View style={{ marginTop: 10 }}>
               <TouchableOpacity activeOpacity={0.8} onPress={handleRegister} disabled={loading}>
                 <LinearGradient
                   colors={[COLORS.primary, '#6D28D9']}
@@ -171,17 +189,17 @@ export default function RegisterScreen({ navigation }) {
                   {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" style={{marginLeft: 8}}/>}
                 </LinearGradient>
               </TouchableOpacity>
-            </Animated.View>
+            </View>
           </View>
 
-          <Animated.View entering={FadeInDown.delay(500).duration(800)} style={styles.bottomText}>
+          <View style={styles.bottomText}>
             <Text style={styles.bottomTextNormal}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.signInLink}>Sign In now</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
 
-        </Animated.View>
+        </View>
       </Animated.ScrollView>
     </KeyboardAvoidingView>
   );
@@ -263,7 +281,6 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.radius.xl, 
     alignItems: 'center', 
     justifyContent: 'center', 
-    marginTop: 10, 
     ...SHADOWS.primary 
   },
   signupBtnText: { color: '#FFF', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 },
