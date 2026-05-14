@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, StatusBar, Image, Alert, ActivityIndicator, Modal, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, StatusBar, Image, Alert, ActivityIndicator, Modal, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
-import { propertyAPI, propertyTypeAPI } from '../../api';
+import { propertyAPI, propertyTypeAPI, amenityAPI } from '../../api';
 import api from '../../api';
 
 const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
@@ -34,16 +34,30 @@ export default function AddPropertyScreen({ navigation }) {
   const [images, setImages] = useState([]);
   const [videoUri, setVideoUri] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [floorPlanUrls, setFloorPlanUrls] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingFloorPlan, setUploadingFloorPlan] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
+  // Amenities
+  const [allAmenities, setAllAmenities] = useState([]);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
 
-  useEffect(() => { loadPropertyTypes(); }, []);
+  useEffect(() => { loadPropertyTypes(); loadAmenities(); }, []);
 
   const loadPropertyTypes = async () => {
     try { const r = await propertyTypeAPI.list(); setPropertyTypes(r.data || []); } catch(e) {}
+  };
+
+  const loadAmenities = async () => {
+    try { const r = await amenityAPI.list(); setAllAmenities(r.data || []); } catch(e) {}
+  };
+
+  const toggleAmenity = (id) => {
+    setSelectedAmenities(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
   };
 
   const getGPS = async () => {
@@ -71,7 +85,7 @@ export default function AddPropertyScreen({ navigation }) {
     if (status !== 'granted') { Alert.alert('Permission needed'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 10 });
     if (!result.canceled && result.assets?.length > 0) {
-      setUploading(true);
+      setUploadingImages(true);
       try {
         const uploaded = [];
         for (const asset of result.assets) {
@@ -82,7 +96,7 @@ export default function AddPropertyScreen({ navigation }) {
         }
         setImages([...images, ...uploaded]);
       } catch(e) { Alert.alert('Upload Error', 'Failed to upload images'); }
-      setUploading(false);
+      setUploadingImages(false);
     }
   };
 
@@ -91,7 +105,7 @@ export default function AddPropertyScreen({ navigation }) {
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.7 });
     if (!result.canceled && result.assets?.[0]) {
-      setUploading(true);
+      setUploadingVideo(true);
       try {
         const asset = result.assets[0];
         const fd = new FormData();
@@ -99,7 +113,7 @@ export default function AddPropertyScreen({ navigation }) {
         const r = await api.post('/upload/video', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         if (r.data?.video?.url) { setVideoUrl(r.data.video.url); setVideoUri(asset.uri); }
       } catch(e) { Alert.alert('Upload Error', 'Failed to upload video'); }
-      setUploading(false);
+      setUploadingVideo(false);
     }
   };
 
@@ -108,7 +122,7 @@ export default function AddPropertyScreen({ navigation }) {
     if (status !== 'granted') return;
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8, selectionLimit: 5 });
     if (!result.canceled && result.assets?.length > 0) {
-      setUploading(true);
+      setUploadingFloorPlan(true);
       try {
         const uploaded = [];
         for (const asset of result.assets) {
@@ -119,7 +133,7 @@ export default function AddPropertyScreen({ navigation }) {
         }
         setFloorPlanUrls([...floorPlanUrls, ...uploaded]);
       } catch(e) { Alert.alert('Upload Error', 'Failed to upload floor plan'); }
-      setUploading(false);
+      setUploadingFloorPlan(false);
     }
   };
 
@@ -156,7 +170,8 @@ export default function AddPropertyScreen({ navigation }) {
         price: parseFloat(price), price_unit: priceUnit,
         details: { bedrooms: parseInt(bedrooms)||0, bathrooms: parseFloat(bathrooms)||0, total_sqft: parseInt(sqft)||null, year_built: parseInt(yearBuilt)||null },
         location: locData, images,
-        video_url: videoUrl || null,
+        amenities: selectedAmenities,
+        video_url: videoUrl || youtubeUrl || null,
         floor_plan_urls: floorPlanUrls,
       };
       await propertyAPI.create(payload);
@@ -182,7 +197,8 @@ export default function AddPropertyScreen({ navigation }) {
       <Text style={s.stepTitle}>{titles[step-1]}</Text>
       {error?<View style={s.errBox}><Ionicons name="alert-circle" size={16} color={COLORS.error}/><Text style={s.errText}>{error}</Text></View>:null}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}}>
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:20,paddingTop:8}} keyboardShouldPersistTaps="handled">
         {step===1&&<View style={s.sc}>
           <View style={s.ig}><Text style={s.lb}>Property Title *</Text><TextInput style={s.inp} placeholder="e.g. Beautiful 3BR House" placeholderTextColor={COLORS.textMuted} value={title} onChangeText={setTitle}/></View>
           <View style={s.ig}><Text style={s.lb}>Description *</Text><TextInput style={[s.inp,{height:120,paddingTop:14}]} placeholder="Describe your property..." placeholderTextColor={COLORS.textMuted} value={description} onChangeText={setDescription} multiline textAlignVertical="top"/></View>
@@ -232,12 +248,35 @@ export default function AddPropertyScreen({ navigation }) {
             <View style={{width:12}}/>
             <View style={[s.ig,{flex:1}]}><Text style={s.lb}>Year Built</Text><TextInput style={s.inp} placeholder="2020" placeholderTextColor={COLORS.textMuted} value={yearBuilt} onChangeText={setYearBuilt} keyboardType="numeric" maxLength={4}/></View>
           </View>
+
+          {/* ── AMENITIES MULTI-SELECT ── */}
+          <View style={s.ig}>
+            <Text style={s.lb}>Amenities</Text>
+            <Text style={{fontSize:11,color:COLORS.textMuted,fontFamily:'Raleway_400Regular',marginBottom:6}}>Tap to select amenities</Text>
+            {allAmenities.length > 0 ? (
+              <View style={s.chipGrid}>
+                {allAmenities.map(am => {
+                  const selected = selectedAmenities.includes(am.id);
+                  return (
+                    <TouchableOpacity key={am.id} style={[s.chip, selected && s.chipActive]} onPress={() => toggleAmenity(am.id)}>
+                      <Text style={{fontSize:12,marginRight:4}}>{am.icon || '✦'}</Text>
+                      <Text style={[s.chipTxt, selected && s.chipTxtActive]}>{am.name}</Text>
+                      {selected && <Ionicons name="checkmark-circle" size={14} color="#FFF" style={{marginLeft:2}}/>}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text style={{fontSize:12,color:COLORS.textMuted,fontFamily:'Raleway_400Regular'}}>No amenities available</Text>
+            )}
+          </View>
         </View>}
 
         {step===4&&<View style={s.sc}>
+          {/* ── PHOTOS ── */}
           <Text style={[FONTS.h4,{marginBottom:8}]}>Photos *</Text>
-          <TouchableOpacity style={s.addBox} onPress={pickImages} disabled={uploading}>
-            {uploading?<ActivityIndicator color={COLORS.primary}/>:<><Ionicons name="camera-outline" size={32} color={COLORS.primary}/><Text style={s.addTxt}>Add Photos</Text></>}
+          <TouchableOpacity style={s.addBox} onPress={pickImages} disabled={uploadingImages}>
+            {uploadingImages ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading photos...</Text></> : <><Ionicons name="camera-outline" size={32} color={COLORS.primary}/><Text style={s.addTxt}>Add Photos</Text></>}
           </TouchableOpacity>
           {images.length>0&&<View style={s.imgGrid}>{images.map((img,i)=>
             <View key={i} style={s.thumb}><Image source={{uri:img.url}} style={s.thumbImg}/>
@@ -246,15 +285,26 @@ export default function AddPropertyScreen({ navigation }) {
               {!img.is_primary&&<TouchableOpacity style={s.setPrimBtn} onPress={()=>setPrimary(i)}><Text style={s.setPrimTxt}>Set cover</Text></TouchableOpacity>}
             </View>)}</View>}
 
+          {/* ── VIDEO ── */}
           <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Video (Optional)</Text>
-          {videoUrl?<View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontFamily: 'Raleway_600SemiBold'}}>Video uploaded</Text>
-            <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
-          :<TouchableOpacity style={s.addBox} onPress={pickVideo} disabled={uploading}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Video</Text></TouchableOpacity>}
+          {videoUrl ? (
+            <View style={s.mediaDone}><Ionicons name="videocam" size={24} color={COLORS.success}/><Text style={{flex:1,color:COLORS.success,fontFamily:'Raleway_600SemiBold'}}>Video uploaded</Text>
+              <TouchableOpacity onPress={()=>{setVideoUrl('');setVideoUri(null);}}><Ionicons name="trash-outline" size={20} color={COLORS.error}/></TouchableOpacity></View>
+          ) : uploadingVideo ? (
+            <View style={s.uploadingBox}><ActivityIndicator color={COLORS.primary} size="small"/><Text style={s.uploadingTxt}>Uploading video...</Text><View style={s.uploadBar}><View style={[s.uploadBarFill,{width:'60%'}]}/></View></View>
+          ) : (
+            <TouchableOpacity style={s.addBox} onPress={pickVideo}><Ionicons name="videocam-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Upload Video</Text></TouchableOpacity>
+          )}
 
+          {/* ── YOUTUBE URL ── */}
+          <Text style={{fontSize:12,fontFamily:'Raleway_500Medium',color:COLORS.textMuted,textAlign:'center',marginVertical:8}}>— OR paste a YouTube URL —</Text>
+          <TextInput style={s.inp} placeholder="https://youtube.com/watch?v=..." placeholderTextColor={COLORS.textMuted} value={youtubeUrl} onChangeText={setYoutubeUrl} autoCapitalize="none" keyboardType="url"/>
+          {youtubeUrl.length > 0 && <Text style={{fontSize:11,color:COLORS.success,fontFamily:'Raleway_500Medium',marginTop:4}}>✓ YouTube URL will be used for property video</Text>}
+
+          {/* ── FLOOR PLANS ── */}
           <Text style={[FONTS.h4,{marginTop:24,marginBottom:8}]}>Floor Plans (Optional)</Text>
-          <TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploading}>
-            <Ionicons name="map-outline" size={28} color={COLORS.primary}/>
-            <Text style={s.addTxt}>Add Floor Plans</Text>
+          <TouchableOpacity style={s.addBox} onPress={pickFloorPlan} disabled={uploadingFloorPlan}>
+            {uploadingFloorPlan ? <><ActivityIndicator color={COLORS.primary}/><Text style={s.addTxt}>Uploading floor plans...</Text></> : <><Ionicons name="map-outline" size={28} color={COLORS.primary}/><Text style={s.addTxt}>Add Floor Plans</Text></>}
           </TouchableOpacity>
           {floorPlanUrls.length>0&&<View style={s.imgGrid}>{floorPlanUrls.map((url,i)=>
             <View key={i} style={s.fpDone}><Image source={{uri:url}} style={s.fpImg}/>
@@ -263,6 +313,7 @@ export default function AddPropertyScreen({ navigation }) {
         </View>}
         <View style={{height:120}}/>
       </ScrollView>
+    </KeyboardAvoidingView>
 
       <View style={s.bottomBar}>{step<4?
         <TouchableOpacity style={s.nextBtn} onPress={validate}><Text style={s.nextTxt}>Continue</Text><Ionicons name="arrow-forward" size={20} color="#FFF"/></TouchableOpacity>:
@@ -345,4 +396,15 @@ const s = StyleSheet.create({
   optA:{backgroundColor:COLORS.primarySoft},
   optTxt:{fontSize:15,fontFamily: 'Raleway_500Medium',color:COLORS.text},
   optTxtA:{color:COLORS.primary,fontFamily: 'Raleway_700Bold'},
+  // Amenity chips
+  chipGrid:{flexDirection:'row',flexWrap:'wrap',gap:8},
+  chip:{flexDirection:'row',alignItems:'center',paddingHorizontal:12,paddingVertical:8,borderRadius:20,borderWidth:1.5,borderColor:COLORS.border,backgroundColor:COLORS.bgAlt},
+  chipActive:{backgroundColor:COLORS.primary,borderColor:COLORS.primary},
+  chipTxt:{fontSize:12,fontFamily:'Raleway_600SemiBold',color:COLORS.textSecondary},
+  chipTxtActive:{color:'#FFF'},
+  // Video upload progress
+  uploadingBox:{alignItems:'center',justifyContent:'center',padding:20,borderRadius:SIZES.radius.lg,backgroundColor:COLORS.bgAlt,borderWidth:1,borderColor:COLORS.borderLight,gap:8},
+  uploadingTxt:{fontSize:13,fontFamily:'Raleway_600SemiBold',color:COLORS.primary},
+  uploadBar:{width:'80%',height:4,borderRadius:2,backgroundColor:COLORS.borderLight,overflow:'hidden'},
+  uploadBarFill:{height:'100%',borderRadius:2,backgroundColor:COLORS.primary},
 });
