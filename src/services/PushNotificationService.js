@@ -1,6 +1,7 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { userAPI } from '../api';
 
 // How notifications should be handled when the app is foregrounded
@@ -15,6 +16,12 @@ Notifications.setNotificationHandler({
 export const PushNotificationService = {
   async registerForPushNotificationsAsync() {
     let token;
+
+    // SDK 53+ removed push notification support from Expo Go. We must bypass it to prevent errors.
+    if (Constants.appOwnership === 'expo') {
+      console.log('Skipping push notification setup: Not supported in Expo Go (SDK 53+)');
+      return null;
+    }
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('propertyking_channel', {
