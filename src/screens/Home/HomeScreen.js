@@ -92,7 +92,12 @@ const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, sectionY }) => 
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
-  const [propertyTypes, setPropertyTypes] = useState([]);
+  const [propertyTypes, setPropertyTypes] = useState([
+    { id: 't1', name: 'House', icon: '🏠' },
+    { id: 't2', name: 'Condo', icon: '🏢' },
+    { id: 't3', name: 'Townhouse', icon: '🏘️' },
+    { id: 't4', name: 'Apartment', icon: '🏙️' }
+  ]);
   const [selectedType, setSelectedType] = useState(null);
   const [nearbyProps, setNearbyProps] = useState([]);
   const [topViewedProps, setTopViewedProps] = useState([]);
@@ -339,28 +344,6 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* ═══════════ TYPE CHIPS SCROLL ═══════════ */}
-        {propertyTypes.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={st.typeChipsScroll}
-          >
-            {propertyTypes.map(t => (
-              <TouchableOpacity
-                key={t.id}
-                style={[st.typeChip, selectedType === t.id && st.typeChipActive]}
-                onPress={() => {
-                  setSelectedType(selectedType === t.id ? null : t.id);
-                  navigation.navigate('PropertyListing', { property_type_id: t.id });
-                }}
-              >
-                <Text style={st.typeIcon}>{t.icon || '🏠'}</Text>
-                <Text style={[st.typeText, selectedType === t.id && st.typeTextActive]}>{t.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
 
         {/* ═══════════ NEAR YOU ═══════════ */}
         {finalNearby.length > 0 && (
