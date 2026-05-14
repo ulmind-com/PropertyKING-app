@@ -280,20 +280,47 @@ export default function MapExploreScreen({ navigation }) {
         onRegionChangeComplete={onRegionChangeComplete}
         mapPadding={{ top: 100, right: 0, bottom: 0, left: 0 }}
       >
-        {mapReady && properties.map((prop) => {
-          const coords = getCoords(prop.location);
-          if (!coords) return null;
+        {mapReady && (() => {
+          // Spread overlapping markers that share the same coordinates
+          const coordMap = {};
+          const jitteredProps = properties.map((prop) => {
+            const coords = getCoords(prop.location);
+            if (!coords) return null;
+            const key = `${coords.lat.toFixed(5)}_${coords.lng.toFixed(5)}`;
+            if (!coordMap[key]) coordMap[key] = 0;
+            const index = coordMap[key]++;
+            return { prop, coords, index, key };
+          }).filter(Boolean);
 
-          return (
-            <PropertyMarker
-              key={prop.id}
-              prop={prop}
-              coords={coords}
-              getImage={getMarkerImage(prop)}
-              onPress={() => onMarkerPress(prop)}
-            />
-          );
-        })}
+          // Apply jitter to duplicates
+          const countMap = {};
+          jitteredProps.forEach(item => {
+            countMap[item.key] = (countMap[item.key] || 0) + 1;
+          });
+
+          return jitteredProps.map((item) => {
+            let { coords } = item;
+            const total = countMap[item.key];
+            if (total > 1) {
+              // Spread in a circle: ~0.0008 degrees ≈ ~80m offset
+              const angle = (2 * Math.PI * item.index) / total;
+              const offset = 0.0008;
+              coords = {
+                lat: coords.lat + offset * Math.cos(angle),
+                lng: coords.lng + offset * Math.sin(angle),
+              };
+            }
+            return (
+              <PropertyMarker
+                key={item.prop.id}
+                prop={item.prop}
+                coords={coords}
+                getImage={getMarkerImage(item.prop)}
+                onPress={() => onMarkerPress(item.prop)}
+              />
+            );
+          });
+        })()}
       </MapView>
 
       {/* ═══════════ SEARCH BAR OVERLAY ═══════════ */}
