@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 
-const AVAILABLE_SCREENS = ['MyListings', 'EditProfile'];
+const AVAILABLE_SCREENS = ['MyListings', 'EditProfile', 'Favorites'];
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();

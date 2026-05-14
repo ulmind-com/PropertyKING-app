@@ -22,6 +22,7 @@ import MyListingsScreen from '../screens/Profile/MyListingsScreen';
 import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
+import MapExploreScreen from '../screens/Map/MapExploreScreen';
 import FloatingCompareButton from '../components/FloatingCompareButton';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -48,10 +49,10 @@ function ExploreStack() {
   );
 }
 
-function FavStack() {
+function MapStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="FavMain" component={FavoritesScreen} />
+      <Stack.Screen name="MapMain" component={MapExploreScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
     </Stack.Navigator>
   );
@@ -64,6 +65,8 @@ function ProfileStack() {
       <Stack.Screen name="MyListings" component={MyListingsScreen} />
       <Stack.Screen name="PropertyLeads" component={PropertyLeadsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="Favorites" component={FavoritesScreen} />
+      <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
     </Stack.Navigator>
   );
 }
@@ -100,7 +103,7 @@ function MainTabs() {
           let iconName;
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
           else if (route.name === 'Explore') iconName = focused ? 'compass' : 'compass-outline';
-          else if (route.name === 'Favorites') iconName = focused ? 'heart' : 'heart-outline';
+          else if (route.name === 'Map') iconName = focused ? 'map' : 'map-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <Ionicons name={iconName} size={22} color={color} />;
         },
@@ -154,11 +157,10 @@ function MainTabs() {
           },
         })}
       />
-      <Tab.Screen name="Favorites" component={FavStack} 
+      <Tab.Screen name="Map" component={MapStack} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
-            e.preventDefault();
-            navigation.navigate('Favorites', { screen: 'FavMain' });
+            navigation.navigate('Map', { screen: 'MapMain' });
           }
         })}
       />
