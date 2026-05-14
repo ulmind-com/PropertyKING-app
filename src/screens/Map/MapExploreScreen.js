@@ -47,10 +47,10 @@ const DARK_MAP_STYLE = [
 ];
 
 // ──────────────────────────────────────────────────────────────
-// Robust React Native Map Marker component
-// Uses a known workaround for Android Maps where we force a 
-// complete re-render of the Image after it caches, ensuring 
-// the border-radius is perfectly applied during the snapshot.
+// The Ultimate Android Map Marker Fix (Masking Hack)
+// Since Android Map snapshotter fails to clip images with borderRadius,
+// we instead render a SQUARE image and overlay a THICK WHITE RING 
+// over it to hide the square corners! 100% Guaranteed to be round!
 // ──────────────────────────────────────────────────────────────
 const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   const [loaded, setLoaded] = useState(false);
@@ -60,31 +60,50 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
       coordinate={{ latitude: coords.lat, longitude: coords.lng }}
       onPress={onPress}
       tracksViewChanges={!loaded}
+      anchor={{ x: 0.5, y: 1 }}
     >
-      <View style={{
-        width: 54, 
-        height: 54, 
-        borderRadius: 27, 
-        backgroundColor: '#FFFFFF', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 5,
+      <View style={{ 
+        width: 60, height: 70, alignItems: 'center', 
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 
       }}>
-        {/* The key prop forces a fresh render cycle once the image is in cache, 
-            guaranteeing the borderRadius is captured by Android's bitmap snapshot! */}
-        <RNImage
-          key={loaded ? 'loaded' : 'loading'}
-          source={{ uri: getImage }}
-          style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#333' }}
-          resizeMode="cover"
-          onLoad={() => {
-            if (!loaded) setTimeout(() => setLoaded(true), 100);
-          }}
-        />
+        
+        {/* Base Image (Square) */}
+        <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
+          <RNImage
+            source={{ uri: getImage }}
+            style={{ width: 40, height: 40, backgroundColor: '#333' }}
+            resizeMode="cover"
+            onLoad={() => {
+              if (!loaded) setTimeout(() => setLoaded(true), 100);
+            }}
+          />
+          
+          {/* Overlay Mask Ring - Paints thick white over the square corners */}
+          <View style={{
+            position: 'absolute',
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            borderWidth: 10,
+            borderColor: '#FFFFFF'
+          }} />
+        </View>
+
+        {/* Pin Bottom Triangle */}
+        <View style={{
+          width: 0,
+          height: 0,
+          borderLeftWidth: 8,
+          borderRightWidth: 8,
+          borderTopWidth: 10,
+          borderStyle: 'solid',
+          backgroundColor: 'transparent',
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderTopColor: '#FFFFFF',
+          marginTop: -2,
+        }} />
+
       </View>
     </Marker>
   );
