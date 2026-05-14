@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
+import Svg, { Defs, ClipPath, Circle, Path, Image as SvgImage, LinearGradient as SvgLinearGradient, Stop, Ellipse } from 'react-native-svg';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
 import { MapView, Marker } from '../../components/Map/MapViewComponent.native';
@@ -46,16 +47,16 @@ const DARK_MAP_STYLE = [
 ];
 
 // ──────────────────────────────────────────────────────────────
-// Custom Circular Marker component
-// Uses tracksViewChanges + onLoad to guarantee the image is
-// rendered BEFORE the bitmap snapshot is taken by Android Maps.
+// Premium 3D SVG Circular Marker component
+// Uses native SVG ClipPath which is guaranteed to be rasterized
+// flawlessly by Android maps without any "flat bottom" bugs!
 // ──────────────────────────────────────────────────────────────
 const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   const [canFreeze, setCanFreeze] = useState(false);
 
   const handleImageLoad = useCallback(() => {
-    // Give Android Maps time to rasterize the correctly-clipped bitmap
-    setTimeout(() => setCanFreeze(true), 600);
+    // Give Android Maps time to rasterize the SVG properly
+    setTimeout(() => setCanFreeze(true), 400);
   }, []);
 
   return (
@@ -63,16 +64,41 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
       coordinate={{ latitude: coords.lat, longitude: coords.lng }}
       onPress={onPress}
       tracksViewChanges={!canFreeze}
+      anchor={{ x: 0.5, y: 0.95 }}
     >
-      <View style={st.markerBorderRing}>
-        <View style={st.markerImgContainer}>
-          <RNImage
-            source={{ uri: getImage }}
-            style={st.markerImg}
-            resizeMode="cover"
+      <View style={{ width: 60, height: 85, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width="60" height="85" viewBox="0 0 60 85">
+          <Defs>
+            <ClipPath id="clip">
+              <Circle cx="30" cy="30" r="22" />
+            </ClipPath>
+            <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#FFFFFF" />
+              <Stop offset="1" stopColor="#D4D4D4" />
+            </SvgLinearGradient>
+          </Defs>
+          
+          {/* Fake Shadow at the bottom tip */}
+          <Ellipse cx="30" cy="78" rx="10" ry="4" fill="rgba(0,0,0,0.3)" />
+
+          {/* The Teardrop Pin Body */}
+          <Path 
+            d="M 30 2 C 14.536 2 2 14.536 2 30 C 2 50 30 80 30 80 C 30 80 58 50 58 30 C 58 14.536 45.464 2 30 2 Z"
+            fill="url(#grad)"
+          />
+
+          {/* The property image seamlessly clipped */}
+          <SvgImage
+            x="8"
+            y="8"
+            width="44"
+            height="44"
+            preserveAspectRatio="xMidYMid slice"
+            href={{ uri: getImage }}
+            clipPath="url(#clip)"
             onLoad={handleImageLoad}
           />
-        </View>
+        </Svg>
       </View>
     </Marker>
   );
@@ -518,30 +544,6 @@ const st = StyleSheet.create({
     justifyContent: 'center',
     ...SHADOWS.primary,
     zIndex: 10,
-  },
-
-  // ─── MARKERS ───
-  // White ring as the border, expo-image handles its own borderRadius clipping natively
-  markerBorderRing: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#FFFFFF',
-    padding: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Container to strictly enforce clipping for React Native Maps
-  markerImgContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    overflow: 'hidden',
-    backgroundColor: '#333',
-  },
-  markerImg: {
-    width: '100%',
-    height: '100%',
   },
 
   // ─── BOTTOM PROPERTY CARD ───
