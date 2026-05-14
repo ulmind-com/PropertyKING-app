@@ -52,9 +52,6 @@ export default function MapExploreScreen({ navigation }) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
-  const [selectedProperty, setSelectedProperty] = useState(null);
-  const [mapReady, setMapReady] = useState(false);
-
   const [mapReady, setMapReady] = useState(false);
 
   // ─── LOCATION & INITIAL LOAD ───
