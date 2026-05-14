@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI, amenityAPI } from '../../api';
 import api from '../../api';
+import { MapView, Marker } from '../../components/Map/MapViewComponent';
 
 const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
 
@@ -45,6 +46,10 @@ export default function AddPropertyScreen({ navigation }) {
   // Amenities
   const [allAmenities, setAllAmenities] = useState([]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
+  // Map Picker
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [tempCoords, setTempCoords] = useState(null);
+  const [mapRegion, setMapRegion] = useState({ latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
 
   useEffect(() => { loadPropertyTypes(); loadAmenities(); }, []);
 
@@ -67,6 +72,7 @@ export default function AddPropertyScreen({ navigation }) {
       if (status !== 'granted') { Alert.alert('Permission needed', 'Allow location access'); setGpsLoading(false); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setGpsCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      setMapRegion({ latitude: loc.coords.latitude, longitude: loc.coords.longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
       // Reverse geocode
       const [geo] = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       if (geo) {
@@ -77,6 +83,24 @@ export default function AddPropertyScreen({ navigation }) {
         if (!county && geo.subregion) setCounty(geo.subregion);
       }
     } catch(e) { Alert.alert('Error', 'Could not get location'); }
+    setGpsLoading(false);
+  };
+
+  const confirmMapLocation = async () => {
+    if (!tempCoords) return setShowMapPicker(false);
+    setGpsLoading(true);
+    setShowMapPicker(false);
+    try {
+      setGpsCoords({ lat: tempCoords.latitude, lng: tempCoords.longitude });
+      const [geo] = await Location.reverseGeocodeAsync({ latitude: tempCoords.latitude, longitude: tempCoords.longitude });
+      if (geo) {
+        setAddress(`${geo.streetNumber || ''} ${geo.street || ''}`.trim());
+        setCity(geo.city || '');
+        setStateSel(geo.region?.length === 2 ? geo.region : '');
+        setZipCode(geo.postalCode || '');
+        setCounty(geo.subregion || '');
+      }
+    } catch(e) { Alert.alert('Error', 'Could not reverse geocode map location'); }
     setGpsLoading(false);
   };
 
@@ -221,9 +245,15 @@ export default function AddPropertyScreen({ navigation }) {
           </View>}
 
           {step===2&&<View style={s.sc}>
-            <TouchableOpacity style={s.gpsBtn} onPress={getGPS} disabled={gpsLoading}>
-              {gpsLoading?<ActivityIndicator color={COLORS.primary}/>:<><Ionicons name="locate" size={20} color={COLORS.primary}/><Text style={s.gpsTxt}>Use Current GPS Location</Text></>}
-            </TouchableOpacity>
+            <View style={{flexDirection:'row',gap:12}}>
+              <TouchableOpacity style={[s.gpsBtn,{flex:1}]} onPress={getGPS} disabled={gpsLoading}>
+                {gpsLoading?<ActivityIndicator color={COLORS.primary}/>:<><Ionicons name="locate" size={18} color={COLORS.primary}/><Text style={s.gpsTxt}>Auto GPS</Text></>}
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.gpsBtn,{flex:1,backgroundColor:COLORS.bgAlt,borderColor:COLORS.border}]} onPress={() => { setTempCoords(gpsCoords ? {latitude: gpsCoords.lat, longitude: gpsCoords.lng} : null); setShowMapPicker(true); }}>
+                <Ionicons name="map" size={18} color={COLORS.text}/>
+                <Text style={[s.gpsTxt,{color:COLORS.text}]}>Pick on Map</Text>
+              </TouchableOpacity>
+            </View>
             {gpsCoords&&<Text style={s.gpsInfo}>📍 {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</Text>}
             <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
             <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
@@ -344,6 +374,31 @@ export default function AddPropertyScreen({ navigation }) {
             </TouchableOpacity>}/>
         </View></View>
       </Modal>
+
+      {/* Map Picker Modal */}
+      <Modal visible={showMapPicker} transparent animationType="slide">
+        <View style={[s.mo, {justifyContent: 'flex-start', backgroundColor: COLORS.bg}]}>
+          <View style={[s.header, {paddingTop: Platform.OS==='ios'?50:20}]}>
+            <TouchableOpacity onPress={()=>setShowMapPicker(false)} style={s.backBtn}><Ionicons name="close" size={24} color={COLORS.text} /></TouchableOpacity>
+            <Text style={FONTS.h3}>Tap to select location</Text>
+            <View style={{width:40}}/>
+          </View>
+          <View style={{flex: 1}}>
+            <MapView 
+              style={{flex:1}} 
+              initialRegion={mapRegion}
+              onPress={(e) => setTempCoords(e.nativeEvent.coordinate)}
+            >
+              {tempCoords && <Marker coordinate={tempCoords} pinColor={COLORS.primary} />}
+            </MapView>
+            <View style={s.mapConfirmBox}>
+              <TouchableOpacity style={[s.submitBtn, !tempCoords && {opacity:0.5}]} disabled={!tempCoords} onPress={confirmMapLocation}>
+                <Text style={s.submitTxt}>{tempCoords ? "Confirm Location" : "Tap on map first"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -407,4 +462,5 @@ const s = StyleSheet.create({
   uploadingTxt:{fontSize:13,fontFamily:'Raleway_600SemiBold',color:COLORS.primary},
   uploadBar:{width:'80%',height:4,borderRadius:2,backgroundColor:COLORS.borderLight,overflow:'hidden'},
   uploadBarFill:{height:'100%',borderRadius:2,backgroundColor:COLORS.primary},
+  mapConfirmBox:{position:'absolute',bottom:Platform.OS==='ios'?40:20,left:20,right:20,backgroundColor:COLORS.bg,padding:16,borderRadius:SIZES.radius.lg,...SHADOWS.md},
 });
