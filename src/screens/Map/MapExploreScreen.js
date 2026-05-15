@@ -9,7 +9,7 @@ import { Image } from 'expo-image';
 
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
-import { MapView, Marker } from '../../components/Map/MapViewComponent.native';
+import { MapView, Marker } from '../../components/Map/MapViewComponent';
 
 const { width, height } = Dimensions.get('window');
 const CARD_HEIGHT = 160;
