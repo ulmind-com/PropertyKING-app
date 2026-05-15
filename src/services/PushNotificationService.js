@@ -51,7 +51,7 @@ export const PushNotificationService = {
       // We get the Expo Push Token. It works out-of-the-box for Android/iOS via Expo servers.
       try {
         const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: '542c3882-626a-4b07-82a8-125026ffefc0' // A dummy placeholder or project id
+          projectId: 'c4f1115f-7a9b-4670-be77-45524b616a7b'
         }).catch(err => Notifications.getExpoPushTokenAsync()); // Fallback without it
         
         if (tokenData) {
