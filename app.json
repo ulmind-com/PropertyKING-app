@@ -46,7 +46,8 @@
           "photosPermission": "Allow PropertyKING to access your photos to upload property images and avatars."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "./plugins/withPointerTagging.js"
     ],
     "extra": {
       "eas": {
