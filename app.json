@@ -25,7 +25,7 @@
       "package": "com.ulmind.propertyking",
       "config": {
         "googleMaps": {
-          "apiKey": "DUMMY_KEY_TO_PREVENT_NATIVE_CRASH_ON_STARTUP"
+          "apiKey": "AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o"
         }
       }
     },
