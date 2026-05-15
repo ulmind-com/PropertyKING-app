@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuth } from '../../context/AuthContext';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // OP Premium Glassy Button
 const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
@@ -32,26 +32,47 @@ const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
-  const [name, setName] = useState('');
+  
+  // Form State
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideXAnim = useRef(new Animated.Value(0)).current; // For horizontal step sliding
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true })
-    ]).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, []);
 
+  const animateSlide = (direction) => {
+    slideXAnim.setValue(direction === 'next' ? 50 : -50);
+    Animated.spring(slideXAnim, { toValue: 0, friction: 7, tension: 40, useNativeDriver: true }).start();
+  };
+
+  const handleNextStep1 = () => {
+    if (!email || !email.includes('@')) return setError('Please enter a valid email address.');
+    setError('');
+    setStep(2);
+    animateSlide('next');
+  };
+
+  const handleNextStep2 = () => {
+    if (!password || password.length < 6) return setError('Password must be at least 6 characters.');
+    setError('');
+    setStep(3);
+    animateSlide('next');
+  };
+
   const handleRegister = async () => {
-    if (!name || !email || !password || !phone) return setError('Please fill all fields.');
+    if (!name || !phone) return setError('Please fill out your name and phone number.');
     setLoading(true); setError('');
     try { 
       await register(email, password, name, phone); 
@@ -60,6 +81,16 @@ export default function RegisterScreen({ navigation }) {
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed.')); 
     }
     setLoading(false);
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+      animateSlide('prev');
+      setError('');
+    } else {
+      navigation.goBack();
+    }
   };
 
   return (
@@ -74,33 +105,47 @@ export default function RegisterScreen({ navigation }) {
 
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+            <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
               <Ionicons name="chevron-back" size={24} color="#FFF" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.signupText}>Sign In</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFF" />
-            </TouchableOpacity>
+            {step === 1 && (
+              <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.signupText}>Sign In</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+              </TouchableOpacity>
+            )}
           </View>
 
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], flex: 1, justifyContent: 'center' }}>
+          {/* Progress Indicator */}
+          <View style={styles.progressRow}>
+            <View style={[styles.progressDot, step >= 1 && styles.progressDotActive]} />
+            <View style={[styles.progressLine, step >= 2 && styles.progressLineActive]} />
+            <View style={[styles.progressDot, step >= 2 && styles.progressDotActive]} />
+            <View style={[styles.progressLine, step >= 3 && styles.progressLineActive]} />
+            <View style={[styles.progressDot, step >= 3 && styles.progressDotActive]} />
+          </View>
+
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideXAnim }], flex: 1, justifyContent: 'center' }}>
             
             {/* Header area */}
             <View style={styles.headerArea}>
-              <View style={styles.logoBadge}>
-                <Ionicons name="person-add" size={28} color="#FFF" />
-              </View>
-              <Text style={styles.mainTitle}>Create Account</Text>
-              <Text style={styles.subTitle}>Join PropertyKING to unlock exclusive luxury properties.</Text>
+              <Text style={styles.mainTitle}>
+                {step === 1 ? "What's your email?" : step === 2 ? "Create a password" : "Final details"}
+              </Text>
+              <Text style={styles.subTitle}>
+                {step === 1 ? "We'll use this to log you in." : step === 2 ? "Make it strong and secure." : "Help us identify you."}
+              </Text>
             </View>
 
             {/* Form Area */}
@@ -112,76 +157,92 @@ export default function RegisterScreen({ navigation }) {
                 </View>
               ) : null}
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Full Name</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="John Doe"
-                    placeholderTextColor="#6B7280"
-                    value={name}
-                    onChangeText={setName}
-                  />
+              {/* STEP 1: EMAIL */}
+              {step === 1 && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Email Address</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                    <TextInput 
+                      style={styles.input}
+                      placeholder="john@example.com"
+                      placeholderTextColor="#6B7280"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoFocus
+                    />
+                  </View>
+                  <View style={{ marginTop: 20 }}>
+                    <GlassyWhiteButton title="Continue" icon="arrow-forward" onPress={handleNextStep1} />
+                  </View>
                 </View>
-              </View>
+              )}
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="john@example.com"
-                    placeholderTextColor="#6B7280"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
+              {/* STEP 2: PASSWORD */}
+              {step === 2 && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Secure Password</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                    <TextInput 
+                      style={styles.input}
+                      placeholder="••••••••"
+                      placeholderTextColor="#6B7280"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPass}
+                      autoFocus
+                    />
+                    <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPass(!showPass)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+                      <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9CA3AF" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={{ marginTop: 20 }}>
+                    <GlassyWhiteButton title="Continue" icon="arrow-forward" onPress={handleNextStep2} />
+                  </View>
                 </View>
-              </View>
+              )}
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone Number</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="call-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="+1 234 567 8900"
-                    placeholderTextColor="#6B7280"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                  />
+              {/* STEP 3: NAME & PHONE */}
+              {step === 3 && (
+                <View style={{ gap: 16 }}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Full Name</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                      <TextInput 
+                        style={styles.input}
+                        placeholder="John Doe"
+                        placeholderTextColor="#6B7280"
+                        value={name}
+                        onChangeText={setName}
+                        autoFocus
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Phone Number</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="call-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                      <TextInput 
+                        style={styles.input}
+                        placeholder="+1 234 567 8900"
+                        placeholderTextColor="#6B7280"
+                        value={phone}
+                        onChangeText={setPhone}
+                        keyboardType="phone-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{ marginTop: 20 }}>
+                    <GlassyWhiteButton title="Complete Sign Up" icon="checkmark" onPress={handleRegister} loading={loading} />
+                  </View>
                 </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor="#6B7280"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPass}
-                  />
-                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPass(!showPass)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
-                    <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9CA3AF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={{ marginTop: 10 }}>
-                <GlassyWhiteButton 
-                  title="Sign Up" 
-                  onPress={handleRegister}
-                  loading={loading}
-                />
-              </View>
+              )}
 
             </View>
           </Animated.View>
@@ -193,11 +254,11 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  scrollContent: { flexGrow: 1, padding: 24, paddingBottom: 60, justifyContent: 'center' },
+  scrollContent: { flexGrow: 1, padding: 24, paddingBottom: 120, justifyContent: 'center' },
   
   topBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? 40 : 30, marginBottom: 40,
+    marginTop: Platform.OS === 'ios' ? 40 : 30, marginBottom: 30,
   },
   iconBtn: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)',
@@ -209,12 +270,14 @@ const styles = StyleSheet.create({
   },
   signupText: { color: '#FFF', fontFamily: 'Raleway_600SemiBold', fontSize: 14 },
 
+  progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 40, paddingHorizontal: 40 },
+  progressDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.2)' },
+  progressDotActive: { backgroundColor: '#FFF', shadowColor: '#FFF', shadowOpacity: 0.8, shadowRadius: 6, shadowOffset: { width:0, height:0 } },
+  progressLine: { flex: 1, height: 2, backgroundColor: 'rgba(255,255,255,0.2)', marginHorizontal: 8, borderRadius: 2 },
+  progressLineActive: { backgroundColor: '#FFF' },
+
   headerArea: { marginBottom: 32 },
-  logoBadge: {
-    width: 56, height: 56, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
-  },
-  mainTitle: { fontSize: 36, fontFamily: 'Raleway_800ExtraBold', color: '#FFF', marginBottom: 12, letterSpacing: -0.5 },
+  mainTitle: { fontSize: 32, fontFamily: 'Raleway_800ExtraBold', color: '#FFF', marginBottom: 12, letterSpacing: -0.5 },
   subTitle: { fontSize: 16, fontFamily: 'Raleway_400Regular', color: '#9CA3AF', lineHeight: 24 },
 
   formContainer: { gap: 16 },
