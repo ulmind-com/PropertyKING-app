@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useCallback } from 'react';
 import { StatusBar, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { CompareProvider } from './src/context/CompareContext';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -38,14 +39,16 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <AuthProvider>
-        <CompareProvider>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          <AppNavigator />
-          <Toast />
-        </CompareProvider>
-      </AuthProvider>
-    </View>
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <AuthProvider>
+          <CompareProvider>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <AppNavigator />
+            <Toast />
+          </CompareProvider>
+        </AuthProvider>
+      </View>
+    </SafeAreaProvider>
   );
 }
