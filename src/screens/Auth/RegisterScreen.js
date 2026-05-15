@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import CountryPicker from 'react-native-country-picker-modal';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -39,6 +40,8 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('US');
+  const [callingCode, setCallingCode] = useState('1');
   
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -75,7 +78,8 @@ export default function RegisterScreen({ navigation }) {
     if (!name || !phone) return setError('Please fill out your name and phone number.');
     setLoading(true); setError('');
     try { 
-      await register(email, password, name, phone); 
+      const fullPhone = `+${callingCode}${phone}`;
+      await register(email, password, name, fullPhone); 
     } catch (e) { 
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed.')); 
@@ -226,10 +230,35 @@ export default function RegisterScreen({ navigation }) {
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Phone Number</Text>
                     <View style={styles.inputWrapper}>
-                      <Ionicons name="call-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                      <CountryPicker
+                        withFilter
+                        withFlag
+                        withCallingCode
+                        withCallingCodeButton
+                        countryCode={countryCode}
+                        onSelect={(country) => {
+                          setCountryCode(country.cca2);
+                          setCallingCode(country.callingCode[0]);
+                        }}
+                        theme={{
+                          backgroundColor: '#111827',
+                          onBackgroundTextColor: '#FFFFFF',
+                          fontSize: 16,
+                          filterPlaceholderTextColor: '#9CA3AF',
+                          primaryColorVariant: '#1F2937',
+                          primaryColor: '#000000',
+                        }}
+                        containerButtonStyle={{ 
+                          paddingRight: 8, 
+                          borderRightWidth: 1, 
+                          borderColor: 'rgba(255,255,255,0.2)', 
+                          marginRight: 12,
+                          justifyContent: 'center'
+                        }}
+                      />
                       <TextInput 
                         style={styles.input}
-                        placeholder="+1 234 567 8900"
+                        placeholder="234 567 8900"
                         placeholderTextColor="#6B7280"
                         value={phone}
                         onChangeText={setPhone}
