@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert, Image, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
@@ -71,10 +71,14 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
-        <View style={styles.poweredByContainer}>
+        <TouchableOpacity 
+          style={styles.poweredByContainer}
+          activeOpacity={0.7}
+          onPress={() => Linking.openURL('https://www.ulmind.com')}
+        >
           <Text style={styles.poweredByText}>Powered By</Text>
           <Image source={require('../../../assets/ulmind.png')} style={styles.poweredByLogo} resizeMode="contain" />
-        </View>
+        </TouchableOpacity>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 24, padding: 16, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.errorLight },
   logoutText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
   
-  poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10, gap: 6 },
+  poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10, gap: 3 },
   poweredByText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted, letterSpacing: 0.5 },
   poweredByLogo: { width: 80, height: 24, opacity: 0.9 },
 });
