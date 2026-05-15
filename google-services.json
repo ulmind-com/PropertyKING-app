@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "642116439018",
+    "project_id": "propertyking-dc6bb",
+    "storage_bucket": "propertyking-dc6bb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642116439018:android:82352b4b885c44a28e0093",
+        "android_client_info": {
+          "package_name": "com.ulmind.propertyking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgZeDxBn_md7wxT07cYmC9LZRBXXmJGrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
