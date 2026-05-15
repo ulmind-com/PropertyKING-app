@@ -22,7 +22,12 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ulmind.propertyking"
+      "package": "com.ulmind.propertyking",
+      "config": {
+        "googleMaps": {
+          "apiKey": "DUMMY_KEY_TO_PREVENT_NATIVE_CRASH_ON_STARTUP"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
