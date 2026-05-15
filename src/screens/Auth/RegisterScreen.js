@@ -79,7 +79,7 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true); setError('');
     try { 
       const fullPhone = `+${callingCode}${phone}`;
-      await register(email, password, name, fullPhone); 
+      await register({ email, password, full_name: name, phone: fullPhone }); 
     } catch (e) { 
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed.')); 
