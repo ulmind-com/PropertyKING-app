@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 24, padding: 16, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.errorLight },
   logoutText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
   
-  poweredByContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10 },
-  poweredByText: { fontSize: 12, fontFamily: 'Raleway_500Medium', color: COLORS.textMuted, marginBottom: 4, letterSpacing: 0.5 },
-  poweredByLogo: { width: 100, height: 30, opacity: 0.8 },
+  poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10, gap: 6 },
+  poweredByText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted, letterSpacing: 0.5 },
+  poweredByLogo: { width: 80, height: 24, opacity: 0.9 },
 });
