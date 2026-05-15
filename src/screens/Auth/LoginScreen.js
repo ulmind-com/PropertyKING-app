@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -7,21 +7,21 @@ import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-// Glassy White Button Component
+// OP Premium Glassy Button
 const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} disabled={loading} style={styles.glassBtnWrapper}>
       <LinearGradient
-        colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.03)']}
+        colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.75)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.glassBtnInner}
       >
         {loading ? (
-          <ActivityIndicator color="#FFF" />
+          <ActivityIndicator color="#000" />
         ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {icon && <Ionicons name={icon} size={20} color="#FFF" />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {icon && <Ionicons name={icon} size={20} color="#000" />}
             <Text style={styles.glassBtnText}>{title}</Text>
           </View>
         )}
@@ -39,9 +39,13 @@ export default function LoginScreen({ navigation }) {
   const [error, setError] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true })
+    ]).start();
   }, []);
 
   const handleLogin = async () => {
@@ -57,235 +61,159 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#050505' }}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* Top Wavy White Section */}
-      <View style={styles.headerArea}>
-        <View style={styles.headerContent}>
+      {/* Absolute Background Gradient */}
+      <LinearGradient
+        colors={['#111827', '#050505', '#000000']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Top Bar */}
           <View style={styles.topBar}>
-            {/* Logo */}
-            <View style={styles.logoBox}>
-              <View style={styles.logoInner} />
-            </View>
-            
-            {/* Sign Up Link */}
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+              <Ionicons name="chevron-back" size={24} color="#FFF" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('Register')}>
-              <Ionicons name="person-outline" size={20} color="#000" />
               <Text style={styles.signupText}>Sign Up</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFF" />
             </TouchableOpacity>
           </View>
-          
-          <Text style={styles.mainTitle}>Sign In</Text>
-        </View>
 
-        {/* Wave replacement using View with borderRadius */}
-        <View style={styles.waveContainer}>
-          <View style={{ width: width * 2, height: 100, backgroundColor: '#FFFFFF', borderBottomLeftRadius: width, borderBottomRightRadius: width, alignSelf: 'center', marginLeft: -width / 2 }} />
-        </View>
-      </View>
-
-      <Animated.ScrollView 
-        contentContainerStyle={styles.scroll} 
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        style={{ flex: 1, backgroundColor: '#050505', opacity: fadeAnim }}
-      >
-        <View style={styles.formContainer}>
-          
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : null}
-
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="e.g. john@example.com"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              textAlign="center"
-            />
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput 
-                style={styles.passwordInput}
-                placeholder="••••••••••••"
-                placeholderTextColor="#666"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPass}
-                textAlign="center"
-              />
-              <TouchableOpacity 
-                style={styles.eyeIcon} 
-                onPress={() => setShowPass(!showPass)}
-                hitSlop={{top:10, bottom:10, left:10, right:10}}
-              >
-                <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#666" />
-              </TouchableOpacity>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], flex: 1, justifyContent: 'center' }}>
+            
+            {/* Header area */}
+            <View style={styles.headerArea}>
+              <View style={styles.logoBadge}>
+                <Ionicons name="home" size={32} color="#FFF" />
+              </View>
+              <Text style={styles.mainTitle}>Welcome Back</Text>
+              <Text style={styles.subTitle}>Sign in to continue exploring premium properties.</Text>
             </View>
-          </View>
 
-          {/* Sign In Button */}
-          <View style={{ marginTop: 20 }}>
-            <GlassyWhiteButton 
-              title="Sign In" 
-              icon="log-in-outline"
-              onPress={handleLogin}
-              loading={loading}
-            />
-          </View>
-          
-        </View>
-      </Animated.ScrollView>
+            {/* Form Area */}
+            <View style={styles.formContainer}>
+              {error ? (
+                <View style={styles.errorBox}>
+                  <Ionicons name="alert-circle" size={18} color="#EF4444" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="john@example.com"
+                    placeholderTextColor="#6B7280"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#6B7280"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPass}
+                  />
+                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPass(!showPass)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+                    <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.forgotPass}>
+                <Text style={styles.forgotPassText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              <View style={{ marginTop: 10 }}>
+                <GlassyWhiteButton 
+                  title="Sign In" 
+                  onPress={handleLogin}
+                  loading={loading}
+                />
+              </View>
+
+            </View>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#050505' },
+  container: { flex: 1, backgroundColor: '#000' },
+  scrollContent: { flexGrow: 1, padding: 24, paddingBottom: 60, justifyContent: 'center' },
   
-  headerArea: {
-    backgroundColor: '#050505',
-    zIndex: 1,
-  },
-  headerContent: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 40,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: Platform.OS === 'ios' ? 40 : 30, marginBottom: 40,
   },
-  logoBox: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#000',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '45deg' }]
-  },
-  logoInner: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#FFF',
-    borderRadius: 3,
+  iconBtn: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
   },
   signupLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)'
   },
-  signupText: {
-    fontSize: 16,
-    fontFamily: 'Raleway_700Bold',
-    color: '#000',
+  signupText: { color: '#FFF', fontFamily: 'Raleway_600SemiBold', fontSize: 14 },
+
+  headerArea: { marginBottom: 40 },
+  logoBadge: {
+    width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
   },
-  mainTitle: {
-    fontSize: 42,
-    fontFamily: 'Raleway_800ExtraBold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: -10,
+  mainTitle: { fontSize: 36, fontFamily: 'Raleway_800ExtraBold', color: '#FFF', marginBottom: 12, letterSpacing: -0.5 },
+  subTitle: { fontSize: 16, fontFamily: 'Raleway_400Regular', color: '#9CA3AF', lineHeight: 24 },
+
+  formContainer: { gap: 20 },
+  errorBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+    padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)'
   },
-  waveContainer: {
-    width: width,
-    height: 100,
-    backgroundColor: '#050505',
-    marginTop: -1,
+  errorText: { color: '#EF4444', fontFamily: 'Raleway_500Medium', flex: 1, fontSize: 14 },
+
+  inputGroup: { gap: 8 },
+  label: { fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: '#E5E7EB', marginLeft: 4 },
+  inputWrapper: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 16, height: 60, paddingHorizontal: 16
   },
-  
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 32,
-    paddingTop: 10,
-    paddingBottom: 40,
-  },
-  formContainer: {
-    gap: 24,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontFamily: 'Raleway_600SemiBold',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: -10,
-  },
-  inputGroup: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  label: {
-    color: '#888',
-    fontSize: 14,
-    fontFamily: 'Raleway_600SemiBold',
-  },
-  input: {
-    width: '100%',
-    height: 56,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 30,
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Raleway_500Medium',
-    paddingHorizontal: 24,
-  },
-  passwordContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
-    borderRadius: 30,
-    height: 56,
-  },
-  passwordInput: {
-    flex: 1,
-    height: '100%',
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Raleway_500Medium',
-    paddingLeft: 44, // Offset the eye icon to keep text centered visually
-    paddingRight: 10,
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 20,
-  },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, color: '#FFF', fontSize: 16, fontFamily: 'Raleway_500Medium', height: '100%' },
+  eyeIcon: { padding: 8 },
+
+  forgotPass: { alignSelf: 'flex-end', marginTop: -4 },
+  forgotPassText: { color: '#9CA3AF', fontFamily: 'Raleway_500Medium', fontSize: 14 },
 
   glassBtnWrapper: {
-    width: '100%',
-    height: 56,
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 100, overflow: 'hidden', shadowColor: '#FFF', shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.2, shadowRadius: 12, elevation: 8,
   },
-  glassBtnInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glassBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Raleway_700Bold',
-    letterSpacing: 1,
-  },
+  glassBtnInner: { height: 60, alignItems: 'center', justifyContent: 'center' },
+  glassBtnText: { color: '#000', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 }
 });

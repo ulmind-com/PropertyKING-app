@@ -1,27 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuth } from '../../context/AuthContext';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-// Glassy White Button Component
+// OP Premium Glassy Button
 const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} disabled={loading} style={styles.glassBtnWrapper}>
       <LinearGradient
-        colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.03)']}
+        colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.75)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.glassBtnInner}
       >
         {loading ? (
-          <ActivityIndicator color="#FFF" />
+          <ActivityIndicator color="#000" />
         ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {icon && <Ionicons name={icon} size={20} color="#FFF" />}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {icon && <Ionicons name={icon} size={20} color="#000" />}
             <Text style={styles.glassBtnText}>{title}</Text>
           </View>
         )}
@@ -32,7 +32,7 @@ const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -41,20 +41,20 @@ export default function RegisterScreen({ navigation }) {
   const [error, setError] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true })
+    ]).start();
   }, []);
 
   const handleRegister = async () => {
-    if (!fullName || !email || !phone || !password) return setError('Please fill out all fields.');
-    if (phone.replace(/\D/g, '').length < 10) return setError('Please enter a valid phone number.');
-    if (password.length < 6) return setError('Password must be at least 6 characters.');
-
+    if (!name || !email || !password || !phone) return setError('Please fill all fields.');
     setLoading(true); setError('');
-    try {
-      const cleanPhone = phone.startsWith('+') ? phone : `+1${phone.replace(/\D/g, '')}`;
-      await register({ full_name: fullName, email, phone: cleanPhone, password });
+    try { 
+      await register(email, password, name, phone); 
     } catch (e) { 
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Registration failed.')); 
@@ -63,257 +63,181 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#050505' }}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* Top Wavy White Section */}
-      <View style={styles.headerArea}>
-        <View style={styles.headerContent}>
+      {/* Absolute Background Gradient */}
+      <LinearGradient
+        colors={['#111827', '#050505', '#000000']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Top Bar */}
           <View style={styles.topBar}>
-            {/* Back Button / Logo Box style */}
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.logoBox}>
-              <Ionicons name="chevron-back" size={20} color="#FFF" style={{ transform: [{ rotate: '-45deg' }] }} />
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+              <Ionicons name="chevron-back" size={24} color="#FFF" />
             </TouchableOpacity>
+            <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.signupText}>Sign In</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], flex: 1, justifyContent: 'center' }}>
             
-            {/* Sign In Link */}
-            <TouchableOpacity style={styles.signinLink} onPress={() => navigation.navigate('Login')}>
-              <Ionicons name="log-in-outline" size={22} color="#000" />
-              <Text style={styles.signinText}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={styles.mainTitle}>Sign Up</Text>
-        </View>
-
-        {/* Wave replacement using View with borderRadius */}
-        <View style={styles.waveContainer}>
-          <View style={{ width: width * 2, height: 100, backgroundColor: '#FFFFFF', borderBottomLeftRadius: width, borderBottomRightRadius: width, alignSelf: 'center', marginLeft: -width / 2 }} />
-        </View>
-      </View>
-
-      <Animated.ScrollView 
-        contentContainerStyle={styles.scroll} 
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        style={{ flex: 1, backgroundColor: '#050505', opacity: fadeAnim }}
-      >
-        <View style={styles.formContainer}>
-          
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : null}
-
-          {/* Full Name Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="John Doe"
-              placeholderTextColor="#666"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-              textAlign="center"
-            />
-          </View>
-
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="john@example.com"
-              placeholderTextColor="#666"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              textAlign="center"
-            />
-          </View>
-
-          {/* Phone Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="+1 (555) 123-4567"
-              placeholderTextColor="#666"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              textAlign="center"
-            />
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput 
-                style={styles.passwordInput}
-                placeholder="••••••••••••"
-                placeholderTextColor="#666"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPass}
-                textAlign="center"
-              />
-              <TouchableOpacity 
-                style={styles.eyeIcon} 
-                onPress={() => setShowPass(!showPass)}
-                hitSlop={{top:10, bottom:10, left:10, right:10}}
-              >
-                <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#666" />
-              </TouchableOpacity>
+            {/* Header area */}
+            <View style={styles.headerArea}>
+              <View style={styles.logoBadge}>
+                <Ionicons name="person-add" size={28} color="#FFF" />
+              </View>
+              <Text style={styles.mainTitle}>Create Account</Text>
+              <Text style={styles.subTitle}>Join PropertyKING to unlock exclusive luxury properties.</Text>
             </View>
-          </View>
 
-          {/* Create Account Button */}
-          <View style={{ marginTop: 10 }}>
-            <GlassyWhiteButton 
-              title="Create Account" 
-              icon="person-add-outline"
-              onPress={handleRegister}
-              loading={loading}
-            />
-          </View>
-          
-        </View>
-      </Animated.ScrollView>
+            {/* Form Area */}
+            <View style={styles.formContainer}>
+              {error ? (
+                <View style={styles.errorBox}>
+                  <Ionicons name="alert-circle" size={18} color="#EF4444" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Full Name</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="John Doe"
+                    placeholderTextColor="#6B7280"
+                    value={name}
+                    onChangeText={setName}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="john@example.com"
+                    placeholderTextColor="#6B7280"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Phone Number</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="call-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="+1 234 567 8900"
+                    placeholderTextColor="#6B7280"
+                    value={phone}
+                    onChangeText={setPhone}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput 
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#6B7280"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPass}
+                  />
+                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPass(!showPass)} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+                    <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={{ marginTop: 10 }}>
+                <GlassyWhiteButton 
+                  title="Sign Up" 
+                  onPress={handleRegister}
+                  loading={loading}
+                />
+              </View>
+
+            </View>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#050505' },
+  container: { flex: 1, backgroundColor: '#000' },
+  scrollContent: { flexGrow: 1, padding: 24, paddingBottom: 60, justifyContent: 'center' },
   
-  headerArea: {
-    backgroundColor: '#050505',
-    zIndex: 1,
-  },
-  headerContent: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 40,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: Platform.OS === 'ios' ? 40 : 30, marginBottom: 40,
   },
-  logoBox: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#000',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '45deg' }]
+  iconBtn: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
   },
-  signinLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  signupLink: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)'
   },
-  signinText: {
-    fontSize: 16,
-    fontFamily: 'Raleway_700Bold',
-    color: '#000',
+  signupText: { color: '#FFF', fontFamily: 'Raleway_600SemiBold', fontSize: 14 },
+
+  headerArea: { marginBottom: 32 },
+  logoBadge: {
+    width: 56, height: 56, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
   },
-  mainTitle: {
-    fontSize: 42,
-    fontFamily: 'Raleway_800ExtraBold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: -10,
+  mainTitle: { fontSize: 36, fontFamily: 'Raleway_800ExtraBold', color: '#FFF', marginBottom: 12, letterSpacing: -0.5 },
+  subTitle: { fontSize: 16, fontFamily: 'Raleway_400Regular', color: '#9CA3AF', lineHeight: 24 },
+
+  formContainer: { gap: 16 },
+  errorBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+    padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)'
   },
-  waveContainer: {
-    width: width,
-    height: 100,
-    backgroundColor: '#050505',
-    marginTop: -1,
+  errorText: { color: '#EF4444', fontFamily: 'Raleway_500Medium', flex: 1, fontSize: 14 },
+
+  inputGroup: { gap: 8 },
+  label: { fontSize: 14, fontFamily: 'Raleway_600SemiBold', color: '#E5E7EB', marginLeft: 4 },
+  inputWrapper: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 16, height: 60, paddingHorizontal: 16
   },
-  
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 32,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  formContainer: {
-    gap: 16,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontFamily: 'Raleway_600SemiBold',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: -5,
-  },
-  inputGroup: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  label: {
-    color: '#888',
-    fontSize: 13,
-    fontFamily: 'Raleway_600SemiBold',
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 25,
-    color: '#FFF',
-    fontSize: 15,
-    fontFamily: 'Raleway_500Medium',
-    paddingHorizontal: 24,
-  },
-  passwordContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E1E1E',
-    borderRadius: 25,
-    height: 50,
-  },
-  passwordInput: {
-    flex: 1,
-    height: '100%',
-    color: '#FFF',
-    fontSize: 15,
-    fontFamily: 'Raleway_500Medium',
-    paddingLeft: 44, // Offset the eye icon to keep text centered visually
-    paddingRight: 10,
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 20,
-  },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, color: '#FFF', fontSize: 16, fontFamily: 'Raleway_500Medium', height: '100%' },
+  eyeIcon: { padding: 8 },
 
   glassBtnWrapper: {
-    width: '100%',
-    height: 56,
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 100, overflow: 'hidden', shadowColor: '#FFF', shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.2, shadowRadius: 12, elevation: 8, marginTop: 10
   },
-  glassBtnInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glassBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Raleway_700Bold',
-    letterSpacing: 1,
-  },
+  glassBtnInner: { height: 60, alignItems: 'center', justifyContent: 'center' },
+  glassBtnText: { color: '#000', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 }
 });
