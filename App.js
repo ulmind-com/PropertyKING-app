@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useEffect, useCallback } from 'react';
 import { StatusBar, View } from 'react-native';
 import { AuthProvider } from './src/context/AuthContext';
@@ -33,7 +34,7 @@ export default function App() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: '#000000' }} />;
   }
 
   return (
