@@ -20,7 +20,7 @@ import {
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Raleway_400Regular,
     Raleway_500Medium,
     Raleway_600SemiBold,
@@ -29,12 +29,12 @@ export default function App() {
   });
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return <View style={{ flex: 1, backgroundColor: '#000000' }} />;
   }
 
