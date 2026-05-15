@@ -49,12 +49,14 @@ export const PushNotificationService = {
       }
 
       try {
-        // Direct FCM token bypasses Expo's servers completely
-        const tokenData = await Notifications.getDevicePushTokenAsync();
+        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '5ed33441-30bc-4bc4-80ad-c55f650cc555';
+        const tokenData = await Notifications.getExpoPushTokenAsync({
+          projectId: projectId
+        });
         
         if (tokenData && tokenData.data) {
           token = tokenData.data;
-          console.log('Got FCM Device Token:', token);
+          console.log('Got Expo Push Token:', token);
 
           // Send to backend
           if (token) {
