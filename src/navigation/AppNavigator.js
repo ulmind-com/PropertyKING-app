@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Vibration } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -88,7 +88,7 @@ function AuthStack() {
 // Custom center "+" tab button
 function AddTabButton({ onPress }) {
   return (
-    <TouchableOpacity style={styles.addBtn} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.addBtn} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} activeOpacity={0.85}>
       <View style={styles.addBtnInner}>
         <Ionicons name="add" size={28} color="#FFF" />
       </View>
@@ -134,6 +134,7 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeStack} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
+            Vibration.vibrate(20);
             navigation.navigate('Home', { screen: 'HomeMain' });
           }
         })}
@@ -141,6 +142,7 @@ function MainTabs() {
       <Tab.Screen name="Explore" component={ExploreStack} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
+            Vibration.vibrate(20);
             navigation.navigate('Explore', { screen: 'ExploreMain' });
           }
         })}
@@ -157,6 +159,7 @@ function MainTabs() {
         }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
+            Vibration.vibrate(20);
             e.preventDefault();
             navigation.navigate('AddProperty');
           },
@@ -165,11 +168,18 @@ function MainTabs() {
       <Tab.Screen name="Map" component={MapStack} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
+            Vibration.vibrate(20);
             navigation.navigate('Map', { screen: 'MapMain' });
           }
         })}
       />
-      <Tab.Screen name="Profile" component={ProfileStack} />
+      <Tab.Screen name="Profile" component={ProfileStack} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            Vibration.vibrate(20);
+          }
+        })}
+      />
     </Tab.Navigator>
   );
 }
