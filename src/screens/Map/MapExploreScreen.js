@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image as RNImage, Dimensions,
-  StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard
+  StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard, Vibration
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -149,6 +149,9 @@ export default function MapExploreScreen({ navigation }) {
 
   // ─── MARKER TAP → show bottom card ───
   const onMarkerPress = useCallback((property) => {
+    // Isolated premium haptic pop
+    Vibration.vibrate(50);
+    
     setSelectedProperty(property);
     Animated.spring(cardAnim, {
       toValue: 0,
