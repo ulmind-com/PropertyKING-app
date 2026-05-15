@@ -49,8 +49,9 @@ export const PushNotificationService = {
       }
 
       try {
+        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '5ed33441-30bc-4bc4-80ad-c55f650cc555';
         const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: 'c4f1115f-7a9b-4670-be77-45524b616a7b'
+          projectId: projectId
         });
         
         if (tokenData) {
