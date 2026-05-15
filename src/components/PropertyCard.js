@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../theme';
 import { useCompare } from '../context/CompareContext';
@@ -26,7 +26,7 @@ export default function PropertyCard({ property, onPress, style }) {
   const isCompared = isInCompare(property.id);
 
   return (
-    <TouchableOpacity style={[s.card, style]} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity style={[s.card, style]} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} activeOpacity={0.9}>
       {/* Image */}
       <View style={s.imgWrap}>
         <Image source={{ uri: primaryImage }} style={s.img} />
@@ -39,11 +39,11 @@ export default function PropertyCard({ property, onPress, style }) {
         <View style={s.topActions}>
           <TouchableOpacity 
             style={[s.iconBtn, isCompared && s.iconBtnActive]} 
-            onPress={() => isCompared ? removeFromCompare(property.id) : addToCompare(property)}
+            onPress={() => { Vibration.vibrate(20); isCompared ? removeFromCompare(property.id) : addToCompare(property); }}
           >
             <Ionicons name="git-compare" size={18} color={isCompared ? COLORS.primary : '#FFF'} />
           </TouchableOpacity>
-          <TouchableOpacity style={s.iconBtn} onPress={() => setLiked(!liked)}>
+          <TouchableOpacity style={s.iconBtn} onPress={() => { Vibration.vibrate(20); setLiked(!liked); }}>
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? '#EF4444' : '#FFF'} />
           </TouchableOpacity>
         </View>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -10,7 +10,7 @@ const { width } = Dimensions.get('window');
 // Glassy White Button Component
 const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
   return (
-    <TouchableOpacity activeOpacity={0.8} onPress={onPress} disabled={loading} style={styles.glassBtnWrapper}>
+    <TouchableOpacity activeOpacity={0.8} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} disabled={loading} style={styles.glassBtnWrapper}>
       <LinearGradient
         colors={['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.03)']}
         start={{ x: 0, y: 0 }}
