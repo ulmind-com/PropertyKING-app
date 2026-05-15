@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path } from 'react-native-svg';
+
 import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
@@ -81,14 +81,9 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.mainTitle}>Sign In</Text>
         </View>
 
-        {/* The Wave SVG */}
+        {/* Wave replacement using View with borderRadius */}
         <View style={styles.waveContainer}>
-          <Svg height={100} width={width} viewBox={`0 0 ${width} 100`} preserveAspectRatio="none">
-            <Path 
-              d={`M0,0 L0,50 Q${width * 0.25},100 ${width * 0.5},50 T${width},0 L${width},0 Z`}
-              fill="#FFFFFF"
-            />
-          </Svg>
+          <View style={{ width: width * 2, height: 100, backgroundColor: '#FFFFFF', borderBottomLeftRadius: width, borderBottomRightRadius: width, alignSelf: 'center', marginLeft: -width / 2 }} />
         </View>
       </View>
 

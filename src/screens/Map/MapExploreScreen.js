@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
-import Svg, { Defs, ClipPath, Circle, Path, Image as SvgImage, LinearGradient as SvgLinearGradient, Stop, Ellipse } from 'react-native-svg';
+
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI } from '../../api';
 import { MapView, Marker } from '../../components/Map/MapViewComponent.native';

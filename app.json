@@ -27,7 +27,12 @@
         "googleMaps": {
           "apiKey": "AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,9 +55,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "c4f1115f-7a9b-4670-be77-45524b616a7b"
+        "projectId": "5ed33441-30bc-4bc4-80ad-c55f650cc555"
       }
     },
-    "owner": "newsomedia"
+    "owner": "handiman-001"
   }
 }
