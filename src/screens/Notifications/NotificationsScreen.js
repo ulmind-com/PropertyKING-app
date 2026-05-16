@@ -135,7 +135,10 @@ export default function NotificationsScreen({ navigation }) {
   };
 
   const formatTimeAgo = (dateStr) => {
-    const date = new Date(dateStr);
+    if (!dateStr) return '';
+    let d = dateStr;
+    if (!d.endsWith('Z')) d += 'Z'; // Force UTC parsing
+    const date = new Date(d);
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
     
