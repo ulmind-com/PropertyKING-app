@@ -1,12 +1,148 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, ScrollView, Vibration, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import CountryPicker from 'react-native-country-picker-modal';
 
 import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
+
+// Common countries with emoji flags
+const COUNTRIES = [
+  { code: 'IN', name: 'India', flag: '🇮🇳', dial: '91' },
+  { code: 'US', name: 'United States', flag: '🇺🇸', dial: '1' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', dial: '44' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦', dial: '1' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺', dial: '61' },
+  { code: 'AE', name: 'UAE', flag: '🇦🇪', dial: '971' },
+  { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', dial: '966' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬', dial: '65' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪', dial: '49' },
+  { code: 'FR', name: 'France', flag: '🇫🇷', dial: '33' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵', dial: '81' },
+  { code: 'KR', name: 'South Korea', flag: '🇰🇷', dial: '82' },
+  { code: 'CN', name: 'China', flag: '🇨🇳', dial: '86' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷', dial: '55' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽', dial: '52' },
+  { code: 'RU', name: 'Russia', flag: '🇷🇺', dial: '7' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', dial: '27' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', dial: '234' },
+  { code: 'KE', name: 'Kenya', flag: '🇰🇪', dial: '254' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬', dial: '20' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰', dial: '92' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', dial: '880' },
+  { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰', dial: '94' },
+  { code: 'NP', name: 'Nepal', flag: '🇳🇵', dial: '977' },
+  { code: 'MY', name: 'Malaysia', flag: '🇲🇾', dial: '60' },
+  { code: 'TH', name: 'Thailand', flag: '🇹🇭', dial: '66' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭', dial: '63' },
+  { code: 'ID', name: 'Indonesia', flag: '🇮🇩', dial: '62' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹', dial: '39' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸', dial: '34' },
+  { code: 'NL', name: 'Netherlands', flag: '🇳🇱', dial: '31' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪', dial: '46' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭', dial: '41' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿', dial: '64' },
+  { code: 'IE', name: 'Ireland', flag: '🇮🇪', dial: '353' },
+  { code: 'QA', name: 'Qatar', flag: '🇶🇦', dial: '974' },
+  { code: 'KW', name: 'Kuwait', flag: '🇰🇼', dial: '965' },
+  { code: 'BH', name: 'Bahrain', flag: '🇧🇭', dial: '973' },
+  { code: 'OM', name: 'Oman', flag: '🇴🇲', dial: '968' },
+];
+
+// Custom Country Picker (no external deps)
+const CountryCodePicker = ({ selected, onSelect }) => {
+  const [visible, setVisible] = useState(false);
+  const [search, setSearch] = useState('');
+  const current = COUNTRIES.find(c => c.code === selected) || COUNTRIES[0];
+  const filtered = COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || c.dial.includes(search)
+  );
+
+  return (
+    <>
+      <TouchableOpacity 
+        onPress={() => setVisible(true)} 
+        style={cpStyles.trigger}
+        activeOpacity={0.7}
+      >
+        <Text style={cpStyles.flag}>{current.flag}</Text>
+        <Text style={cpStyles.dial}>+{current.dial}</Text>
+        <Ionicons name="chevron-down" size={14} color="#9CA3AF" />
+      </TouchableOpacity>
+
+      <Modal visible={visible} animationType="slide" transparent>
+        <View style={cpStyles.overlay}>
+          <View style={cpStyles.modal}>
+            <View style={cpStyles.modalHeader}>
+              <Text style={cpStyles.modalTitle}>Select Country</Text>
+              <TouchableOpacity onPress={() => { setVisible(false); setSearch(''); }}>
+                <Ionicons name="close" size={24} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+            <View style={cpStyles.searchBox}>
+              <Ionicons name="search" size={18} color="#9CA3AF" />
+              <TextInput
+                style={cpStyles.searchInput}
+                placeholder="Search country..."
+                placeholderTextColor="#6B7280"
+                value={search}
+                onChangeText={setSearch}
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={filtered}
+              keyExtractor={item => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={[cpStyles.row, item.code === selected && cpStyles.rowActive]}
+                  onPress={() => { onSelect(item); setVisible(false); setSearch(''); }}
+                >
+                  <Text style={cpStyles.rowFlag}>{item.flag}</Text>
+                  <Text style={cpStyles.rowName}>{item.name}</Text>
+                  <Text style={cpStyles.rowDial}>+{item.dial}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+};
+
+const cpStyles = StyleSheet.create({
+  trigger: { 
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingRight: 10, borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.2)', marginRight: 12
+  },
+  flag: { fontSize: 20 },
+  dial: { fontSize: 15, color: '#FFF', fontFamily: 'Raleway_600SemiBold' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modal: { 
+    backgroundColor: '#111827', borderTopLeftRadius: 24, borderTopRightRadius: 24, 
+    maxHeight: '70%', paddingBottom: Platform.OS === 'ios' ? 40 : 20 
+  },
+  modalHeader: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    padding: 20, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.1)' 
+  },
+  modalTitle: { fontSize: 18, fontFamily: 'Raleway_700Bold', color: '#FFF' },
+  searchBox: { 
+    flexDirection: 'row', alignItems: 'center', gap: 10, margin: 16, 
+    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, paddingHorizontal: 14, height: 48 
+  },
+  searchInput: { flex: 1, color: '#FFF', fontSize: 15, fontFamily: 'Raleway_500Medium' },
+  row: { 
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14,
+    borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)' 
+  },
+  rowActive: { backgroundColor: 'rgba(255,255,255,0.08)' },
+  rowFlag: { fontSize: 22, marginRight: 14 },
+  rowName: { flex: 1, fontSize: 15, color: '#E5E7EB', fontFamily: 'Raleway_500Medium' },
+  rowDial: { fontSize: 14, color: '#9CA3AF', fontFamily: 'Raleway_600SemiBold' },
+});
 
 // OP Premium Glassy Button
 const GlassyWhiteButton = ({ title, icon, onPress, loading }) => {
@@ -40,8 +176,8 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('US');
-  const [callingCode, setCallingCode] = useState('1');
+  const [countryCode, setCountryCode] = useState('IN');
+  const [callingCode, setCallingCode] = useState('91');
   
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,7 +185,7 @@ export default function RegisterScreen({ navigation }) {
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideXAnim = useRef(new Animated.Value(0)).current; // For horizontal step sliding
+  const slideXAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
@@ -101,7 +237,6 @@ export default function RegisterScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* Absolute Background Gradient */}
       <LinearGradient
         colors={['#111827', '#050505', '#000000']}
         style={StyleSheet.absoluteFillObject}
@@ -230,30 +365,11 @@ export default function RegisterScreen({ navigation }) {
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Phone Number</Text>
                     <View style={styles.inputWrapper}>
-                      <CountryPicker
-                        withFilter
-                        withFlag
-                        withCallingCode
-                        withCallingCodeButton
-                        countryCode={countryCode}
+                      <CountryCodePicker 
+                        selected={countryCode}
                         onSelect={(country) => {
-                          setCountryCode(country.cca2);
-                          setCallingCode(country.callingCode[0]);
-                        }}
-                        theme={{
-                          backgroundColor: '#111827',
-                          onBackgroundTextColor: '#FFFFFF',
-                          fontSize: 16,
-                          filterPlaceholderTextColor: '#9CA3AF',
-                          primaryColorVariant: '#1F2937',
-                          primaryColor: '#000000',
-                        }}
-                        containerButtonStyle={{ 
-                          paddingRight: 8, 
-                          borderRightWidth: 1, 
-                          borderColor: 'rgba(255,255,255,0.2)', 
-                          marginRight: 12,
-                          justifyContent: 'center'
+                          setCountryCode(country.code);
+                          setCallingCode(country.dial);
                         }}
                       />
                       <TextInput 
