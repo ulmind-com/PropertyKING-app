@@ -116,7 +116,7 @@ export default function ProfileScreen({ navigation }) {
           <Image source={require('../../../assets/ulmind.png')} style={styles.poweredByLogo} resizeMode="contain" />
         </TouchableOpacity>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 30 }} />
       </ScrollView>
     </View>
   );
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   deleteAccountBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 12, padding: 16, borderRadius: SIZES.radius.lg },
   deleteAccountText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
   
-  poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10, gap: 3 },
+  poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 10, gap: 3 },
   poweredByText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted, letterSpacing: 0.5 },
   poweredByLogo: { width: 80, height: 24, opacity: 0.9 },
 });
