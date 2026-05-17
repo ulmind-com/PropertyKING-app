@@ -198,27 +198,29 @@ export default function MyListingsScreen({ navigation }) {
       </View>
 
       {/* Summary — OP Level UI */}
-      <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: '#EFF6FF' }]}>
-          <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}>
-            <Ionicons name="business" size={20} color={COLORS.primary} />
+      <View style={styles.dashboardWidget}>
+        <View style={styles.statCol}>
+          <View style={[styles.statIconWrap, { backgroundColor: 'rgba(96, 165, 250, 0.15)' }]}>
+            <Ionicons name="home" size={18} color="#60A5FA" />
           </View>
-          <Text style={styles.summaryValue}>{stats.totalProps}</Text>
-          <Text style={styles.summaryLabel}>Listings</Text>
+          <Text style={styles.statVal}>{stats.totalProps}</Text>
+          <Text style={styles.statLbl}>Listings</Text>
         </View>
-        <View style={[styles.summaryCard, { backgroundColor: '#F5F3FF' }]}>
-          <View style={[styles.iconBox, { backgroundColor: '#EDE9FE' }]}>
-            <Ionicons name="eye" size={20} color="#8B5CF6" />
+        <View style={styles.vDivider} />
+        <View style={styles.statCol}>
+          <View style={[styles.statIconWrap, { backgroundColor: 'rgba(167, 139, 250, 0.15)' }]}>
+            <Ionicons name="eye" size={18} color="#A78BFA" />
           </View>
-          <Text style={styles.summaryValue}>{stats.totalViews}</Text>
-          <Text style={styles.summaryLabel}>Views</Text>
+          <Text style={styles.statVal}>{stats.totalViews}</Text>
+          <Text style={styles.statLbl}>Views</Text>
         </View>
-        <View style={[styles.summaryCard, { backgroundColor: '#ECFDF5' }]}>
-          <View style={[styles.iconBox, { backgroundColor: '#D1FAE5' }]}>
-            <Ionicons name="chatbubbles" size={20} color="#10B981" />
+        <View style={styles.vDivider} />
+        <View style={styles.statCol}>
+          <View style={[styles.statIconWrap, { backgroundColor: 'rgba(52, 211, 153, 0.15)' }]}>
+            <Ionicons name="people" size={18} color="#34D399" />
           </View>
-          <Text style={styles.summaryValue}>{stats.totalInquiries}</Text>
-          <Text style={styles.summaryLabel}>Leads</Text>
+          <Text style={styles.statVal}>{stats.totalInquiries}</Text>
+          <Text style={styles.statLbl}>Leads</Text>
         </View>
       </View>
 
@@ -257,12 +259,52 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, letterSpacing: -0.5 },
 
-  // Stats Grid
-  summaryRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, paddingBottom: 24, paddingTop: 16, backgroundColor: COLORS.bg },
-  summaryCard: { flex: 1, alignItems: 'center', paddingVertical: 20, borderRadius: 24, ...SHADOWS.sm },
-  iconBox: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  summaryValue: { fontSize: 24, fontFamily: 'Raleway_800ExtraBold', color: COLORS.text, marginBottom: 2 },
-  summaryLabel: { fontSize: 12, fontFamily: 'Raleway_700Bold', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  // Stats Grid (Premium Widget)
+  dashboardWidget: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 24,
+    backgroundColor: '#111827',
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    ...SHADOWS.md,
+    elevation: 8,
+    shadowColor: '#111827',
+  },
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginVertical: 8,
+  },
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(96, 165, 250, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statVal: {
+    fontSize: 24,
+    fontFamily: 'Raleway_800ExtraBold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  statLbl: {
+    fontSize: 12,
+    fontFamily: 'Raleway_700Bold',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
 
   // Cards
   card: { backgroundColor: COLORS.bg, borderRadius: 24, marginBottom: 20, ...SHADOWS.md, padding: 12 },
