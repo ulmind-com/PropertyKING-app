@@ -190,12 +190,21 @@ export default function ForgotPasswordScreen({ navigation }) {
               {step === 2 && (
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Verification Code</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="keypad-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                  <View style={styles.otpContainer}>
+                    {[...Array(6)].map((_, index) => (
+                      <View 
+                        key={index} 
+                        style={[
+                          styles.otpBox, 
+                          otp.length === index ? styles.otpBoxActive : null, 
+                          otp.length > index ? styles.otpBoxFilled : null
+                        ]}
+                      >
+                        <Text style={styles.otpText}>{otp[index] || ''}</Text>
+                      </View>
+                    ))}
                     <TextInput 
-                      style={[styles.input, { letterSpacing: 6, fontSize: 20 }]}
-                      placeholder="------"
-                      placeholderTextColor="#6B7280"
+                      style={styles.hiddenOtpInput}
                       value={otp}
                       onChangeText={setOtp}
                       keyboardType="number-pad"
@@ -290,5 +299,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2, shadowRadius: 12, elevation: 8, marginTop: 10
   },
   glassBtnInner: { height: 60, alignItems: 'center', justifyContent: 'center' },
-  glassBtnText: { color: '#000', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 }
+  glassBtnText: { color: '#000', fontSize: 18, fontFamily: 'Raleway_800ExtraBold', letterSpacing: 0.5 },
+
+  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 10, position: 'relative' },
+  otpBox: { 
+    width: 48, height: 60, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center', alignItems: 'center'
+  },
+  otpBoxActive: { borderColor: '#FFF', backgroundColor: 'rgba(255,255,255,0.1)' },
+  otpBoxFilled: { borderColor: 'rgba(255,255,255,0.4)' },
+  otpText: { fontSize: 24, fontFamily: 'Raleway_700Bold', color: '#FFF' },
+  hiddenOtpInput: { position: 'absolute', width: '100%', height: '100%', opacity: 0 }
 });
