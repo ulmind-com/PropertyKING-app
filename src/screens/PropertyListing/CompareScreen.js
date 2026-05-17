@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, StatusBar, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { useCompare } from '../../context/CompareContext';
@@ -39,20 +39,22 @@ export default function CompareScreen({ navigation }) {
   }
 
   // Intelligent Best Pick Algorithm
-  const bestPropertyId = React.useMemo(() => {
+  const bestPick = React.useMemo(() => {
     if (compareList.length < 2) return null;
 
     let bestId = null;
     let maxScore = -Infinity;
+    let winningReason = '';
 
     compareList.forEach(p => {
-      let score = 0;
+      let featureScore = 0;
       
       // 1. Feature Score (Amenities, Beds, Baths, Garage)
-      score += (p.amenity_names?.length || 0) * 15;
-      score += (p.details?.bedrooms || 0) * 20;
-      score += (p.details?.bathrooms || 0) * 10;
-      score += (p.details?.garage_spaces || 0) * 5;
+      const amenityScore = (p.amenity_names?.length || 0) * 15;
+      featureScore += amenityScore;
+      featureScore += (p.details?.bedrooms || 0) * 20;
+      featureScore += (p.details?.bathrooms || 0) * 10;
+      featureScore += (p.details?.garage_spaces || 0) * 5;
 
       // 2. Value Score (Price vs Size)
       const price = p.price || 100000;
@@ -60,15 +62,26 @@ export default function CompareScreen({ navigation }) {
       
       // Lower price per sqft is better, penalize high price/sqft
       const pricePerSqft = price / sqft;
-      score -= pricePerSqft * 0.5;
+      const valuePenalty = pricePerSqft * 0.5;
+      const score = featureScore - valuePenalty;
 
       if (score > maxScore) {
         maxScore = score;
         bestId = p.id;
+        
+        if (amenityScore > 50 && valuePenalty < 200) {
+          winningReason = 'Offers the most amenities with excellent value per square foot.';
+        } else if (valuePenalty < 100) {
+          winningReason = 'Exceptional value for its size compared to the others.';
+        } else if ((p.details?.bedrooms || 0) > 3) {
+          winningReason = 'Maximum living space and bedrooms for the price.';
+        } else {
+          winningReason = 'Best overall balance of price, size, and features.';
+        }
       }
     });
 
-    return bestId;
+    return { id: bestId, reason: winningReason };
   }, [compareList]);
 
   // Row mapping logic
@@ -100,17 +113,22 @@ export default function CompareScreen({ navigation }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {compareList.map((property, idx) => {
             const imgUrl = property.images?.[0]?.url || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400';
-            const isBest = property.id === bestPropertyId;
+            const isBest = bestPick && property.id === bestPick.id;
             
             return (
               <View key={property.id} style={styles.column}>
                 {/* Header Card */}
                 <View style={[styles.propertyCard, isBest && styles.bestPropertyCard]}>
                   {isBest && (
-                    <View style={styles.bestBadge}>
+                    <TouchableOpacity 
+                      style={styles.bestBadge}
+                      activeOpacity={0.8}
+                      onPress={() => Alert.alert('⭐ Top Pick', bestPick.reason)}
+                    >
                       <Ionicons name="star" size={12} color="#FFF" />
                       <Text style={styles.bestBadgeText}>TOP PICK</Text>
-                    </View>
+                      <Ionicons name="information-circle-outline" size={12} color="#FFF" style={{ marginLeft: 2 }} />
+                    </TouchableOpacity>
                   )}
                   <TouchableOpacity 
                     style={styles.removeBtn} 
