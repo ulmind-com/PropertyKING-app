@@ -19,9 +19,12 @@ api.interceptors.response.use(r => r, async (error) => {
 });
 
 export const authAPI = {
+  requestOTP: (data) => api.post('/auth/request-otp', data),
+  verifyOTP: (data) => api.post('/auth/verify-otp', data),
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   googleAuth: (token) => api.post('/auth/google', { token }),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
 export const userAPI = {

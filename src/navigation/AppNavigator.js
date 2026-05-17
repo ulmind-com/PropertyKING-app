@@ -17,6 +17,7 @@ import FavoritesScreen from '../screens/Favorites/FavoritesScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import RegisterScreen from '../screens/Auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
 import AddPropertyScreen from '../screens/AddProperty/AddPropertyScreen';
 import MyListingsScreen from '../screens/Profile/MyListingsScreen';
 import PropertyLeadsScreen from '../screens/Profile/PropertyLeadsScreen';
@@ -81,6 +82,7 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 }

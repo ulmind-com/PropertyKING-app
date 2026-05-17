@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../api';
 
 const { width } = Dimensions.get('window');
 
@@ -176,6 +177,7 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [countryCode, setCountryCode] = useState('IN');
   const [callingCode, setCallingCode] = useState('91');
   
@@ -196,17 +198,38 @@ export default function RegisterScreen({ navigation }) {
     Animated.spring(slideXAnim, { toValue: 0, friction: 7, tension: 40, useNativeDriver: true }).start();
   };
 
-  const handleNextStep1 = () => {
+  const handleNextStep1 = async () => {
     if (!email || !email.includes('@')) return setError('Please enter a valid email address.');
-    setError('');
-    setStep(2);
-    animateSlide('next');
+    setLoading(true); setError('');
+    try {
+      await authAPI.requestOTP({ email, purpose: 'registration' });
+      setStep(2);
+      animateSlide('next');
+    } catch (e) {
+      const detail = e.response?.data?.detail;
+      setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Failed to send OTP.'));
+    }
+    setLoading(false);
   };
 
-  const handleNextStep2 = () => {
+  const handleNextStep2 = async () => {
+    if (!otp || otp.length < 6) return setError('Please enter the 6-digit OTP.');
+    setLoading(true); setError('');
+    try {
+      await authAPI.verifyOTP({ email, otp, purpose: 'registration' });
+      setStep(3);
+      animateSlide('next');
+    } catch (e) {
+      const detail = e.response?.data?.detail;
+      setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Invalid or expired OTP.'));
+    }
+    setLoading(false);
+  };
+
+  const handleNextStep3 = () => {
     if (!password || password.length < 6) return setError('Password must be at least 6 characters.');
     setError('');
-    setStep(3);
+    setStep(4);
     animateSlide('next');
   };
 
@@ -273,6 +296,8 @@ export default function RegisterScreen({ navigation }) {
             <View style={[styles.progressDot, step >= 2 && styles.progressDotActive]} />
             <View style={[styles.progressLine, step >= 3 && styles.progressLineActive]} />
             <View style={[styles.progressDot, step >= 3 && styles.progressDotActive]} />
+            <View style={[styles.progressLine, step >= 4 && styles.progressLineActive]} />
+            <View style={[styles.progressDot, step >= 4 && styles.progressDotActive]} />
           </View>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideXAnim }], flex: 1, justifyContent: 'center' }}>
@@ -280,10 +305,10 @@ export default function RegisterScreen({ navigation }) {
             {/* Header area */}
             <View style={styles.headerArea}>
               <Text style={styles.mainTitle}>
-                {step === 1 ? "What's your email?" : step === 2 ? "Create a password" : "Final details"}
+                {step === 1 ? "What's your email?" : step === 2 ? "Verify your email" : step === 3 ? "Create a password" : "Final details"}
               </Text>
               <Text style={styles.subTitle}>
-                {step === 1 ? "We'll use this to log you in." : step === 2 ? "Make it strong and secure." : "Help us identify you."}
+                {step === 1 ? "We'll use this to log you in." : step === 2 ? "Enter the 6-digit OTP sent to your email." : step === 3 ? "Make it strong and secure." : "Help us identify you."}
               </Text>
             </View>
 
@@ -319,8 +344,34 @@ export default function RegisterScreen({ navigation }) {
                 </View>
               )}
 
-              {/* STEP 2: PASSWORD */}
+              {/* STEP 2: OTP */}
               {step === 2 && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Verification Code</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="keypad-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                    <TextInput 
+                      style={[styles.input, { letterSpacing: 6, fontSize: 20 }]}
+                      placeholder="------"
+                      placeholderTextColor="#6B7280"
+                      value={otp}
+                      onChangeText={setOtp}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      autoFocus
+                    />
+                  </View>
+                  <View style={{ marginTop: 20 }}>
+                    <GlassyWhiteButton title="Verify OTP" icon="checkmark-circle" onPress={handleNextStep2} loading={loading} />
+                  </View>
+                  <TouchableOpacity onPress={handleNextStep1} style={{ alignItems: 'center', marginTop: 16 }}>
+                    <Text style={{ color: '#9CA3AF', fontFamily: 'Raleway_600SemiBold', fontSize: 14 }}>Resend Code</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* STEP 3: PASSWORD */}
+              {step === 3 && (
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Secure Password</Text>
                   <View style={styles.inputWrapper}>
@@ -339,13 +390,13 @@ export default function RegisterScreen({ navigation }) {
                     </TouchableOpacity>
                   </View>
                   <View style={{ marginTop: 20 }}>
-                    <GlassyWhiteButton title="Continue" icon="arrow-forward" onPress={handleNextStep2} />
+                    <GlassyWhiteButton title="Continue" icon="arrow-forward" onPress={handleNextStep3} />
                   </View>
                 </View>
               )}
 
-              {/* STEP 3: NAME & PHONE */}
-              {step === 3 && (
+              {/* STEP 4: NAME & PHONE */}
+              {step === 4 && (
                 <View style={{ gap: 16 }}>
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Full Name</Text>
