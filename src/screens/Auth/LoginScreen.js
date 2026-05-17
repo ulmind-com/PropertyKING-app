@@ -83,9 +83,8 @@ export default function LoginScreen({ navigation }) {
         >
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
-              <Ionicons name="chevron-back" size={24} color="#FFF" />
-            </TouchableOpacity>
+            <View />
+
             <TouchableOpacity style={styles.signupLink} onPress={() => navigation.navigate('Register')}>
               <Text style={styles.signupText}>Sign Up</Text>
               <Ionicons name="arrow-forward" size={16} color="#FFF" />
