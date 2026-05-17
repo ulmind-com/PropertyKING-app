@@ -86,8 +86,19 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('pk_user', JSON.stringify(updated));
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await userAPI.getMe();
+      const freshUser = res.data;
+      await AsyncStorage.setItem('pk_user', JSON.stringify(freshUser));
+      setUser(freshUser);
+    } catch (e) {
+      console.log('Error refreshing user stats', e);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, register, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

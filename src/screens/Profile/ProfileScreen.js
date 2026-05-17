@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert, Image, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AVAILABLE_SCREENS = ['MyListings', 'EditProfile', 'Favorites', 'Inquiries', 'Notifications'];
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser();
+    }, [])
+  );
 
   const menuItems = [
     { icon: 'person-outline', label: 'Edit Profile', screen: 'EditProfile' },
@@ -51,7 +58,7 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.statDivider} />
           <View style={styles.statItem}><Text style={styles.statValue}>{user?.favorites_count || 0}</Text><Text style={FONTS.caption}>Favorites</Text></View>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}><Text style={styles.statValue}>0</Text><Text style={FONTS.caption}>Reviews</Text></View>
+          <View style={styles.statItem}><Text style={styles.statValue}>{user?.reviews_count || 0}</Text><Text style={FONTS.caption}>Reviews</Text></View>
         </View>
 
         <View style={styles.menu}>
