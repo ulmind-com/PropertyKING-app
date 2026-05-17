@@ -198,18 +198,22 @@ export default function RegisterScreen({ navigation }) {
     Animated.spring(slideXAnim, { toValue: 0, friction: 7, tension: 40, useNativeDriver: true }).start();
   };
 
-  const handleNextStep1 = async () => {
+  const handleNextStep1 = () => {
     if (!email || !email.includes('@')) return setError('Please enter a valid email address.');
-    setLoading(true); setError('');
-    try {
-      await authAPI.requestOTP({ email, purpose: 'registration' });
-      setStep(2);
-      animateSlide('next');
-    } catch (e) {
+    setError('');
+    
+    // Optimistic UI transition
+    setStep(2);
+    animateSlide('next');
+    
+    // Background request
+    authAPI.requestOTP({ email, purpose: 'registration' }).catch((e) => {
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Failed to send OTP.'));
-    }
-    setLoading(false);
+      // Revert if failed (e.g., email already exists)
+      setStep(1);
+      animateSlide('prev');
+    });
   };
 
   const handleNextStep2 = async () => {
