@@ -102,13 +102,13 @@ export default function CompareScreen({ navigation }) {
                   {/* Amenities */}
                   <View style={styles.amenitiesSection}>
                     <Text style={styles.attributeLabel}>Amenities</Text>
-                    {property.amenities?.slice(0, 5).map((amenity, i) => (
+                    {(property.amenity_names || []).slice(0, 5).map((name, i) => (
                       <View key={i} style={styles.amenityChip}>
                         <Ionicons name="checkmark" size={14} color={COLORS.primary} />
-                        <Text style={styles.amenityText}>{amenity.name}</Text>
+                        <Text style={styles.amenityText}>{name}</Text>
                       </View>
                     ))}
-                    {(!property.amenities || property.amenities.length === 0) && (
+                    {(!property.amenity_names || property.amenity_names.length === 0) && (
                       <Text style={styles.attrText}>None listed</Text>
                     )}
                   </View>
