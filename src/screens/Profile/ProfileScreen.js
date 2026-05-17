@@ -58,7 +58,7 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.statDivider} />
           <View style={styles.statItem}><Text style={styles.statValue}>{user?.favorites_count || 0}</Text><Text style={FONTS.caption}>Favorites</Text></View>
           <View style={styles.statDivider} />
-          <View style={styles.statItem}><Text style={styles.statValue}>{user?.reviews_count || 0}</Text><Text style={FONTS.caption}>Reviews</Text></View>
+          <View style={styles.statItem}><Text style={styles.statValue}>{user?.leads_count || 0}</Text><Text style={FONTS.caption}>Leads</Text></View>
         </View>
 
         <View style={styles.menu}>
