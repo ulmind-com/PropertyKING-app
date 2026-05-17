@@ -120,11 +120,22 @@ export default function MyListingsScreen({ navigation }) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p || 0);
   };
 
+  const getStatusConfig = (status) => {
+    switch (status) {
+      case 'active': return { text: 'ACTIVE', bg: '#ECFDF5', dot: '#10B981', color: '#059669' };
+      case 'pending': return { text: 'PENDING', bg: '#FEF3C7', dot: '#F59E0B', color: '#D97706' };
+      case 'rejected': return { text: 'REJECTED', bg: '#FEE2E2', dot: '#EF4444', color: '#DC2626' };
+      case 'inactive':
+      default: return { text: 'INACTIVE', bg: '#F3F4F6', dot: '#9CA3AF', color: '#6B7280' };
+    }
+  };
+
   const renderItem = ({ item }) => {
-    const isActive = item.status !== 'inactive';
+    const isActiveStatus = item.status !== 'inactive';
+    const statusConfig = getStatusConfig(item.status);
 
     return (
-      <View style={[styles.card, !isActive && styles.cardInactive]}>
+      <View style={[styles.card, !isActiveStatus && styles.cardInactive]}>
         <TouchableOpacity
           style={styles.cardTouchable}
           activeOpacity={0.9}
@@ -132,10 +143,10 @@ export default function MyListingsScreen({ navigation }) {
         >
           <View style={styles.imgWrap}>
             <Image source={{ uri: getImg(item) }} style={styles.cardImg} />
-            <View style={[styles.statusBadge, isActive ? styles.badgeActive : styles.badgeInactive]}>
-              <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotInactive]} />
-              <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextInactive]}>
-                {isActive ? 'ACTIVE' : 'INACTIVE'}
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+              <View style={[styles.statusDot, { backgroundColor: statusConfig.dot }]} />
+              <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                {statusConfig.text}
               </Text>
             </View>
           </View>
@@ -172,11 +183,11 @@ export default function MyListingsScreen({ navigation }) {
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={[styles.toggleSwitch, isActive && styles.toggleSwitchActive]}
+              style={[styles.toggleSwitch, isActiveStatus && styles.toggleSwitchActive]}
               activeOpacity={0.8}
               onPress={() => handleToggleStatus(item)}
             >
-              <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
+              <View style={[styles.toggleThumb, isActiveStatus && styles.toggleThumbActive]} />
             </TouchableOpacity>
           </View>
         </View>
