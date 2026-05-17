@@ -91,6 +91,25 @@ export default function MyListingsScreen({ navigation }) {
     }
   };
 
+  // ── DELETE PROPERTY ──
+  const handleDeleteProperty = (id) => {
+    Alert.alert('Delete Property', 'Are you sure you want to permanently delete this listing? This action cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            await propertyAPI.delete(id);
+            setListings(prev => prev.filter(p => p.id !== id));
+            fetchStats();
+            const Toast = require('react-native-toast-message').default;
+            Toast.show({ type: 'success', text1: 'Deleted', text2: 'Property listing removed.' });
+          } catch (e) {
+            const Toast = require('react-native-toast-message').default;
+            Toast.show({ type: 'error', text1: 'Error', text2: 'Could not delete property.' });
+          }
+      }}
+    ]);
+  };
+
   const getImg = (property) => {
     const imgs = property.images || [];
     const primary = imgs.find(i => i.is_primary);
@@ -147,13 +166,19 @@ export default function MyListingsScreen({ navigation }) {
             <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.toggleSwitch, isActive && styles.toggleSwitchActive]}
-            activeOpacity={0.8}
-            onPress={() => handleToggleStatus(item)}
-          >
-            <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <TouchableOpacity onPress={() => handleDeleteProperty(item.id)} style={styles.deleteBtn}>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.toggleSwitch, isActive && styles.toggleSwitchActive]}
+              activeOpacity={0.8}
+              onPress={() => handleToggleStatus(item)}
+            >
+              <View style={[styles.toggleThumb, isActive && styles.toggleThumbActive]} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -267,6 +292,7 @@ const styles = StyleSheet.create({
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
   detailsBtnText: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.primary },
+  deleteBtn: { padding: 4 },
   
   toggleSwitch: { width: 50, height: 28, borderRadius: 14, backgroundColor: '#E5E7EB', padding: 2, justifyContent: 'center' },
   toggleSwitchActive: { backgroundColor: '#10B981' },

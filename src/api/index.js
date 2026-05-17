@@ -40,6 +40,7 @@ export const propertyAPI = {
   getBySlug: (slug) => api.get(`/properties/${slug}`),
   create: (data) => api.post('/properties', data),
   update: (id, data) => api.put(`/properties/${id}`, data),
+  delete: (id) => api.delete(`/properties/${id}`),
   toggleStatus: (id) => api.put(`/properties/${id}/toggle-status`),
   nearby: (params) => api.get('/properties/nearby', { params }),
   recommendations: (params) => api.get('/properties/recommendations', { params }),
@@ -54,6 +55,6 @@ export const amenityAPI = { list: (cat) => api.get('/amenities', { params: { cat
 export const favoriteAPI = { list: (p) => api.get('/favorites', { params: p }), add: (id) => api.post(`/favorites/${id}`), remove: (id) => api.delete(`/favorites/${id}`) };
 export const inquiryAPI = { create: (data) => api.post('/inquiries', data), sent: (p) => api.get('/inquiries/sent', { params: p }), received: (p) => api.get('/inquiries/received', { params: p }), respond: (id, data) => api.put(`/inquiries/${id}/respond`, data) };
 export const reviewAPI = { getForProperty: (id, p) => api.get(`/reviews/property/${id}`, { params: p }), create: (data) => api.post('/reviews', data) };
-export const notificationAPI = { list: (p) => api.get('/notifications', { params: p }), markRead: (id) => api.put(`/notifications/${id}/read`), markAllRead: () => api.put('/notifications/read-all') };
+export const notificationAPI = { list: (p) => api.get('/notifications', { params: p }), markRead: (id) => api.put(`/notifications/${id}/read`), markAllRead: () => api.put('/notifications/read-all'), delete: (id) => api.delete(`/notifications/${id}`), deleteAll: () => api.delete('/notifications') };
 
 export default api;
