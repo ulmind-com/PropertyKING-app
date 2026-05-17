@@ -5,6 +5,8 @@ import { COLORS, FONTS, SIZES, SHADOWS } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 
+import { userAPI } from '../../api';
+
 const AVAILABLE_SCREENS = ['MyListings', 'EditProfile', 'Favorites', 'Inquiries', 'Notifications'];
 
 export default function ProfileScreen({ navigation }) {
@@ -32,6 +34,28 @@ export default function ProfileScreen({ navigation }) {
     } else {
       Alert.alert('Coming Soon 🚀', `${item.label} will be available in the next update!`);
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This action is completely irreversible. All your personal data, property listings, favorites, and inquiries will be permanently wiped from our servers.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete Permanently', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await userAPI.deleteAccount();
+              logout();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete account. Please try again later.');
+            }
+          } 
+        }
+      ]
+    );
   };
 
   return (
@@ -78,6 +102,11 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.deleteAccountBtn} onPress={handleDeleteAccount}>
+          <Ionicons name="warning-outline" size={20} color={COLORS.error} />
+          <Text style={styles.deleteAccountText}>Delete Account</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.poweredByContainer}
           activeOpacity={0.7}
@@ -114,6 +143,9 @@ const styles = StyleSheet.create({
 
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 24, padding: 16, borderRadius: SIZES.radius.lg, borderWidth: 1.5, borderColor: COLORS.errorLight },
   logoutText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
+  
+  deleteAccountBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginTop: 12, padding: 16, borderRadius: SIZES.radius.lg },
+  deleteAccountText: { fontSize: 15, fontFamily: 'Raleway_600SemiBold', color: COLORS.error },
   
   poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40, marginBottom: 10, gap: 3 },
   poweredByText: { fontSize: 13, fontFamily: 'Raleway_600SemiBold', color: COLORS.textMuted, letterSpacing: 0.5 },

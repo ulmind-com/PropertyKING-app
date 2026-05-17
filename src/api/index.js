@@ -33,6 +33,7 @@ export const userAPI = {
   updateAvatar: (file) => { const fd = new FormData(); fd.append('file', file); return api.put('/users/me/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); },
   updateFCMToken: (token) => api.put('/users/me/fcm-token', { fcm_token: token }),
   getPublicProfile: (id) => api.get(`/users/${id}/public`),
+  deleteAccount: () => api.delete('/users/me'),
 };
 
 export const propertyAPI = {
