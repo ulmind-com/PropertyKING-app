@@ -38,6 +38,39 @@ export default function CompareScreen({ navigation }) {
     );
   }
 
+  // Intelligent Best Pick Algorithm
+  const bestPropertyId = React.useMemo(() => {
+    if (compareList.length < 2) return null;
+
+    let bestId = null;
+    let maxScore = -Infinity;
+
+    compareList.forEach(p => {
+      let score = 0;
+      
+      // 1. Feature Score (Amenities, Beds, Baths, Garage)
+      score += (p.amenity_names?.length || 0) * 15;
+      score += (p.details?.bedrooms || 0) * 20;
+      score += (p.details?.bathrooms || 0) * 10;
+      score += (p.details?.garage_spaces || 0) * 5;
+
+      // 2. Value Score (Price vs Size)
+      const price = p.price || 100000;
+      const sqft = p.details?.total_sqft || 500; // baseline if missing
+      
+      // Lower price per sqft is better, penalize high price/sqft
+      const pricePerSqft = price / sqft;
+      score -= pricePerSqft * 0.5;
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestId = p.id;
+      }
+    });
+
+    return bestId;
+  }, [compareList]);
+
   // Row mapping logic
   const attributeRows = [
     { label: 'Price', key: 'price', render: (p) => <Text style={styles.priceText}>{formatPrice(p.price, p.price_unit)}</Text> },
@@ -67,11 +100,18 @@ export default function CompareScreen({ navigation }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {compareList.map((property, idx) => {
             const imgUrl = property.images?.[0]?.url || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400';
+            const isBest = property.id === bestPropertyId;
             
             return (
               <View key={property.id} style={styles.column}>
                 {/* Header Card */}
-                <View style={styles.propertyCard}>
+                <View style={[styles.propertyCard, isBest && styles.bestPropertyCard]}>
+                  {isBest && (
+                    <View style={styles.bestBadge}>
+                      <Ionicons name="star" size={12} color="#FFF" />
+                      <Text style={styles.bestBadgeText}>TOP PICK</Text>
+                    </View>
+                  )}
                   <TouchableOpacity 
                     style={styles.removeBtn} 
                     onPress={() => removeFromCompare(property.id)}
@@ -154,8 +194,25 @@ const styles = StyleSheet.create({
     borderRadius: 20, 
     ...SHADOWS.md, 
     overflow: 'hidden',
-    marginBottom: 20
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: 'transparent'
   },
+  bestPropertyCard: { borderColor: '#F59E0B', ...SHADOWS.md },
+  bestBadge: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    backgroundColor: '#F59E0B', 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    borderBottomRightRadius: 12, 
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4
+  },
+  bestBadgeText: { color: '#FFF', fontSize: 10, fontFamily: 'Raleway_800ExtraBold' },
   cardImage: { width: '100%', height: 140, backgroundColor: COLORS.borderLight },
   cardBody: { padding: 12 },
   cardTitle: { fontSize: 14, fontFamily: 'Raleway_700Bold', color: COLORS.text, lineHeight: 20, marginBottom: 4 },
