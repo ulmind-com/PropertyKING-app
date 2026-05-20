@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "PropertyKING",
+    "name": "PropertyKing",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,9 +8,13 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logoremovebg.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
+    },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#000000"
     },
     "ios": {
       "supportsTablet": true,
@@ -45,13 +49,13 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow PropertyKING to use your location to show nearby properties."
+          "locationAlwaysAndWhenInUsePermission": "Allow PropertyKing to use your location to show nearby properties."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow PropertyKING to access your photos to upload property images and avatars."
+          "photosPermission": "Allow PropertyKing to access your photos to upload property images and avatars."
         }
       ],
       "expo-notifications"

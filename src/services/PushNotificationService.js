@@ -27,7 +27,7 @@ export const PushNotificationService = {
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('propertyking_channel', {
-        name: 'PropertyKING Notifications',
+        name: 'PropertyKing Notifications',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#8B5CF6',

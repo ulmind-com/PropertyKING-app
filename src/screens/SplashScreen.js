@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated, Dimensions } from 'react-native';
 
 export default function SplashScreenComponent() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -30,12 +30,14 @@ export default function SplashScreenComponent() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] }]}>
-        <View style={styles.logoBox}>
-          <View style={styles.logoInner} />
-        </View>
+        <Image 
+          source={require('../../assets/logoremovebg.png')} 
+          style={styles.logoImage} 
+          resizeMode="contain"
+        />
         
         <View style={styles.textContainer}>
-          <Text style={styles.titleText}>PropertyKING</Text>
+          <Text style={styles.titleText}>PropertyKing</Text>
         </View>
         <Text style={styles.subtitle}>Unlock Premium Real Estate</Text>
       </Animated.View>
@@ -53,21 +55,10 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
-  logoBox: {
-    width: 64,
-    height: 64,
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '45deg' }],
-    marginBottom: 40,
-  },
-  logoInner: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#050505',
-    borderRadius: 6,
+  logoImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 30,
   },
   textContainer: {
     flexDirection: 'row',
