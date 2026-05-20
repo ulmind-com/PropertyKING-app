@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, Vibration } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Vibration, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -107,9 +107,17 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color }) => {
+          if (route.name === 'Home') {
+            return (
+              <Image
+                source={require('../../assets/logoremovebg.png')}
+                style={{ width: 26, height: 26, opacity: focused ? 1 : 0.45 }}
+                resizeMode="contain"
+              />
+            );
+          }
           let iconName;
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Explore') iconName = focused ? 'compass' : 'compass-outline';
+          if (route.name === 'Explore') iconName = focused ? 'compass' : 'compass-outline';
           else if (route.name === 'Map') iconName = focused ? 'map' : 'map-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <Ionicons name={iconName} size={22} color={color} />;
