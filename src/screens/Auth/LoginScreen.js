@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, StatusBar, Dimensions, Animated, ActivityIndicator, Vibration, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -96,7 +96,7 @@ export default function LoginScreen({ navigation }) {
             {/* Header area */}
             <View style={styles.headerArea}>
               <View style={styles.logoBadge}>
-                <Ionicons name="home" size={32} color="#FFF" />
+                <Image source={require('../../../assets/logoremovebg.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
               </View>
               <Text style={styles.mainTitle}>Welcome Back</Text>
               <Text style={styles.subTitle}>Sign in to continue exploring premium properties.</Text>
