@@ -13,8 +13,8 @@
       "backgroundColor": "#000000"
     },
     "notification": {
-      "icon": "./assets/icon.png",
-      "color": "#000000"
+      "icon": "./assets/notification-icon.png",
+      "color": "#D4A017"
     },
     "ios": {
       "supportsTablet": true,
