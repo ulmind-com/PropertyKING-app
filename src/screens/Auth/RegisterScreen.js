@@ -10,8 +10,8 @@ const { width } = Dimensions.get('window');
 
 // Common countries with emoji flags
 const COUNTRIES = [
-  { code: 'IN', name: 'India', flag: '🇮🇳', dial: '91' },
   { code: 'US', name: 'United States', flag: '🇺🇸', dial: '1' },
+  { code: 'IN', name: 'India', flag: '🇮🇳', dial: '91' },
   { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', dial: '44' },
   { code: 'CA', name: 'Canada', flag: '🇨🇦', dial: '1' },
   { code: 'AU', name: 'Australia', flag: '🇦🇺', dial: '61' },
@@ -178,8 +178,8 @@ export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [countryCode, setCountryCode] = useState('IN');
-  const [callingCode, setCallingCode] = useState('91');
+  const [countryCode, setCountryCode] = useState('US');
+  const [callingCode, setCallingCode] = useState('1');
   
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
