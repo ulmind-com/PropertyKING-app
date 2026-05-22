@@ -49,14 +49,11 @@ export const PushNotificationService = {
       }
 
       try {
-        const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId ?? '5ed33441-30bc-4bc4-80ad-c55f650cc555';
-        const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: projectId
-        });
+        const tokenData = await Notifications.getDevicePushTokenAsync();
         
         if (tokenData && tokenData.data) {
           token = tokenData.data;
-          console.log('Got Expo Push Token:', token);
+          console.log('Got Device Push Token (FCM):', token);
 
           // Send to backend
           if (token) {
