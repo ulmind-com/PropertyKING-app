@@ -18,7 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ulmind.propertyking",
+      "bundleIdentifier": "com.propertykingpro.app",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
@@ -27,7 +27,7 @@
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ulmind.propertyking",
+      "package": "com.propertykingpro.app",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o"
@@ -60,6 +60,10 @@
       ],
       "expo-notifications"
     ],
-    "extra": {}
+    "extra": {
+      "eas": {
+        "projectId": "db5869cc-100a-4a66-9f02-e028ffc59810"
+      }
+    }
   }
 }
