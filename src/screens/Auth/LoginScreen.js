@@ -99,7 +99,7 @@ export default function LoginScreen({ navigation }) {
                 <Image source={require('../../../assets/logoremovebg.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
               </View>
               <Text style={styles.mainTitle}>Welcome Back</Text>
-              <Text style={styles.subTitle}>Sign in to continue exploring premium properties.</Text>
+              <Text style={styles.subTitle}>Sign in to explore distressed & off-market properties.</Text>
             </View>
 
             {/* Form Area */}

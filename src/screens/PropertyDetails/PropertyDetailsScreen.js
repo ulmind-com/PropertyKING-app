@@ -288,7 +288,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           <View style={styles.section}>
             <Text style={FONTS.h4}>Description</Text>
             <Text style={[FONTS.body, { marginTop: 8 }]} numberOfLines={descExpanded ? undefined : 3}>
-              {property.description || 'This beautiful property offers premium living in one of the most sought-after locations in the United States.'}
+              {property.description || 'This distressed or off-market property presents a unique opportunity in one of the most sought-after locations in the United States.'}
             </Text>
             <TouchableOpacity onPress={() => setDescExpanded(!descExpanded)}>
               <Text style={styles.readMore}>{descExpanded ? 'Show less' : 'Read More'}</Text>

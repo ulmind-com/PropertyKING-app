@@ -39,7 +39,7 @@ export default function SplashScreenComponent() {
         <View style={styles.textContainer}>
           <Text style={styles.titleText}>PropertyKing</Text>
         </View>
-        <Text style={styles.subtitle}>Unlock Premium Real Estate</Text>
+        <Text style={styles.subtitle}>Distressed & Off-Market Properties</Text>
       </Animated.View>
     </View>
   );
