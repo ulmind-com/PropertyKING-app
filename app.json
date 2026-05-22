@@ -60,11 +60,6 @@
       ],
       "expo-notifications"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "5ed33441-30bc-4bc4-80ad-c55f650cc555"
-      }
-    },
-    "owner": "handiman-001"
+    "extra": {}
   }
 }
