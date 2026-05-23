@@ -7,6 +7,7 @@ import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI, amenityAPI } from '../../api';
 import api from '../../api';
 import { MapView, Marker } from '../../components/Map/MapViewComponent';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
 
@@ -268,10 +269,79 @@ export default function AddPropertyScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={s.sc}>
-                <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
-                <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
-                <View style={{flexDirection:'row'}}>
+              <View style={[s.sc, { zIndex: 10 }]}>
+                <View style={[s.ig, { zIndex: 999 }]}>
+                  <Text style={s.lb}>Street Address *</Text>
+                  <GooglePlacesAutocomplete
+                    placeholder="123 Main Street"
+                    fetchDetails={true}
+                    onPress={(data, details = null) => {
+                      if (details) {
+                        const lat = details.geometry?.location?.lat;
+                        const lng = details.geometry?.location?.lng;
+                        if (lat && lng) setGpsCoords({ lat, lng });
+
+                        const result = {};
+                        for (const c of details.address_components) {
+                          const t = c.types;
+                          if (t.includes('street_number')) result.house_number = c.long_name;
+                          if (t.includes('route')) result.road = c.long_name;
+                          if (t.includes('locality')) result.city = c.long_name;
+                          if (t.includes('sublocality_level_1') && !result.city) result.city = c.long_name;
+                          if (t.includes('administrative_area_level_1')) result.state_short = c.short_name;
+                          if (t.includes('postal_code')) result.postcode = c.long_name;
+                          if (t.includes('administrative_area_level_2')) result.county = c.long_name;
+                        }
+
+                        const road = result.house_number || result.road ? `${result.house_number || ''} ${result.road || ''}`.trim() : (details.formatted_address ? details.formatted_address.split(',')[0] : '');
+                        if (road) setAddress(road);
+                        if (result.city) setCity(result.city);
+                        if (result.state_short && US_STATES.includes(result.state_short)) setStateSel(result.state_short);
+                        if (result.postcode) setZipCode(result.postcode.split('-')[0]);
+                        if (result.county) setCounty(result.county.replace('County', '').trim());
+                      }
+                    }}
+                    query={{
+                      key: 'AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o',
+                      language: 'en',
+                      components: 'country:us',
+                    }}
+                    textInputProps={{
+                      placeholderTextColor: COLORS.textMuted,
+                      value: address,
+                      onChangeText: setAddress,
+                    }}
+                    styles={{
+                      container: { flex: 0 },
+                      textInputContainer: { width: '100%' },
+                      textInput: {
+                        backgroundColor: COLORS.bgAlt,
+                        borderRadius: SIZES.radius.md,
+                        paddingHorizontal: 16,
+                        height: 52,
+                        fontSize: 14,
+                        color: COLORS.text,
+                        borderWidth: 1,
+                        borderColor: COLORS.borderLight,
+                        fontFamily: 'Raleway_500Medium',
+                      },
+                      listView: {
+                        position: 'absolute',
+                        top: 54,
+                        backgroundColor: '#FFF',
+                        borderRadius: SIZES.radius.md,
+                        borderWidth: 1,
+                        borderColor: COLORS.borderLight,
+                        elevation: 3,
+                        zIndex: 999,
+                      },
+                      row: { padding: 13, minHeight: 44, flexDirection: 'row' },
+                      description: { fontFamily: 'Raleway_500Medium', fontSize: 13, color: COLORS.text },
+                    }}
+                  />
+                </View>
+                <View style={[s.ig, { zIndex: -1 }]}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
+                <View style={[{flexDirection:'row', zIndex: -1}]}>
                   <View style={[s.ig,{flex:1}]}><Text style={s.lb}>State *</Text>
                     <TouchableOpacity style={s.selBtn} onPress={()=>setShowStatePicker(true)}><Text style={stateSel?s.selTxt:s.selPh}>{stateSel||'Select'}</Text><Ionicons name="chevron-down" size={18} color={COLORS.textMuted}/></TouchableOpacity>
                   </View>
