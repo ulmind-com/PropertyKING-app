@@ -7,9 +7,69 @@ import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { propertyAPI, propertyTypeAPI, amenityAPI } from '../../api';
 import api from '../../api';
 import { MapView, Marker } from '../../components/Map/MapViewComponent';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+
+const CustomGooglePlacesAutocomplete = ({ placeholder, onPress, query, textInputProps, styles }) => {
+  const [results, setResults] = useState([]);
+  const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    const val = textInputProps.value;
+    if (val && val.length > 2) {
+      const delay = setTimeout(() => {
+        fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(val)}&key=${query.key}&language=${query.language}&components=${query.components}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.status === 'OK') {
+              setResults(d.predictions);
+              setShowList(true);
+            }
+          }).catch(()=>{});
+      }, 300);
+      return () => clearTimeout(delay);
+    } else {
+      setShowList(false);
+      setResults([]);
+    }
+  }, [textInputProps.value]);
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        {...textInputProps}
+        placeholder={placeholder}
+        style={styles.textInput}
+        onFocus={() => { if(results.length > 0) setShowList(true); }}
+        onBlur={() => { setTimeout(()=>setShowList(false), 200); }}
+      />
+      {showList && results.length > 0 && (
+        <View style={styles.listView}>
+          <FlatList
+            data={results}
+            keyExtractor={i => i.place_id}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({item}) => (
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => {
+                  setShowList(false);
+                  fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&key=${query.key}`)
+                    .then(r => r.json())
+                    .then(d => {
+                      if (d.status === 'OK') onPress(item, d.result);
+                    });
+                }}
+              >
+                <Text style={styles.description}>{item.description}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
+    </View>
+  );
+};
 
 export default function AddPropertyScreen({ navigation }) {
   const [propertyTypes, setPropertyTypes] = useState([]);
@@ -272,9 +332,8 @@ export default function AddPropertyScreen({ navigation }) {
               <View style={[s.sc, { zIndex: 10 }]}>
                 <View style={[s.ig, { zIndex: 999 }]}>
                   <Text style={s.lb}>Street Address *</Text>
-                  <GooglePlacesAutocomplete
+                  <CustomGooglePlacesAutocomplete
                     placeholder="123 Main Street"
-                    fetchDetails={true}
                     onPress={(data, details = null) => {
                       if (details) {
                         const lat = details.geometry?.location?.lat;
