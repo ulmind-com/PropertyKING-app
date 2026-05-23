@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:642116439018:android:0971348dacaa3c508e0093",
+        "android_client_info": {
+          "package_name": "com.propertykingpro.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgZeDxBn_md7wxT07cYmC9LZRBXXmJGrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:642116439018:android:82352b4b885c44a28e0093",
         "android_client_info": {
           "package_name": "com.ulmind.propertyking"

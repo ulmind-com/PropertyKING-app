@@ -48,6 +48,7 @@ export default function AddPropertyScreen({ navigation }) {
   const [customAmenity, setCustomAmenity] = useState('');
   // Map Picker
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [showManualAddress, setShowManualAddress] = useState(false);
   const [tempCoords, setTempCoords] = useState(null);
   const [mapRegion, setMapRegion] = useState({ latitude: 39.8283, longitude: -98.5795, latitudeDelta: 40, longitudeDelta: 40 }); // Default: USA Center zoomed out
 
@@ -258,16 +259,28 @@ export default function AddPropertyScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             {gpsCoords&&<Text style={s.gpsInfo}>📍 {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}</Text>}
-            <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
-            <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
-            <View style={{flexDirection:'row'}}>
-              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>State *</Text>
-                <TouchableOpacity style={s.selBtn} onPress={()=>setShowStatePicker(true)}><Text style={stateSel?s.selTxt:s.selPh}>{stateSel||'Select'}</Text><Ionicons name="chevron-down" size={18} color={COLORS.textMuted}/></TouchableOpacity>
+            
+            {(!gpsCoords && !showManualAddress) ? (
+              <View style={{alignItems:'center', paddingTop: 8}}>
+                <Text style={{fontSize:13, fontFamily:'Raleway_500Medium', color:COLORS.textMuted, marginBottom: 12}}>Use GPS or Map to auto-fill your property address.</Text>
+                <TouchableOpacity onPress={() => setShowManualAddress(true)}>
+                  <Text style={{fontSize:13, fontFamily:'Raleway_700Bold', color:COLORS.text, textDecorationLine:'underline'}}>Or enter address manually</Text>
+                </TouchableOpacity>
               </View>
-              <View style={{width:12}}/>
-              <View style={[s.ig,{flex:1}]}><Text style={s.lb}>ZIP Code *</Text><TextInput style={s.inp} placeholder="10001" placeholderTextColor={COLORS.textMuted} value={zipCode} onChangeText={setZipCode} keyboardType="numeric" maxLength={10}/></View>
-            </View>
-            <View style={s.ig}><Text style={s.lb}>County</Text><TextInput style={s.inp} placeholder="e.g. Kings County" placeholderTextColor={COLORS.textMuted} value={county} onChangeText={setCounty}/></View>
+            ) : (
+              <View style={s.sc}>
+                <View style={s.ig}><Text style={s.lb}>Street Address *</Text><TextInput style={s.inp} placeholder="123 Main Street" placeholderTextColor={COLORS.textMuted} value={address} onChangeText={setAddress}/></View>
+                <View style={s.ig}><Text style={s.lb}>City *</Text><TextInput style={s.inp} placeholder="New York" placeholderTextColor={COLORS.textMuted} value={city} onChangeText={setCity}/></View>
+                <View style={{flexDirection:'row'}}>
+                  <View style={[s.ig,{flex:1}]}><Text style={s.lb}>State *</Text>
+                    <TouchableOpacity style={s.selBtn} onPress={()=>setShowStatePicker(true)}><Text style={stateSel?s.selTxt:s.selPh}>{stateSel||'Select'}</Text><Ionicons name="chevron-down" size={18} color={COLORS.textMuted}/></TouchableOpacity>
+                  </View>
+                  <View style={{width:12}}/>
+                  <View style={[s.ig,{flex:1}]}><Text style={s.lb}>ZIP Code *</Text><TextInput style={s.inp} placeholder="10001" placeholderTextColor={COLORS.textMuted} value={zipCode} onChangeText={setZipCode} keyboardType="numeric" maxLength={10}/></View>
+                </View>
+                <View style={s.ig}><Text style={s.lb}>County</Text><TextInput style={s.inp} placeholder="e.g. Kings County" placeholderTextColor={COLORS.textMuted} value={county} onChangeText={setCounty}/></View>
+              </View>
+            )}
           </View>}
 
           {step===3&&<View style={s.sc}>

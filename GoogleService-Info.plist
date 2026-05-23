@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.ulmind.propertyking</string>
+	<string>com.propertykingpro.app</string>
 	<key>PROJECT_ID</key>
 	<string>propertyking-dc6bb</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:642116439018:ios:6c4e4582b7c7f4ae8e0093</string>
+	<string>1:642116439018:ios:76c3b9bd199e155d8e0093</string>
 </dict>
 </plist>
