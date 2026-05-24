@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, SHADOWS } from '../theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -206,13 +207,26 @@ export default function AppNavigator() {
   React.useEffect(() => {
     let unsubs;
     if (isAuthenticated) {
+      // Check if we need to redirect
+      setTimeout(async () => {
+        try {
+          const redirect = await AsyncStorage.getItem('pk_redirect_listings');
+          if (redirect === 'true') {
+            await AsyncStorage.removeItem('pk_redirect_listings');
+            navigationRef.current?.navigate('Profile', { screen: 'MyListings' });
+          }
+        } catch(e) {}
+      }, 500);
+
       // Small timeout to ensure NavigationContainer is ready
       setTimeout(() => {
         unsubs = PushNotificationService.setupNotificationListeners(navigationRef.current);
       }, 1000);
     }
     return () => {
-      if (unsubs) unsubs();
+      if (unsubs) {
+        unsubs.forEach(unsub => unsub.remove());
+      }
     };
   }, [isAuthenticated]);
 

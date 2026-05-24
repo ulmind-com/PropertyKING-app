@@ -53,6 +53,18 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('pk_token', access_token);
     await AsyncStorage.setItem('pk_refresh_token', refresh_token);
     await AsyncStorage.setItem('pk_user', JSON.stringify(u));
+    
+    // Check listings count for redirect
+    try {
+      const { propertyAPI } = require('../api');
+      const listRes = await propertyAPI.myListings({ limit: 1 });
+      if (listRes.data.properties && listRes.data.properties.length > 0) {
+        await AsyncStorage.setItem('pk_redirect_listings', 'true');
+      }
+    } catch(e) {
+      console.log('Failed to check user listings for redirect:', e);
+    }
+    
     setUser(u); setIsAuthenticated(true);
     
     // Setup push notifications
