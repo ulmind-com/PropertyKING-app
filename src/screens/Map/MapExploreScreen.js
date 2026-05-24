@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image as RNImage, Dimensions,
-  StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard, Vibration
+  StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard, Vibration, FlatList, ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -187,48 +187,72 @@ export default function MapExploreScreen({ navigation }) {
     Keyboard.dismiss();
   }, [selectedProperty]);
 
+  // ─── AUTOCOMPLETE SUGGESTIONS ───
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef(null);
+
+  const fetchSuggestions = (q) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!q || q.length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1&countrycodes=us`);
+        const data = await resp.json();
+        setSuggestions(data.map(d => ({
+          display: d.display_name,
+          lat: parseFloat(d.lat),
+          lng: parseFloat(d.lon),
+          short: [d.address?.city || d.address?.town || d.address?.village || d.address?.county, d.address?.state].filter(Boolean).join(', ') || d.display_name.split(',').slice(0, 2).join(','),
+        })));
+        setShowSuggestions(true);
+      } catch(e) { setSuggestions([]); }
+    }, 350);
+  };
+
+  const handleSearchInput = (val) => {
+    setSearchText(val);
+    fetchSuggestions(val);
+  };
+
+  const handleSelectSuggestion = async (sug) => {
+    setSearchText(sug.short);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    Keyboard.dismiss();
+    setSearching(true);
+    const c = { lat: sug.lat, lng: sug.lng };
+    if (mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: c.lat, longitude: c.lng,
+        latitudeDelta: 0.08, longitudeDelta: 0.08,
+      }, 800);
+    }
+    await loadProperties(c, 50);
+    setSearching(false);
+  };
+
   // ─── SEARCH (geocode → pan map → load properties) ───
   const [searching, setSearching] = useState(false);
   const handleSearch = async () => {
     const query = searchText.trim();
     if (!query) return;
     Keyboard.dismiss();
+    setShowSuggestions(false);
+    setSuggestions([]);
     setSearching(true);
     try {
-      // Use expo-location to geocode the search text into coordinates
       const results = await Location.geocodeAsync(query);
       if (results && results.length > 0) {
         const { latitude, longitude } = results[0];
         const newCoords = { lat: latitude, lng: longitude };
-
-        // Pan map to the searched location
         if (mapRef.current) {
           mapRef.current.animateToRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.08,
-            longitudeDelta: 0.08,
+            latitude, longitude,
+            latitudeDelta: 0.08, longitudeDelta: 0.08,
           }, 800);
         }
-
-        // Load properties near the searched location
         await loadProperties(newCoords, 50);
-      } else {
-        // No geocode result — try loading properties by search text via API
-        setLoading(true);
-        try {
-          const res = await propertyAPI.nearby({
-            lat: userCoords?.lat || 40.7128,
-            lng: userCoords?.lng || -74.006,
-            radius_miles: 500,
-            limit: 50,
-            search: query,
-          });
-          setProperties(res.data?.properties || []);
-        } catch (e) {
-          console.log('[MapExplore] search fallback error:', e);
-        }
-        setLoading(false);
       }
     } catch (e) {
       console.log('[MapExplore] geocode error:', e);
@@ -334,7 +358,7 @@ export default function MapExploreScreen({ navigation }) {
 
       {/* ═══════════ SEARCH BAR OVERLAY ═══════════ */}
       <View style={st.searchOverlay}>
-        <View style={st.searchBar}>
+        <View style={[st.searchBar, showSuggestions && suggestions.length > 0 && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]}>
           {searching ? (
             <ActivityIndicator size={18} color={COLORS.primary} />
           ) : (
@@ -342,20 +366,43 @@ export default function MapExploreScreen({ navigation }) {
           )}
           <TextInput
             style={st.searchInput}
-            placeholder="Search city, e.g. Austin, Miami..."
+            placeholder="Search city, address, zip code..."
             placeholderTextColor={COLORS.textMuted}
             value={searchText}
-            onChangeText={setSearchText}
+            onChangeText={handleSearchInput}
             onSubmitEditing={handleSearch}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             returnKeyType="search"
             editable={!searching}
           />
           {searchText.length > 0 && !searching && (
-            <TouchableOpacity onPress={() => setSearchText('')}>
+            <TouchableOpacity onPress={() => { setSearchText(''); setSuggestions([]); setShowSuggestions(false); }}>
               <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Suggestions Dropdown */}
+        {showSuggestions && suggestions.length > 0 && (
+          <View style={st.suggestionsContainer}>
+            {suggestions.map((sug, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[st.suggestionItem, i < suggestions.length - 1 && st.suggestionBorder]}
+                onPress={() => handleSelectSuggestion(sug)}
+                activeOpacity={0.7}
+              >
+                <View style={st.suggestionIcon}>
+                  <Ionicons name="location-outline" size={14} color={COLORS.textMuted} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={st.suggestionShort} numberOfLines={1}>{sug.short}</Text>
+                  <Text style={st.suggestionFull} numberOfLines={1}>{sug.display}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* ═══════════ PROPERTY COUNT PILL ═══════════ */}
@@ -490,6 +537,46 @@ const st = StyleSheet.create({
     fontSize: 15,
     color: COLORS.text,
     fontFamily: 'Raleway_500Medium',
+  },
+
+  // ─── SUGGESTIONS ───
+  suggestionsContainer: {
+    backgroundColor: '#FFF',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    ...SHADOWS.lg,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  suggestionBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  suggestionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestionShort: {
+    fontSize: 13,
+    fontFamily: 'Raleway_600SemiBold',
+    color: COLORS.text,
+  },
+  suggestionFull: {
+    fontSize: 11,
+    fontFamily: 'Raleway_400Regular',
+    color: COLORS.textMuted,
+    marginTop: 1,
   },
 
   // ─── COUNT PILL ───
