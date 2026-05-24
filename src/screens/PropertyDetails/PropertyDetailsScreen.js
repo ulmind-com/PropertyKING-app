@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { WebView } from '../../components/WebView/WebViewComponent';
@@ -33,8 +33,8 @@ import { MapView, Marker, Polyline } from '../../components/Map/MapViewComponent
 
 const { width } = Dimensions.get('window');
 
-// Generate next 30 days for date picker
-const getNext30Days = () => {
+// Pre-compute at module level — ZERO work on component mount
+const NEXT_30_DAYS = (() => {
   const days = [];
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -48,23 +48,28 @@ const getNext30Days = () => {
     });
   }
   return days;
-};
+})();
 
-// Generate 30-min interval times from 8 AM to 8 PM
-const generateTimeSlots = () => {
+const TIME_SLOTS = (() => {
   const slots = [];
   for (let i = 8; i <= 20; i++) {
     const ampm = i >= 12 ? 'PM' : 'AM';
     const hour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
     let icon = i >= 18 ? 'moon-outline' : i >= 16 ? 'partly-sunny-outline' : i >= 12 ? 'sunny' : 'sunny-outline';
-    
     slots.push({ label: `${hour}:00 ${ampm}`, value: `${i.toString().padStart(2, '0')}:00`, icon });
     if (i < 20) {
       slots.push({ label: `${hour}:30 ${ampm}`, value: `${i.toString().padStart(2, '0')}:30`, icon });
     }
   }
   return slots;
-};
+})();
+
+const CONTACT_OPTIONS = [
+  { label: 'Call', value: 'call', icon: 'call' },
+  { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
+  { label: 'In Person', value: 'in_person', icon: 'people' },
+  { label: 'Video', value: 'video', icon: 'videocam' },
+];
 
 const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
   const [inquiryMsg, setInquiryMsg] = useState('');
@@ -72,15 +77,6 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
-
-  const next30Days = useMemo(() => getNext30Days(), []);
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
-  const contactOptions = useMemo(() => [
-    { label: 'Call', value: 'call', icon: 'call' },
-    { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
-    { label: 'In Person', value: 'in_person', icon: 'people' },
-    { label: 'Video', value: 'video', icon: 'videocam' },
-  ], []);
 
   const handleInquiry = async () => {
     if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
@@ -114,64 +110,62 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
   return (
     <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
       <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowInquiry(false)} />
+        <Pressable style={styles.modalDismiss} onPress={() => setShowInquiry(false)} />
         <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '95%' }]}>
           {/* Handle bar */}
           <View style={styles.sheetHandle} />
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 20 }}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: 20 }}>
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
             {/* 📅 Date Picker 📅 */}
             <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {next30Days.map((day) => (
-                <TouchableOpacity
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {NEXT_30_DAYS.map((day) => (
+                <Pressable
                   key={day.value}
                   style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
                   onPress={() => setSelectedDate(day.value)}
-                  activeOpacity={0.6}
                 >
                   <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
                   <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
                   <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
 
             {/* 🕐 Preferred Time 🕐 */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {timeSlots.map((slot) => (
-                <TouchableOpacity
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {TIME_SLOTS.map((slot) => (
+                <Pressable
                   key={slot.value}
                   style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
                   onPress={() => setSelectedTime(slot.value)}
-                  activeOpacity={0.6}
                 >
                   <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
                   <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
 
-            {/* ── Contact Preference ── */}
+            {/* 💬 Contact Preference 💬 */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
             <View style={styles.contactGrid}>
-              {contactOptions.map((opt) => (
-                <TouchableOpacity
+              {CONTACT_OPTIONS.map((opt) => (
+                <Pressable
                   key={opt.value}
                   style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
                   onPress={() => setContactPref(opt.value)}
                 >
                   <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
                   <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
-            {/* ── Message ── */}
+            {/* 📝 Message 📝 */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
             <TextInput
               style={styles.msgInput}
@@ -185,14 +179,14 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
             />
 
             {/* ── Submit ── */}
-            <TouchableOpacity
+            <Pressable
               style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
               onPress={handleInquiry}
               disabled={inquiryLoading}
             >
               <Ionicons name="calendar-outline" size={20} color="#FFF" />
               <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-            </TouchableOpacity>
+            </Pressable>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
