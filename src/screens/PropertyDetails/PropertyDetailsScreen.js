@@ -72,46 +72,40 @@ const CONTACT_OPTIONS = [
 ];
 
 const DateChip = React.memo(({ day, isSelected, onSelect }) => (
-  <Pressable delayPressIn={0} onPress={() => onSelect(day.value)} style={({ pressed }) => [styles.dateChip, (isSelected || pressed) && styles.dateChipActive]}>
-    {({ pressed }) => {
-      const active = isSelected || pressed;
-      return (
-        <>
-          <Text style={[styles.dateChipLabel, active && styles.dateChipTextActive]}>{day.label}</Text>
-          <Text style={[styles.dateChipDate, active && styles.dateChipTextActive]}>{day.date}</Text>
-          <Text style={[styles.dateChipMonth, active && styles.dateChipTextActive]}>{day.month}</Text>
-        </>
-      );
-    }}
-  </Pressable>
+  <TouchableOpacity
+    activeOpacity={0.7}
+    delayPressIn={0}
+    style={[styles.dateChip, isSelected && styles.dateChipActive]}
+    onPress={() => onSelect(day.value)}
+  >
+    <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
+    <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
+    <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
+  </TouchableOpacity>
 ));
 
 const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
-  <Pressable delayPressIn={0} onPress={() => onSelect(slot.value)} style={({ pressed }) => [styles.timeChip, (isSelected || pressed) && styles.timeChipActive]}>
-    {({ pressed }) => {
-      const active = isSelected || pressed;
-      return (
-        <>
-          <Ionicons name={slot.icon} size={16} color={active ? '#FFF' : COLORS.textMuted} />
-          <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>{slot.label}</Text>
-        </>
-      );
-    }}
-  </Pressable>
+  <TouchableOpacity
+    activeOpacity={0.7}
+    delayPressIn={0}
+    style={[styles.timeChip, isSelected && styles.timeChipActive]}
+    onPress={() => onSelect(slot.value)}
+  >
+    <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
+    <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
+  </TouchableOpacity>
 ));
 
 const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
-  <Pressable delayPressIn={0} onPress={() => onSelect(opt.value)} style={({ pressed }) => [styles.contactChip, (isSelected || pressed) && styles.contactChipActive]}>
-    {({ pressed }) => {
-      const active = isSelected || pressed;
-      return (
-        <>
-          <Ionicons name={opt.icon} size={18} color={active ? '#FFF' : COLORS.primary} />
-          <Text style={[styles.contactChipText, active && { color: '#FFF' }]}>{opt.label}</Text>
-        </>
-      );
-    }}
-  </Pressable>
+  <TouchableOpacity
+    activeOpacity={0.7}
+    delayPressIn={0}
+    style={[styles.contactChip, isSelected && styles.contactChipActive]}
+    onPress={() => onSelect(opt.value)}
+  >
+    <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
+    <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
+  </TouchableOpacity>
 ));
 
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
@@ -157,7 +151,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   };
 
   return (
-    <Modal visible={showInquiry} animationType="none" transparent statusBarTranslucent>
+    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
       <KeyboardAvoidingView 
         style={styles.modalOverlay} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -177,19 +171,37 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
 
             {/* 📅 Date Picker 📅 */}
             <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {NEXT_30_DAYS.map((day) => (
-                <DateChip key={day.value} day={day} isSelected={selectedDate === day.value} onSelect={setSelectedDate} />
-              ))}
-            </ScrollView>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="always"
+              contentContainerStyle={{ gap: 10, paddingVertical: 4, paddingHorizontal: 2 }}
+              data={NEXT_30_DAYS}
+              keyExtractor={(item) => item.value}
+              initialNumToRender={6}
+              maxToRenderPerBatch={6}
+              windowSize={3}
+              renderItem={({ item }) => (
+                <DateChip day={item} isSelected={selectedDate === item.value} onSelect={setSelectedDate} />
+              )}
+            />
 
             {/* 🕐 Preferred Time 🕐 */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {TIME_SLOTS.map((slot) => (
-                <TimeChip key={slot.value} slot={slot} isSelected={selectedTime === slot.value} onSelect={setSelectedTime} />
-              ))}
-            </ScrollView>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="always"
+              contentContainerStyle={{ gap: 10, paddingVertical: 4, paddingHorizontal: 2 }}
+              data={TIME_SLOTS}
+              keyExtractor={(item) => item.value}
+              initialNumToRender={5}
+              maxToRenderPerBatch={5}
+              windowSize={3}
+              renderItem={({ item }) => (
+                <TimeChip slot={item} isSelected={selectedTime === item.value} onSelect={setSelectedTime} />
+              )}
+            />
 
             {/* 💬 Contact Preference 💬 */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
