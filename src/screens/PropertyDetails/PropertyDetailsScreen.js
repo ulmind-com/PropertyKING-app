@@ -157,10 +157,10 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   };
 
   return (
-    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
+    <Modal visible={showInquiry} animationType="none" transparent statusBarTranslucent>
       <KeyboardAvoidingView 
         style={styles.modalOverlay} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Pressable style={styles.modalDismiss} onPress={() => setShowInquiry(false)} />
         <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '90%' }]}>
