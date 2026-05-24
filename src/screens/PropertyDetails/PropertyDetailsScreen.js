@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
@@ -77,6 +77,24 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (showInquiry) {
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showInquiry]);
 
   const handleInquiry = async () => {
     if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
@@ -107,90 +125,104 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
     setInquiryLoading(false);
   };
 
+  const backdropOpacity = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const translateY = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [800, 0] });
+
   return (
-    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
-      <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={styles.modalDismiss} onPress={() => setShowInquiry(false)} />
-        <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '95%' }]}>
-          {/* Handle bar */}
-          <View style={styles.sheetHandle} />
+    <View
+      style={[StyleSheet.absoluteFill, { zIndex: showInquiry ? 999 : -1, elevation: showInquiry ? 999 : 0 }]}
+      pointerEvents={showInquiry ? 'auto' : 'none'}
+    >
+      <StatusBar barStyle={showInquiry ? 'light-content' : 'light-content'} />
+      {/* Dark backdrop */}
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowInquiry(false)} />
+      </Animated.View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: 20 }}>
-            <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
-            <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
+      {/* Bottom sheet */}
+      <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, transform: [{ translateY }] }]}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? Dimensions.get('window').height * 0.85 : Dimensions.get('window').height * 0.95 }]}>
+            {/* Handle bar */}
+            <View style={styles.sheetHandle} />
 
-            {/* 📅 Date Picker 📅 */}
-            <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {NEXT_30_DAYS.map((day) => (
-                <Pressable
-                  key={day.value}
-                  style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
-                  onPress={() => setSelectedDate(day.value)}
-                >
-                  <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
-                  <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
-                  <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
-                </Pressable>
-              ))}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: 20 }}>
+              <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
+              <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
+
+              {/* 📅 Date Picker 📅 */}
+              <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                {NEXT_30_DAYS.map((day) => (
+                  <Pressable
+                    key={day.value}
+                    style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
+                    onPress={() => setSelectedDate(day.value)}
+                  >
+                    <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
+                    <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
+                    <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              {/* 🕐 Preferred Time 🕐 */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                {TIME_SLOTS.map((slot) => (
+                  <Pressable
+                    key={slot.value}
+                    style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
+                    onPress={() => setSelectedTime(slot.value)}
+                  >
+                    <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
+                    <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              {/* 💬 Contact Preference 💬 */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
+              <View style={styles.contactGrid}>
+                {CONTACT_OPTIONS.map((opt) => (
+                  <Pressable
+                    key={opt.value}
+                    style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
+                    onPress={() => setContactPref(opt.value)}
+                  >
+                    <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
+                    <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* 📝 Message 📝 */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
+              <TextInput
+                style={styles.msgInput}
+                placeholder="Hi, I'd love to visit this property and discuss..."
+                placeholderTextColor={COLORS.textMuted}
+                value={inquiryMsg}
+                onChangeText={setInquiryMsg}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              {/* ── Submit ── */}
+              <Pressable
+                style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
+                onPress={handleInquiry}
+                disabled={inquiryLoading}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#FFF" />
+                <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
+              </Pressable>
             </ScrollView>
-
-            {/* 🕐 Preferred Time 🕐 */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {TIME_SLOTS.map((slot) => (
-                <Pressable
-                  key={slot.value}
-                  style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
-                  onPress={() => setSelectedTime(slot.value)}
-                >
-                  <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
-                  <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            {/* 💬 Contact Preference 💬 */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
-            <View style={styles.contactGrid}>
-              {CONTACT_OPTIONS.map((opt) => (
-                <Pressable
-                  key={opt.value}
-                  style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
-                  onPress={() => setContactPref(opt.value)}
-                >
-                  <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
-                  <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {/* 📝 Message 📝 */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
-            <TextInput
-              style={styles.msgInput}
-              placeholder="Hi, I'd love to visit this property and discuss..."
-              placeholderTextColor={COLORS.textMuted}
-              value={inquiryMsg}
-              onChangeText={setInquiryMsg}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-            {/* ── Submit ── */}
-            <Pressable
-              style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
-              onPress={handleInquiry}
-              disabled={inquiryLoading}
-            >
-              <Ionicons name="calendar-outline" size={20} color="#FFF" />
-              <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-            </Pressable>
-          </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+          </View>
+        </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 };
 
