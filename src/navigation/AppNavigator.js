@@ -180,6 +180,8 @@ function MainTabs() {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             Vibration.vibrate(20);
+            e.preventDefault();
+            navigation.navigate('Profile', { screen: 'ProfileMain' });
           }
         })}
       />
