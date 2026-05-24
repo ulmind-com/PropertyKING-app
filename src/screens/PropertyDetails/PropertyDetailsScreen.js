@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
@@ -71,7 +71,13 @@ const CONTACT_OPTIONS = [
   { label: 'Video', value: 'video', icon: 'videocam' },
 ];
 
-const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
+const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
+  const [showInquiry, setShowInquiry] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    open: () => setShowInquiry(true),
+    close: () => setShowInquiry(false),
+  }));
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -224,7 +230,7 @@ const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
       </Animated.View>
     </View>
   );
-};
+});
 
 export default function PropertyDetailsScreen({ route, navigation }) {
   const { user } = useAuth();
@@ -234,7 +240,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   
   const [currentImg, setCurrentImg] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [showInquiry, setShowInquiry] = useState(false);
+  const inquiryModalRef = useRef(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const flatListRef = useRef(null);
   
@@ -613,15 +619,14 @@ export default function PropertyDetailsScreen({ route, navigation }) {
           <TouchableOpacity style={styles.favBtnBottom} onPress={handleFav}>
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={22} color={liked ? COLORS.error : COLORS.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.checkoutBtn} onPress={() => setShowInquiry(true)}>
+          <TouchableOpacity style={styles.checkoutBtn} onPress={() => inquiryModalRef.current?.open()}>
             <Text style={styles.checkoutText}>Inquire Now</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* 🔹 Schedule Meeting Modal 🔹 */}
-      {/* 🔹 Schedule Meeting Modal 🔹 */}
-      <ScheduleMeetingModal property={property} showInquiry={showInquiry} setShowInquiry={setShowInquiry} />
+      <ScheduleMeetingModal ref={inquiryModalRef} property={property} />
     </View>
   );
 }
