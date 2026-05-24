@@ -195,14 +195,15 @@ export default function PropertyDetailsScreen({ route, navigation }) {
     }
     return slots;
   };
-  const timeSlots = generateTimeSlots();
+  const next30Days = useMemo(() => getNext30Days(), []);
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
 
-  const contactOptions = [
-    { label: 'Call', value: 'call', icon: 'call-outline' },
+  const contactOptions = useMemo(() => [
+    { label: 'Call', value: 'call', icon: 'call' },
     { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
-    { label: 'In Person', value: 'in_person', icon: 'people-outline' },
-    { label: 'Video', value: 'video_call', icon: 'videocam-outline' },
-  ];
+    { label: 'In Person', value: 'in_person', icon: 'people' },
+    { label: 'Video', value: 'video', icon: 'videocam' },
+  ], []);
 
   const details = [
     d.bedrooms > 0 && { icon: 'bed-outline', label: 'Bedrooms', value: d.bedrooms },
@@ -513,14 +514,15 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
               <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
-              {/* ── Date Picker ── */}
+              {/* 📅 Date Picker 📅 */}
               <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                {getNext30Days().map((day) => (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                {next30Days.map((day) => (
                   <TouchableOpacity
                     key={day.value}
                     style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
                     onPress={() => setSelectedDate(day.value)}
+                    activeOpacity={0.6}
                   >
                     <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
                     <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
@@ -529,14 +531,15 @@ export default function PropertyDetailsScreen({ route, navigation }) {
                 ))}
               </ScrollView>
 
-              {/* ── Time Slots ── */}
+              {/* 🕐 Preferred Time 🕐 */}
               <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
                 {timeSlots.map((slot) => (
                   <TouchableOpacity
                     key={slot.value}
                     style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
                     onPress={() => setSelectedTime(slot.value)}
+                    activeOpacity={0.6}
                   >
                     <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
                     <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
