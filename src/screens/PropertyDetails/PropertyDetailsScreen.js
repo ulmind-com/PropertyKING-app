@@ -104,43 +104,16 @@ const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
 
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [showInquiry, setShowInquiry] = useState(false);
-
-  useImperativeHandle(ref, () => ({
-    open: () => setShowInquiry(true),
-    close: () => setShowInquiry(false),
-  }));
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    import('react-native').then(({ Keyboard }) => {
-      const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
-      const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
-      return () => { showSub.remove(); hideSub.remove(); };
-    });
-  }, []);
-
-  useEffect(() => {
-    if (showInquiry) {
-      Animated.spring(slideAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 65,
-        friction: 11,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [showInquiry]);
+  useImperativeHandle(ref, () => ({
+    open: () => setShowInquiry(true),
+    close: () => setShowInquiry(false),
+  }));
 
   const handleInquiry = async () => {
     if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
@@ -171,82 +144,75 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
     setInquiryLoading(false);
   };
 
-  const backdropOpacity = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
-  const translateY = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [800, 0] });
-
   return (
-    <View
-      style={[StyleSheet.absoluteFill, { zIndex: showInquiry ? 999 : -1, elevation: showInquiry ? 999 : 0 }]}
-      pointerEvents={showInquiry ? 'auto' : 'none'}
-    >
-      <StatusBar barStyle={showInquiry ? 'light-content' : 'light-content'} />
-      {/* Dark backdrop */}
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: backdropOpacity }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowInquiry(false)} />
-      </Animated.View>
+    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
+      <KeyboardAvoidingView 
+        style={styles.modalOverlay} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+      >
+        <Pressable style={styles.modalDismiss} onPress={() => setShowInquiry(false)} />
+        <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '90%' }]}>
+          {/* Handle bar */}
+          <View style={styles.sheetHandle} />
 
-      {/* Bottom sheet */}
-      <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, transform: [{ translateY }] }]}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-          <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? Dimensions.get('window').height * 0.85 : Dimensions.get('window').height * 0.95 }]}>
-            {/* Handle bar */}
-            <View style={styles.sheetHandle} />
+          <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            keyboardShouldPersistTaps="always" 
+            contentContainerStyle={{ paddingBottom: 20 }}
+          >
+            <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
+            <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? 120 : 20 }}>
-              <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
-              <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
-
-              {/* 📅 Date Picker 📅 */}
-              <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                {NEXT_30_DAYS.map((day) => (
-                  <DateChip key={day.value} day={day} isSelected={selectedDate === day.value} onSelect={setSelectedDate} />
-                ))}
-              </ScrollView>
-
-              {/* 🕐 Preferred Time 🕐 */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                {TIME_SLOTS.map((slot) => (
-                  <TimeChip key={slot.value} slot={slot} isSelected={selectedTime === slot.value} onSelect={setSelectedTime} />
-                ))}
-              </ScrollView>
-
-              {/* 💬 Contact Preference 💬 */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
-              <View style={styles.contactGrid}>
-                {CONTACT_OPTIONS.map((opt) => (
-                  <ContactChip key={opt.value} opt={opt} isSelected={contactPref === opt.value} onSelect={setContactPref} />
-                ))}
-              </View>
-
-              {/* 📝 Message 📝 */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
-              <TextInput
-                style={styles.msgInput}
-                placeholder="Hi, I'd love to visit this property and discuss..."
-                placeholderTextColor={COLORS.textMuted}
-                value={inquiryMsg}
-                onChangeText={setInquiryMsg}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-
-              {/* ── Submit ── */}
-              <Pressable
-                style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
-                onPress={handleInquiry}
-                disabled={inquiryLoading}
-              >
-                <Ionicons name="calendar-outline" size={20} color="#FFF" />
-                <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-              </Pressable>
+            {/* 📅 Date Picker 📅 */}
+            <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {NEXT_30_DAYS.map((day) => (
+                <DateChip key={day.value} day={day} isSelected={selectedDate === day.value} onSelect={setSelectedDate} />
+              ))}
             </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Animated.View>
-    </View>
+
+            {/* 🕐 Preferred Time 🕐 */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {TIME_SLOTS.map((slot) => (
+                <TimeChip key={slot.value} slot={slot} isSelected={selectedTime === slot.value} onSelect={setSelectedTime} />
+              ))}
+            </ScrollView>
+
+            {/* 💬 Contact Preference 💬 */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
+            <View style={styles.contactGrid}>
+              {CONTACT_OPTIONS.map((opt) => (
+                <ContactChip key={opt.value} opt={opt} isSelected={contactPref === opt.value} onSelect={setContactPref} />
+              ))}
+            </View>
+
+            {/* 📝 Message 📝 */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
+            <TextInput
+              style={styles.msgInput}
+              placeholder="Hi, I'd love to visit this property and discuss..."
+              placeholderTextColor={COLORS.textMuted}
+              value={inquiryMsg}
+              onChangeText={setInquiryMsg}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            {/* ── Submit ── */}
+            <Pressable
+              style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
+              onPress={handleInquiry}
+              disabled={inquiryLoading}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#FFF" />
+              <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 });
 
