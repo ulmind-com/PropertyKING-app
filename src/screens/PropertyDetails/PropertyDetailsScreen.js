@@ -70,42 +70,44 @@ const CONTACT_OPTIONS = [
   { label: 'In Person', value: 'in_person', icon: 'people' },
   { label: 'Video', value: 'video', icon: 'videocam' },
 ];
+// Use gesture-handler TouchableOpacity — processes touch on NATIVE thread
+// RN's built-in TouchableOpacity goes: Native → JS Bridge → JS Thread → Bridge → Native
+// RNGH TouchableOpacity goes: Native → Native (instant feedback, JS callback later)
+// This is why web buttons feel instant but RN buttons feel slow on heavy screens
+import { TouchableOpacity as GHTouchable } from 'react-native-gesture-handler';
 
 const DateChip = React.memo(({ day, isSelected, onSelect }) => (
-  <TouchableOpacity
+  <GHTouchable
     activeOpacity={0.7}
-    delayPressIn={0}
     style={[styles.dateChip, isSelected && styles.dateChipActive]}
     onPress={() => onSelect(day.value)}
   >
     <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
     <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
     <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
-  </TouchableOpacity>
+  </GHTouchable>
 ));
 
 const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
-  <TouchableOpacity
+  <GHTouchable
     activeOpacity={0.7}
-    delayPressIn={0}
     style={[styles.timeChip, isSelected && styles.timeChipActive]}
     onPress={() => onSelect(slot.value)}
   >
     <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
     <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
-  </TouchableOpacity>
+  </GHTouchable>
 ));
 
 const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
-  <TouchableOpacity
+  <GHTouchable
     activeOpacity={0.7}
-    delayPressIn={0}
     style={[styles.contactChip, isSelected && styles.contactChipActive]}
     onPress={() => onSelect(opt.value)}
   >
     <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
     <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
-  </TouchableOpacity>
+  </GHTouchable>
 ));
 
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
@@ -115,6 +117,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
+  const scrollRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
     open: () => setVisible(true),
@@ -150,32 +153,20 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
     setInquiryLoading(false);
   };
 
-  // ALWAYS MOUNTED — chips are pre-rendered and ready
-  // When hidden: opacity 0, pointerEvents none (invisible + untouchable)
-  // When shown: opacity 1, pointerEvents auto (visible + touchable)
-  // This means ZERO view creation when "Inquire Now" is tapped = ZERO first-touch delay
-  return (
-    <View
-      pointerEvents={visible ? 'auto' : 'none'}
-      style={{
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 999, elevation: 999,
-        opacity: visible ? 1 : 0,
-      }}
-    >
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <TouchableOpacity activeOpacity={1} style={{ flex: 1 }} onPress={() => setVisible(false)} />
+  if (!visible) return null;
 
-        <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '90%' }]}>
+  return (
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setVisible(false)}>
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity activeOpacity={1} style={styles.modalDismiss} onPress={() => setVisible(false)} />
+        <View style={[styles.modalSheet, { maxHeight: '85%' }]}>
           <View style={styles.sheetHandle} />
 
           <ScrollView
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="always"
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 40 }}
           >
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
@@ -211,9 +202,13 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
+              onFocus={() => {
+                // Scroll to bottom so keyboard doesn't cover the input
+                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
+              }}
             />
 
-            <TouchableOpacity
+            <GHTouchable
               activeOpacity={0.7}
               style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
               onPress={handleInquiry}
@@ -221,11 +216,11 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
             >
               <Ionicons name="calendar-outline" size={20} color="#FFF" />
               <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-            </TouchableOpacity>
+            </GHTouchable>
           </ScrollView>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </Modal>
   );
 });
 
