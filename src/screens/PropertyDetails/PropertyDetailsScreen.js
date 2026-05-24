@@ -72,33 +72,45 @@ const CONTACT_OPTIONS = [
 ];
 
 const DateChip = React.memo(({ day, isSelected, onSelect }) => (
-  <Pressable
-    style={[styles.dateChip, isSelected && styles.dateChipActive]}
-    onPress={() => onSelect(day.value)}
-  >
-    <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
-    <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
-    <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
+  <Pressable delayPressIn={0} onPress={() => onSelect(day.value)} style={({ pressed }) => [styles.dateChip, (isSelected || pressed) && styles.dateChipActive]}>
+    {({ pressed }) => {
+      const active = isSelected || pressed;
+      return (
+        <>
+          <Text style={[styles.dateChipLabel, active && styles.dateChipTextActive]}>{day.label}</Text>
+          <Text style={[styles.dateChipDate, active && styles.dateChipTextActive]}>{day.date}</Text>
+          <Text style={[styles.dateChipMonth, active && styles.dateChipTextActive]}>{day.month}</Text>
+        </>
+      );
+    }}
   </Pressable>
 ));
 
 const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
-  <Pressable
-    style={[styles.timeChip, isSelected && styles.timeChipActive]}
-    onPress={() => onSelect(slot.value)}
-  >
-    <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
-    <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
+  <Pressable delayPressIn={0} onPress={() => onSelect(slot.value)} style={({ pressed }) => [styles.timeChip, (isSelected || pressed) && styles.timeChipActive]}>
+    {({ pressed }) => {
+      const active = isSelected || pressed;
+      return (
+        <>
+          <Ionicons name={slot.icon} size={16} color={active ? '#FFF' : COLORS.textMuted} />
+          <Text style={[styles.timeChipText, active && styles.timeChipTextActive]}>{slot.label}</Text>
+        </>
+      );
+    }}
   </Pressable>
 ));
 
 const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
-  <Pressable
-    style={[styles.contactChip, isSelected && styles.contactChipActive]}
-    onPress={() => onSelect(opt.value)}
-  >
-    <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
-    <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
+  <Pressable delayPressIn={0} onPress={() => onSelect(opt.value)} style={({ pressed }) => [styles.contactChip, (isSelected || pressed) && styles.contactChipActive]}>
+    {({ pressed }) => {
+      const active = isSelected || pressed;
+      return (
+        <>
+          <Ionicons name={opt.icon} size={18} color={active ? '#FFF' : COLORS.primary} />
+          <Text style={[styles.contactChipText, active && { color: '#FFF' }]}>{opt.label}</Text>
+        </>
+      );
+    }}
   </Pressable>
 ));
 
