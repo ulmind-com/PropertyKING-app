@@ -45,12 +45,10 @@ const CustomGooglePlacesAutocomplete = ({ placeholder, onPress, query, textInput
       />
       {showList && results.length > 0 && (
         <View style={styles.listView}>
-          <FlatList
-            data={results}
-            keyExtractor={i => i.place_id}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({item}) => (
+          <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
+            {results.map((item) => (
               <TouchableOpacity
+                key={item.place_id}
                 style={styles.row}
                 onPress={() => {
                   setShowList(false);
@@ -63,8 +61,8 @@ const CustomGooglePlacesAutocomplete = ({ placeholder, onPress, query, textInput
               >
                 <Text style={styles.description}>{item.description}</Text>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
