@@ -96,12 +96,14 @@ const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
 ));
 
 const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
-  <GHTouchable activeOpacity={0.7} onPress={() => onSelect(opt.value)} style={{ flex: 1 }}>
-    <View style={[styles.contactChip, isSelected && styles.contactChipActive]}>
-      <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
-      <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
-    </View>
-  </GHTouchable>
+  <View style={{ flex: 1 }}>
+    <GHTouchable activeOpacity={0.7} onPress={() => onSelect(opt.value)}>
+      <View style={[styles.contactChip, isSelected && styles.contactChipActive, { flex: undefined, width: '100%' }]}>
+        <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
+        <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]} numberOfLines={1} adjustsFontSizeToFit>{opt.label}</Text>
+      </View>
+    </GHTouchable>
+  </View>
 ));
 
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
