@@ -96,7 +96,19 @@ export default function FiltersScreen({ navigation, route }) {
     };
     // Remove undefined keys
     Object.keys(params).forEach(k => params[k] === undefined && delete params[k]);
-    navigation.navigate('PropertyListing', params);
+
+    // Try navigating to the listing screen in the current stack
+    // ExploreStack uses 'ExploreMain', HomeStack uses 'PropertyListing'
+    const routes = navigation.getState()?.routes || [];
+    const hasExploreMain = routes.some(r => r.name === 'ExploreMain');
+    const targetScreen = hasExploreMain ? 'ExploreMain' : 'PropertyListing';
+
+    // Go back first, then navigate with params
+    navigation.goBack();
+    // Use setTimeout to let goBack animation finish, then set params
+    setTimeout(() => {
+      navigation.navigate(targetScreen, params);
+    }, 50);
   };
 
   const filterCount = getActiveFilterCount();
