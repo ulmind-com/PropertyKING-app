@@ -226,8 +226,8 @@ export default function AppNavigator() {
       }, 1000);
     }
     return () => {
-      if (unsubs) {
-        unsubs.forEach(unsub => unsub.remove());
+      if (typeof unsubs === 'function') {
+        unsubs();
       }
     };
   }, [isAuthenticated]);
