@@ -71,6 +71,37 @@ const CONTACT_OPTIONS = [
   { label: 'Video', value: 'video', icon: 'videocam' },
 ];
 
+const DateChip = React.memo(({ day, isSelected, onSelect }) => (
+  <Pressable
+    style={[styles.dateChip, isSelected && styles.dateChipActive]}
+    onPress={() => onSelect(day.value)}
+  >
+    <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
+    <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
+    <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
+  </Pressable>
+));
+
+const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
+  <Pressable
+    style={[styles.timeChip, isSelected && styles.timeChipActive]}
+    onPress={() => onSelect(slot.value)}
+  >
+    <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
+    <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
+  </Pressable>
+));
+
+const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
+  <Pressable
+    style={[styles.contactChip, isSelected && styles.contactChipActive]}
+    onPress={() => onSelect(opt.value)}
+  >
+    <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
+    <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
+  </Pressable>
+));
+
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [showInquiry, setShowInquiry] = useState(false);
 
@@ -83,7 +114,16 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    import('react-native').then(({ Keyboard }) => {
+      const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+      const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
+      return () => { showSub.remove(); hideSub.remove(); };
+    });
+  }, []);
 
   useEffect(() => {
     if (showInquiry) {
@@ -147,12 +187,12 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
 
       {/* Bottom sheet */}
       <Animated.View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0, transform: [{ translateY }] }]}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
           <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? Dimensions.get('window').height * 0.85 : Dimensions.get('window').height * 0.95 }]}>
             {/* Handle bar */}
             <View style={styles.sheetHandle} />
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? 120 : 20 }}>
               <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
               <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
@@ -160,15 +200,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
                 {NEXT_30_DAYS.map((day) => (
-                  <Pressable
-                    key={day.value}
-                    style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
-                    onPress={() => setSelectedDate(day.value)}
-                  >
-                    <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
-                    <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
-                    <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
-                  </Pressable>
+                  <DateChip key={day.value} day={day} isSelected={selectedDate === day.value} onSelect={setSelectedDate} />
                 ))}
               </ScrollView>
 
@@ -176,14 +208,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" nestedScrollEnabled contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
                 {TIME_SLOTS.map((slot) => (
-                  <Pressable
-                    key={slot.value}
-                    style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
-                    onPress={() => setSelectedTime(slot.value)}
-                  >
-                    <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
-                    <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
-                  </Pressable>
+                  <TimeChip key={slot.value} slot={slot} isSelected={selectedTime === slot.value} onSelect={setSelectedTime} />
                 ))}
               </ScrollView>
 
@@ -191,14 +216,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
               <View style={styles.contactGrid}>
                 {CONTACT_OPTIONS.map((opt) => (
-                  <Pressable
-                    key={opt.value}
-                    style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
-                    onPress={() => setContactPref(opt.value)}
-                  >
-                    <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
-                    <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
-                  </Pressable>
+                  <ContactChip key={opt.value} opt={opt} isSelected={contactPref === opt.value} onSelect={setContactPref} />
                 ))}
               </View>
 
