@@ -77,36 +77,30 @@ const CONTACT_OPTIONS = [
 import { GestureHandlerRootView, TouchableOpacity as GHTouchable } from 'react-native-gesture-handler';
 
 const DateChip = React.memo(({ day, isSelected, onSelect }) => (
-  <GHTouchable
-    activeOpacity={0.7}
-    style={[styles.dateChip, isSelected && styles.dateChipActive]}
-    onPress={() => onSelect(day.value)}
-  >
-    <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
-    <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
-    <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
+  <GHTouchable activeOpacity={0.7} onPress={() => onSelect(day.value)}>
+    <View style={[styles.dateChip, isSelected && styles.dateChipActive]}>
+      <Text style={[styles.dateChipLabel, isSelected && styles.dateChipTextActive]}>{day.label}</Text>
+      <Text style={[styles.dateChipDate, isSelected && styles.dateChipTextActive]}>{day.date}</Text>
+      <Text style={[styles.dateChipMonth, isSelected && styles.dateChipTextActive]}>{day.month}</Text>
+    </View>
   </GHTouchable>
 ));
 
 const TimeChip = React.memo(({ slot, isSelected, onSelect }) => (
-  <GHTouchable
-    activeOpacity={0.7}
-    style={[styles.timeChip, isSelected && styles.timeChipActive]}
-    onPress={() => onSelect(slot.value)}
-  >
-    <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
-    <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
+  <GHTouchable activeOpacity={0.7} onPress={() => onSelect(slot.value)}>
+    <View style={[styles.timeChip, isSelected && styles.timeChipActive]}>
+      <Ionicons name={slot.icon} size={16} color={isSelected ? '#FFF' : COLORS.textMuted} />
+      <Text style={[styles.timeChipText, isSelected && styles.timeChipTextActive]}>{slot.label}</Text>
+    </View>
   </GHTouchable>
 ));
 
 const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
-  <GHTouchable
-    activeOpacity={0.7}
-    style={[styles.contactChip, isSelected && styles.contactChipActive]}
-    onPress={() => onSelect(opt.value)}
-  >
-    <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
-    <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
+  <GHTouchable activeOpacity={0.7} onPress={() => onSelect(opt.value)} style={{ flex: 1 }}>
+    <View style={[styles.contactChip, isSelected && styles.contactChipActive]}>
+      <Ionicons name={opt.icon} size={18} color={isSelected ? '#FFF' : COLORS.primary} />
+      <Text style={[styles.contactChipText, isSelected && { color: '#FFF' }]}>{opt.label}</Text>
+    </View>
   </GHTouchable>
 ));
 
