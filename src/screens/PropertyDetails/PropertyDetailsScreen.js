@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { WebView } from '../../components/WebView/WebViewComponent';
@@ -501,87 +501,89 @@ export default function PropertyDetailsScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* ─── Schedule Meeting Modal ─── */}
+      {/* 🔹 Schedule Meeting Modal 🔹 */}
       <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowInquiry(false)} />
-          <View style={styles.modalSheet}>
+          <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '95%' }]}>
             {/* Handle bar */}
             <View style={styles.sheetHandle} />
 
-            <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
-            <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 20 }}>
+              <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
+              <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
-            {/* ── Date Picker ── */}
-            <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {getNext30Days().map((day) => (
-                <TouchableOpacity
-                  key={day.value}
-                  style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
-                  onPress={() => setSelectedDate(day.value)}
-                >
-                  <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
-                  <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
-                  <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
-                </TouchableOpacity>
-              ))}
+              {/* ── Date Picker ── */}
+              <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                {getNext30Days().map((day) => (
+                  <TouchableOpacity
+                    key={day.value}
+                    style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
+                    onPress={() => setSelectedDate(day.value)}
+                  >
+                    <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
+                    <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
+                    <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* ── Time Slots ── */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                {timeSlots.map((slot) => (
+                  <TouchableOpacity
+                    key={slot.value}
+                    style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
+                    onPress={() => setSelectedTime(slot.value)}
+                  >
+                    <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
+                    <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* ── Contact Preference ── */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
+              <View style={styles.contactGrid}>
+                {contactOptions.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
+                    onPress={() => setContactPref(opt.value)}
+                  >
+                    <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
+                    <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* ── Message ── */}
+              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
+              <TextInput
+                style={styles.msgInput}
+                placeholder="Hi, I'd love to visit this property and discuss..."
+                placeholderTextColor={COLORS.textMuted}
+                value={inquiryMsg}
+                onChangeText={setInquiryMsg}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              {/* ── Submit ── */}
+              <TouchableOpacity
+                style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
+                onPress={handleInquiry}
+                disabled={inquiryLoading}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#FFF" />
+                <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
+              </TouchableOpacity>
             </ScrollView>
-
-            {/* ── Time Slots ── */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-              {timeSlots.map((slot) => (
-                <TouchableOpacity
-                  key={slot.value}
-                  style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
-                  onPress={() => setSelectedTime(slot.value)}
-                >
-                  <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
-                  <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* ── Contact Preference ── */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
-            <View style={styles.contactGrid}>
-              {contactOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
-                  onPress={() => setContactPref(opt.value)}
-                >
-                  <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
-                  <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* ── Message ── */}
-            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
-            <TextInput
-              style={styles.msgInput}
-              placeholder="Hi, I'd love to visit this property and discuss..."
-              placeholderTextColor={COLORS.textMuted}
-              value={inquiryMsg}
-              onChangeText={setInquiryMsg}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-            {/* ── Submit ── */}
-            <TouchableOpacity
-              style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
-              onPress={handleInquiry}
-              disabled={inquiryLoading}
-            >
-              <Ionicons name="calendar-outline" size={20} color="#FFF" />
-              <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
