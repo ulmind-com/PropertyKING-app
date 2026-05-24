@@ -109,7 +109,7 @@ const ContactChip = React.memo(({ opt, isSelected, onSelect }) => (
 ));
 
 const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
-  const [showInquiry, setShowInquiry] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -117,8 +117,8 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [inquiryLoading, setInquiryLoading] = useState(false);
 
   useImperativeHandle(ref, () => ({
-    open: () => setShowInquiry(true),
-    close: () => setShowInquiry(false),
+    open: () => setVisible(true),
+    close: () => setVisible(false),
   }));
 
   const handleInquiry = async () => {
@@ -138,7 +138,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
         preferred_time: selectedTime,
         contact_preference: contactPref,
       });
-      setShowInquiry(false);
+      setVisible(false);
       setInquiryMsg('');
       setSelectedDate(null);
       setSelectedTime(null);
@@ -150,21 +150,25 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
     setInquiryLoading(false);
   };
 
-  // EXACTLY like website: {showMeetingModal && (<div className="fixed inset-0">...)}
-  // NO Modal component = NO new native Android Window = ZERO first-touch delay
-  if (!showInquiry) return null;
-
+  // ALWAYS MOUNTED — chips are pre-rendered and ready
+  // When hidden: opacity 0, pointerEvents none (invisible + untouchable)
+  // When shown: opacity 1, pointerEvents auto (visible + touchable)
+  // This means ZERO view creation when "Inquire Now" is tapped = ZERO first-touch delay
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, elevation: 999 }}>
-      <StatusBar barStyle="light-content" />
+    <View
+      pointerEvents={visible ? 'auto' : 'none'}
+      style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        zIndex: 999, elevation: 999,
+        opacity: visible ? 1 : 0,
+      }}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Backdrop — tap to close (same as website's onClick on outer div) */}
-        <TouchableOpacity activeOpacity={1} style={{ flex: 1 }} onPress={() => setShowInquiry(false)} />
+        <TouchableOpacity activeOpacity={1} style={{ flex: 1 }} onPress={() => setVisible(false)} />
 
-        {/* Bottom sheet */}
         <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '90%' }]}>
           <View style={styles.sheetHandle} />
 
@@ -176,7 +180,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
-            {/* 📅 Date — same as website: getNext30Days().map(day => <button onClick>) */}
             <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {NEXT_30_DAYS.map((day) => (
@@ -184,7 +187,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               ))}
             </ScrollView>
 
-            {/* 🕐 Time — same as website: getTimeSlots().map(slot => <button onClick>) */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {TIME_SLOTS.map((slot) => (
@@ -192,7 +194,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               ))}
             </ScrollView>
 
-            {/* 💬 Contact — same as website: contactOptions.map(opt => <button onClick>) */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
             <View style={styles.contactGrid}>
               {CONTACT_OPTIONS.map((opt) => (
@@ -200,7 +201,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               ))}
             </View>
 
-            {/* 📝 Message */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
             <TextInput
               style={styles.msgInput}
@@ -213,7 +213,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               textAlignVertical="top"
             />
 
-            {/* Submit */}
             <TouchableOpacity
               activeOpacity={0.7}
               style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
