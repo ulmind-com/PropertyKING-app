@@ -33,6 +33,173 @@ import { MapView, Marker, Polyline } from '../../components/Map/MapViewComponent
 
 const { width } = Dimensions.get('window');
 
+// Generate next 30 days for date picker
+const getNext30Days = () => {
+  const days = [];
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    days.push({
+      label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()],
+      date: d.getDate(),
+      month: monthNames[d.getMonth()],
+      value: d.toISOString().split('T')[0],
+    });
+  }
+  return days;
+};
+
+// Generate 30-min interval times from 8 AM to 8 PM
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let i = 8; i <= 20; i++) {
+    const ampm = i >= 12 ? 'PM' : 'AM';
+    const hour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
+    let icon = i >= 18 ? 'moon-outline' : i >= 16 ? 'partly-sunny-outline' : i >= 12 ? 'sunny' : 'sunny-outline';
+    
+    slots.push({ label: `${hour}:00 ${ampm}`, value: `${i.toString().padStart(2, '0')}:00`, icon });
+    if (i < 20) {
+      slots.push({ label: `${hour}:30 ${ampm}`, value: `${i.toString().padStart(2, '0')}:30`, icon });
+    }
+  }
+  return slots;
+};
+
+const ScheduleMeetingModal = ({ property, showInquiry, setShowInquiry }) => {
+  const [inquiryMsg, setInquiryMsg] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [contactPref, setContactPref] = useState('call');
+  const [inquiryLoading, setInquiryLoading] = useState(false);
+
+  const next30Days = useMemo(() => getNext30Days(), []);
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
+  const contactOptions = useMemo(() => [
+    { label: 'Call', value: 'call', icon: 'call' },
+    { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
+    { label: 'In Person', value: 'in_person', icon: 'people' },
+    { label: 'Video', value: 'video', icon: 'videocam' },
+  ], []);
+
+  const handleInquiry = async () => {
+    if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
+      return Alert.alert('Message Required', 'Please write at least 10 characters describing your interest.');
+    }
+    if (!selectedDate) return Alert.alert('Select Date', 'Please pick a preferred meeting date.');
+    if (!selectedTime) return Alert.alert('Select Time', 'Please pick a preferred time slot.');
+
+    setInquiryLoading(true);
+    try {
+      await inquiryAPI.create({
+        property_id: property.id,
+        message: inquiryMsg,
+        inquiry_type: 'viewing',
+        preferred_date: selectedDate,
+        preferred_time: selectedTime,
+        contact_preference: contactPref,
+      });
+      setShowInquiry(false);
+      setInquiryMsg('');
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setContactPref('call');
+      Alert.alert('Meeting Requested! ✅', 'The property owner will review your request and get back to you soon.');
+    } catch(e) {
+      Alert.alert('Error', 'Failed to submit. Please try again.');
+    }
+    setInquiryLoading(false);
+  };
+
+  return (
+    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
+      <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowInquiry(false)} />
+        <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '95%' }]}>
+          {/* Handle bar */}
+          <View style={styles.sheetHandle} />
+
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 20 }}>
+            <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
+            <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
+
+            {/* 📅 Date Picker 📅 */}
+            <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {next30Days.map((day) => (
+                <TouchableOpacity
+                  key={day.value}
+                  style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
+                  onPress={() => setSelectedDate(day.value)}
+                  activeOpacity={0.6}
+                >
+                  <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
+                  <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
+                  <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* 🕐 Preferred Time 🕐 */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {timeSlots.map((slot) => (
+                <TouchableOpacity
+                  key={slot.value}
+                  style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
+                  onPress={() => setSelectedTime(slot.value)}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
+                  <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* ── Contact Preference ── */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
+            <View style={styles.contactGrid}>
+              {contactOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
+                  onPress={() => setContactPref(opt.value)}
+                >
+                  <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
+                  <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* ── Message ── */}
+            <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
+            <TextInput
+              style={styles.msgInput}
+              placeholder="Hi, I'd love to visit this property and discuss..."
+              placeholderTextColor={COLORS.textMuted}
+              value={inquiryMsg}
+              onChangeText={setInquiryMsg}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            {/* ── Submit ── */}
+            <TouchableOpacity
+              style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
+              onPress={handleInquiry}
+              disabled={inquiryLoading}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#FFF" />
+              <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+};
+
 export default function PropertyDetailsScreen({ route, navigation }) {
   const { user } = useAuth();
   const { isInCompare, addToCompare, removeFromCompare } = useCompare();
@@ -42,13 +209,8 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   const [currentImg, setCurrentImg] = useState(0);
   const [liked, setLiked] = useState(false);
   const [showInquiry, setShowInquiry] = useState(false);
-  const [inquiryMsg, setInquiryMsg] = useState('');
   const [descExpanded, setDescExpanded] = useState(false);
   const flatListRef = useRef(null);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [contactPref, setContactPref] = useState('call');
-  const [inquiryLoading, setInquiryLoading] = useState(false);
   
   const [userCoords, setUserCoords] = useState(passedUserCoords || null);
   const [distance, setDistance] = useState(null);
@@ -133,77 +295,6 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   const handleFav = async () => {
     try { if (liked) await favoriteAPI.remove(property.id); else await favoriteAPI.add(property.id); setLiked(!liked); } catch(e) {}
   };
-
-  const handleInquiry = async () => {
-    if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
-      return Alert.alert('Message Required', 'Please write at least 10 characters describing your interest.');
-    }
-    if (!selectedDate) return Alert.alert('Select Date', 'Please pick a preferred meeting date.');
-    if (!selectedTime) return Alert.alert('Select Time', 'Please pick a preferred time slot.');
-
-    setInquiryLoading(true);
-    try {
-      await inquiryAPI.create({
-        property_id: property.id,
-        message: inquiryMsg,
-        inquiry_type: 'viewing',
-        preferred_date: selectedDate,
-        preferred_time: selectedTime,
-        contact_preference: contactPref,
-      });
-      setShowInquiry(false);
-      setInquiryMsg('');
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setContactPref('call');
-      Alert.alert('Meeting Requested! ✅', 'The property owner will review your request and get back to you soon.');
-    } catch(e) {
-      Alert.alert('Error', 'Failed to submit. Please try again.');
-    }
-    setInquiryLoading(false);
-  };
-
-  // Generate next 30 days for date picker
-  const getNext30Days = () => {
-    const days = [];
-    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(); d.setDate(d.getDate() + i);
-      days.push({
-        label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()],
-        date: d.getDate(),
-        month: monthNames[d.getMonth()],
-        value: d.toISOString().split('T')[0],
-      });
-    }
-    return days;
-  };
-
-  // Generate 30-min interval times from 8 AM to 8 PM
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let i = 8; i <= 20; i++) {
-      const ampm = i >= 12 ? 'PM' : 'AM';
-      const hour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
-      let icon = i >= 18 ? 'moon-outline' : i >= 16 ? 'partly-sunny-outline' : i >= 12 ? 'sunny' : 'sunny-outline';
-      
-      slots.push({ label: `${hour}:00 ${ampm}`, value: `${i.toString().padStart(2, '0')}:00`, icon });
-      if (i < 20) {
-        slots.push({ label: `${hour}:30 ${ampm}`, value: `${i.toString().padStart(2, '0')}:30`, icon });
-      }
-    }
-    return slots;
-  };
-  const next30Days = useMemo(() => getNext30Days(), []);
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
-
-  const contactOptions = useMemo(() => [
-    { label: 'Call', value: 'call', icon: 'call' },
-    { label: 'WhatsApp', value: 'whatsapp', icon: 'logo-whatsapp' },
-    { label: 'In Person', value: 'in_person', icon: 'people' },
-    { label: 'Video', value: 'video', icon: 'videocam' },
-  ], []);
 
   const details = [
     d.bedrooms > 0 && { icon: 'bed-outline', label: 'Bedrooms', value: d.bedrooms },
@@ -503,91 +594,8 @@ export default function PropertyDetailsScreen({ route, navigation }) {
       </View>
 
       {/* 🔹 Schedule Meeting Modal 🔹 */}
-      <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setShowInquiry(false)} />
-          <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '95%' }]}>
-            {/* Handle bar */}
-            <View style={styles.sheetHandle} />
-
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 20 }}>
-              <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
-              <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
-
-              {/* 📅 Date Picker 📅 */}
-              <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                {next30Days.map((day) => (
-                  <TouchableOpacity
-                    key={day.value}
-                    style={[styles.dateChip, selectedDate === day.value && styles.dateChipActive]}
-                    onPress={() => setSelectedDate(day.value)}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={[styles.dateChipLabel, selectedDate === day.value && styles.dateChipTextActive]}>{day.label}</Text>
-                    <Text style={[styles.dateChipDate, selectedDate === day.value && styles.dateChipTextActive]}>{day.date}</Text>
-                    <Text style={[styles.dateChipMonth, selectedDate === day.value && styles.dateChipTextActive]}>{day.month}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* 🕐 Preferred Time 🕐 */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-                {timeSlots.map((slot) => (
-                  <TouchableOpacity
-                    key={slot.value}
-                    style={[styles.timeChip, selectedTime === slot.value && styles.timeChipActive]}
-                    onPress={() => setSelectedTime(slot.value)}
-                    activeOpacity={0.6}
-                  >
-                    <Ionicons name={slot.icon} size={16} color={selectedTime === slot.value ? '#FFF' : COLORS.textMuted} />
-                    <Text style={[styles.timeChipText, selectedTime === slot.value && styles.timeChipTextActive]}>{slot.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* ── Contact Preference ── */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
-              <View style={styles.contactGrid}>
-                {contactOptions.map((opt) => (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[styles.contactChip, contactPref === opt.value && styles.contactChipActive]}
-                    onPress={() => setContactPref(opt.value)}
-                  >
-                    <Ionicons name={opt.icon} size={18} color={contactPref === opt.value ? '#FFF' : COLORS.primary} />
-                    <Text style={[styles.contactChipText, contactPref === opt.value && { color: '#FFF' }]}>{opt.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* ── Message ── */}
-              <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
-              <TextInput
-                style={styles.msgInput}
-                placeholder="Hi, I'd love to visit this property and discuss..."
-                placeholderTextColor={COLORS.textMuted}
-                value={inquiryMsg}
-                onChangeText={setInquiryMsg}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-
-              {/* ── Submit ── */}
-              <TouchableOpacity
-                style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
-                onPress={handleInquiry}
-                disabled={inquiryLoading}
-              >
-                <Ionicons name="calendar-outline" size={20} color="#FFF" />
-                <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      {/* 🔹 Schedule Meeting Modal 🔹 */}
+      <ScheduleMeetingModal property={property} showInquiry={showInquiry} setShowInquiry={setShowInquiry} />
     </View>
   );
 }
