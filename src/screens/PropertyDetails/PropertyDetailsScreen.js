@@ -150,60 +150,49 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
     setInquiryLoading(false);
   };
 
+  // EXACTLY like website: {showMeetingModal && (<div className="fixed inset-0">...)}
+  // NO Modal component = NO new native Android Window = ZERO first-touch delay
+  if (!showInquiry) return null;
+
   return (
-    <Modal visible={showInquiry} animationType="slide" transparent statusBarTranslucent>
-      <KeyboardAvoidingView 
-        style={styles.modalOverlay} 
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, elevation: 999 }}>
+      <StatusBar barStyle="light-content" />
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={styles.modalDismiss} onPress={() => setShowInquiry(false)} />
+        {/* Backdrop — tap to close (same as website's onClick on outer div) */}
+        <TouchableOpacity activeOpacity={1} style={{ flex: 1 }} onPress={() => setShowInquiry(false)} />
+
+        {/* Bottom sheet */}
         <View style={[styles.modalSheet, { maxHeight: Platform.OS === 'ios' ? '85%' : '90%' }]}>
-          {/* Handle bar */}
           <View style={styles.sheetHandle} />
 
-          <ScrollView 
-            showsVerticalScrollIndicator={false} 
-            keyboardShouldPersistTaps="always" 
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
             contentContainerStyle={{ paddingBottom: 20 }}
           >
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
 
-            {/* 📅 Date Picker 📅 */}
+            {/* 📅 Date — same as website: getNext30Days().map(day => <button onClick>) */}
             <Text style={styles.pickerLabel}>📅 Preferred Date</Text>
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps="always"
-              contentContainerStyle={{ gap: 10, paddingVertical: 4, paddingHorizontal: 2 }}
-              data={NEXT_30_DAYS}
-              keyExtractor={(item) => item.value}
-              initialNumToRender={6}
-              maxToRenderPerBatch={6}
-              windowSize={3}
-              renderItem={({ item }) => (
-                <DateChip day={item} isSelected={selectedDate === item.value} onSelect={setSelectedDate} />
-              )}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {NEXT_30_DAYS.map((day) => (
+                <DateChip key={day.value} day={day} isSelected={selectedDate === day.value} onSelect={setSelectedDate} />
+              ))}
+            </ScrollView>
 
-            {/* 🕐 Preferred Time 🕐 */}
+            {/* 🕐 Time — same as website: getTimeSlots().map(slot => <button onClick>) */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>🕐 Preferred Time</Text>
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps="always"
-              contentContainerStyle={{ gap: 10, paddingVertical: 4, paddingHorizontal: 2 }}
-              data={TIME_SLOTS}
-              keyExtractor={(item) => item.value}
-              initialNumToRender={5}
-              maxToRenderPerBatch={5}
-              windowSize={3}
-              renderItem={({ item }) => (
-                <TimeChip slot={item} isSelected={selectedTime === item.value} onSelect={setSelectedTime} />
-              )}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {TIME_SLOTS.map((slot) => (
+                <TimeChip key={slot.value} slot={slot} isSelected={selectedTime === slot.value} onSelect={setSelectedTime} />
+              ))}
+            </ScrollView>
 
-            {/* 💬 Contact Preference 💬 */}
+            {/* 💬 Contact — same as website: contactOptions.map(opt => <button onClick>) */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>💬 Contact Preference</Text>
             <View style={styles.contactGrid}>
               {CONTACT_OPTIONS.map((opt) => (
@@ -211,7 +200,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               ))}
             </View>
 
-            {/* 📝 Message 📝 */}
+            {/* 📝 Message */}
             <Text style={[styles.pickerLabel, { marginTop: 18 }]}>📝 Your Message</Text>
             <TextInput
               style={styles.msgInput}
@@ -224,19 +213,20 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               textAlignVertical="top"
             />
 
-            {/* ── Submit ── */}
-            <Pressable
+            {/* Submit */}
+            <TouchableOpacity
+              activeOpacity={0.7}
               style={[styles.submitBtn, inquiryLoading && { opacity: 0.6 }]}
               onPress={handleInquiry}
               disabled={inquiryLoading}
             >
               <Ionicons name="calendar-outline" size={20} color="#FFF" />
               <Text style={styles.submitBtnText}>{inquiryLoading ? 'Submitting...' : 'Request Meeting'}</Text>
-            </Pressable>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
   );
 });
 
