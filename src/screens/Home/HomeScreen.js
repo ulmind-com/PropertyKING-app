@@ -9,7 +9,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
-import { propertyAPI, propertyTypeAPI } from '../../api';
+import { propertyAPI, propertyTypeAPI, notificationAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
 import Shimmer, { HomeSkeleton } from '../../components/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
@@ -92,6 +92,24 @@ const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, sectionY }) => 
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        const checkUnread = async () => {
+          try {
+            const res = await notificationAPI.list({ is_read: false, limit: 1 });
+            setHasUnread(res.data?.total > 0 || res.data?.notifications?.length > 0);
+          } catch (e) {}
+        };
+        checkUnread();
+        const int = setInterval(checkUnread, 30000);
+        return () => clearInterval(int);
+      }
+    }, [user])
+  );
+
   const [propertyTypes, setPropertyTypes] = useState([
     { id: 't1', name: 'House', icon: '🏠' },
     { id: 't2', name: 'Condo', icon: '🏢' },
@@ -285,8 +303,7 @@ export default function HomeScreen({ navigation }) {
           {/* Notification bell */}
           <TouchableOpacity style={st.notifBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
-            {/* Badge dot */}
-            {/* <View style={st.notifDot} /> */}
+            {hasUnread && <View style={st.notifDot} />}
           </TouchableOpacity>
         </View>
 
@@ -469,10 +486,10 @@ const st = StyleSheet.create({
     position: 'absolute',
     top: 9,
     right: 9,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#EF4444', // Red color
     borderWidth: 1.5,
     borderColor: '#2A2A2A',
   },

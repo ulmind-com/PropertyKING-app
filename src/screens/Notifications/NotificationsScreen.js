@@ -35,6 +35,11 @@ export default function NotificationsScreen({ navigation }) {
       setHasMore(pageNumber < res.data.total_pages);
       setPage(pageNumber);
       setUnreadCount(res.data.unread_count || 0);
+
+      // Auto mark as read in background to clear global dot
+      if (newNotifs.some(n => !n.is_read)) {
+        notificationAPI.markAllRead().catch(() => {});
+      }
     } catch (e) {
       console.log('Error loading notifications:', e);
     } finally {
