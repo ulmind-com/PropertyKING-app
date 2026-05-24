@@ -197,7 +197,10 @@ export default function MapExploreScreen({ navigation }) {
     if (!q || q.length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
     debounceRef.current = setTimeout(async () => {
       try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1&countrycodes=us`);
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1&countrycodes=us`,
+          { headers: { 'User-Agent': 'PropertyKING-App/1.0' } }
+        );
         const data = await resp.json();
         setSuggestions(data.map(d => ({
           display: d.display_name,
