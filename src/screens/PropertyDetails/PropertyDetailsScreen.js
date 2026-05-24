@@ -74,7 +74,7 @@ const CONTACT_OPTIONS = [
 // RN's built-in TouchableOpacity goes: Native → JS Bridge → JS Thread → Bridge → Native
 // RNGH TouchableOpacity goes: Native → Native (instant feedback, JS callback later)
 // This is why web buttons feel instant but RN buttons feel slow on heavy screens
-import { TouchableOpacity as GHTouchable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, TouchableOpacity as GHTouchable } from 'react-native-gesture-handler';
 
 const DateChip = React.memo(({ day, isSelected, onSelect }) => (
   <GHTouchable
@@ -157,6 +157,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setVisible(false)}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.modalOverlay}>
         <TouchableOpacity activeOpacity={1} style={styles.modalDismiss} onPress={() => setVisible(false)} />
         <View style={[styles.modalSheet, { maxHeight: '85%' }]}>
@@ -220,6 +221,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
           </ScrollView>
         </View>
       </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 });
