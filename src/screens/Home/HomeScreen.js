@@ -92,7 +92,7 @@ const AnimatedSectionHeader = ({ title, icon, onSeeAll, scrollY, sectionY }) => 
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
-  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -100,7 +100,7 @@ export default function HomeScreen({ navigation }) {
         const checkUnread = async () => {
           try {
             const res = await notificationAPI.list({ is_read: false, limit: 1 });
-            setHasUnread(res.data?.total > 0 || res.data?.notifications?.length > 0);
+            setUnreadCount(res.data?.unread_count || res.data?.total || 0);
           } catch (e) {}
         };
         checkUnread();
@@ -303,7 +303,11 @@ export default function HomeScreen({ navigation }) {
           {/* Notification bell */}
           <TouchableOpacity style={st.notifBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={20} color="#FFF" />
-            {hasUnread && <View style={st.notifDot} />}
+            {unreadCount > 0 && (
+              <View style={st.notifDot}>
+                <Text style={st.notifText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -484,14 +488,22 @@ const st = StyleSheet.create({
   },
   notifDot: {
     position: 'absolute',
-    top: 9,
-    right: 9,
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: '#EF4444', // Red color
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
     borderWidth: 1.5,
     borderColor: '#2A2A2A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontFamily: 'Raleway_700Bold',
   },
 
   // ─── SEARCH ───
