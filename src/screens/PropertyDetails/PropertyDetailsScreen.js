@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Image, Dimensions, TextInput, FlatList, StatusBar, Linking, Platform, Modal, Alert, Animated, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { WebView } from '../../components/WebView/WebViewComponent';
@@ -113,12 +113,33 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [contactPref, setContactPref] = useState('call');
   const [inquiryLoading, setInquiryLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
     open: () => setVisible(true),
     close: () => setVisible(false),
   }));
+
+  // Keyboard listener — works in APK, Expo Go, everywhere
+  useEffect(() => {
+    if (!visible) return;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   const handleInquiry = async () => {
     if (!inquiryMsg.trim() || inquiryMsg.trim().length < 10) {
@@ -154,13 +175,8 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setVisible(false)}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
       <View style={styles.modalOverlay}>
-        <TouchableOpacity activeOpacity={1} style={styles.modalDismiss} onPress={() => setVisible(false)} />
+        <TouchableOpacity activeOpacity={1} style={styles.modalDismiss} onPress={() => { Keyboard.dismiss(); setVisible(false); }} />
         <View style={[styles.modalSheet, { maxHeight: '85%' }]}>
           <View style={styles.sheetHandle} />
 
@@ -168,7 +184,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
             ref={scrollRef}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="always"
-            contentContainerStyle={{ paddingBottom: 60 }}
+            contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight : 40 }}
           >
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
@@ -204,9 +220,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
-              onFocus={() => {
-                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 400);
-              }}
             />
 
             <GHTouchable
@@ -221,7 +234,6 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
           </ScrollView>
         </View>
       </View>
-      </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
   );
