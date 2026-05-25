@@ -276,7 +276,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
 
       if (uC && propLat !== 0) {
         // Calculate Haversine direct distance
-        const R = 6371;
+        const R = 3958.8;
         const dLat = (propLat - uC.lat) * Math.PI / 180;
         const dLon = (propLng - uC.lng) * Math.PI / 180;
         const a = Math.sin(dLat/2)**2 + Math.cos(uC.lat*Math.PI/180)*Math.cos(propLat*Math.PI/180)*Math.sin(dLon/2)**2;
@@ -548,7 +548,7 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               {distance && (
                 <TouchableOpacity style={styles.navigateBtn} onPress={openMap} activeOpacity={0.8}>
                   <Ionicons name="navigate" size={16} color="#FFF" />
-                  <Text style={styles.navigateText}>Navigate ({distance} km)</Text>
+                  <Text style={styles.navigateText}>Navigate ({distance} mi)</Text>
                 </TouchableOpacity>
               )}
             </View>
