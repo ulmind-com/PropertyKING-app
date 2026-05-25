@@ -154,6 +154,11 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={() => setVisible(false)}>
       <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
       <View style={styles.modalOverlay}>
         <TouchableOpacity activeOpacity={1} style={styles.modalDismiss} onPress={() => setVisible(false)} />
         <View style={[styles.modalSheet, { maxHeight: '85%' }]}>
@@ -163,7 +168,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
             ref={scrollRef}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="always"
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 60 }}
           >
             <Text style={styles.sheetTitle}>Schedule a Meeting</Text>
             <Text style={styles.sheetSub}>Pick a date & time to visit this property</Text>
@@ -200,8 +205,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
               numberOfLines={3}
               textAlignVertical="top"
               onFocus={() => {
-                // Scroll to bottom so keyboard doesn't cover the input
-                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
+                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 400);
               }}
             />
 
@@ -217,6 +221,7 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
           </ScrollView>
         </View>
       </View>
+      </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
   );
