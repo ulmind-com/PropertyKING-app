@@ -36,6 +36,18 @@ export default function PropertyLeadsScreen({ route, navigation }) {
     fetchData();
   }, []);
 
+  const markAsDone = async (id) => {
+    // Optimistic update
+    setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'responded' } : inq));
+    try {
+      await inquiryAPI.respond(id, { response: 'Marked as done.' });
+    } catch (e) {
+      // Revert on failure
+      setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: 'pending' } : inq));
+      console.log('Error marking as done', e);
+    }
+  };
+
   const timeAgo = (date) => {
     if (!date) return '';
     const now = new Date();
@@ -205,18 +217,26 @@ export default function PropertyLeadsScreen({ route, navigation }) {
       </View>
 
       {/* Action Buttons */}
-      {item.contact_phone && (
-        <View style={styles.contactRow}>
+      <View style={styles.contactRow}>
+        {item.contact_phone && (
           <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${item.contact_phone}`)}>
             <Ionicons name="call" size={16} color="#FFF" />
             <Text style={styles.contactBtnText}>Call</Text>
           </TouchableOpacity>
+        )}
+        {item.contact_phone && (
           <TouchableOpacity style={[styles.contactBtn, { backgroundColor: '#10B981' }]} onPress={() => Linking.openURL(`https://wa.me/${item.contact_phone?.replace(/\D/g, '')}`)}>
             <Ionicons name="logo-whatsapp" size={16} color="#FFF" />
             <Text style={styles.contactBtnText}>WhatsApp</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+        {item.status !== 'responded' && (
+          <TouchableOpacity style={[styles.contactBtn, { backgroundColor: COLORS.bgAlt }]} onPress={() => markAsDone(item.id)}>
+            <Ionicons name="checkmark-done" size={16} color={COLORS.primary} />
+            <Text style={[styles.contactBtnText, { color: COLORS.primary }]}>Done</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
