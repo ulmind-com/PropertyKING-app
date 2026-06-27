@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { CompareProvider } from './src/context/CompareContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import UpdatePrompt from './src/components/UpdatePrompt';
 import Toast from 'react-native-toast-message';
 import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +78,7 @@ export default function App() {
           <CompareProvider>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
             <AppNavigator />
+            <UpdatePrompt />
             <Toast config={toastConfig} />
           </CompareProvider>
         </AuthProvider>
