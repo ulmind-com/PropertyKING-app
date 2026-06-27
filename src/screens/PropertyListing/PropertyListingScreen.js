@@ -36,9 +36,11 @@ export default function PropertyListingScreen({ navigation, route }) {
       if (mode === 'nearby' && params.userCoords) {
         res = await propertyAPI.nearby({ lat: params.userCoords.lat, lng: params.userCoords.lng, radius_miles: 25, page: p, limit: 10 });
       } else if (mode === 'top-viewed') {
+        // Genuine most-viewed first (backend returns only views > 0)
         res = await propertyAPI.topViewed({ page: p, limit: 10 });
       } else if (mode === 'featured') {
-        res = await propertyAPI.recommendations({ page: p, limit: 10 });
+        // Featured = browse all, newest first
+        res = await propertyAPI.list({ page: p, limit: 10, sort_by: 'created_at', sort_order: 'desc' });
       } else {
         const { mode: _, userCoords, typeName, ...filterParams } = params;
         res = await propertyAPI.list({ page: p, limit: 10, ...filterParams });
