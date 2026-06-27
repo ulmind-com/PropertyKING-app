@@ -234,12 +234,18 @@ export default function HomeScreen({ navigation }) {
     if (searchText.trim()) navigation.navigate('PropertyListing', { search: searchText });
   };
 
-  // Deduplication
+  // Deduplication — Priority: Near You → Top Viewed → Featured (Featured = "the rest")
   const finalNearby = nearbyProps.slice(0, 5);
   const nearbyIds = new Set(finalNearby.map(p => p.id));
-  const finalFeatured = featuredProps.filter(p => !nearbyIds.has(p.id)).slice(0, 5);
-  const featuredIds = new Set(finalFeatured.map(p => p.id));
-  const finalTopViewed = topViewedProps.filter(p => !nearbyIds.has(p.id) && !featuredIds.has(p.id)).slice(0, 5);
+  // Top Viewed = genuinely most-viewed (views > 0), excluding Near You
+  const finalTopViewed = topViewedProps
+    .filter(p => !nearbyIds.has(p.id) && (p.views_count || 0) > 0)
+    .slice(0, 5);
+  const topViewedIds = new Set(finalTopViewed.map(p => p.id));
+  // Featured = everything else, not already in Near You or Top Viewed
+  const finalFeatured = featuredProps
+    .filter(p => !nearbyIds.has(p.id) && !topViewedIds.has(p.id))
+    .slice(0, 5);
 
   if (loading) return (
     <View style={st.container}>
