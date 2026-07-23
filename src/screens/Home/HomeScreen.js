@@ -9,7 +9,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
-import { propertyAPI, propertyTypeAPI, notificationAPI } from '../../api';
+import api, { propertyAPI, propertyTypeAPI, notificationAPI } from '../../api';
 import PropertyCard from '../../components/PropertyCard';
 import Shimmer, { HomeSkeleton } from '../../components/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
@@ -210,7 +210,12 @@ export default function HomeScreen({ navigation }) {
         if (!loc) loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
         const [geo] = await Location.reverseGeocodeAsync({ latitude: coords.lat, longitude: coords.lng });
-        if (geo) setLocationName(`${geo.city || ''}, ${geo.region || ''}`);
+        if (geo) {
+          const locName = `${geo.city || ''}, ${geo.region || ''}`;
+          setLocationName(locName);
+          // Fire-and-forget: persist auto-detected location to backend for admin visibility
+          api.put('/users/me/location', { lat: coords.lat, lon: coords.lng, name: locName }).catch(() => {});
+        }
       } else {
         if (customName) setLocationName(customName.split(',')[0]);
       }
@@ -225,6 +230,8 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('LocationPicker', {
       currentLat: userCoords?.lat, currentLng: userCoords?.lng,
       onSelectLocation: async (loc) => {
+        // Fire-and-forget: persist picked location to backend for admin visibility
+        api.put('/users/me/location', { lat: loc.lat, lon: loc.lng, name: loc.address }).catch(() => {});
         await loadNearby({ lat: loc.lat, lng: loc.lng }, loc.address);
       }
     });
