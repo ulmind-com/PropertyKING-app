@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { MapView } from '../../components/Map/MapViewComponent';
+import api from '../../api';
 
 export default function LocationPickerScreen({ navigation, route }) {
   const [region, setRegion] = useState({
@@ -70,6 +71,9 @@ export default function LocationPickerScreen({ navigation, route }) {
   };
 
   const confirmLocation = () => {
+    // Fire-and-forget: persist to backend for admin visibility
+    api.put('/users/me/location', { lat: region.latitude, lon: region.longitude, name: address }).catch(() => {});
+
     // Pass back to previous screen
     if (route.params?.onSelectLocation) {
       route.params.onSelectLocation({
