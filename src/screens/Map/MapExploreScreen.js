@@ -82,6 +82,20 @@ const PropertyMarker = React.memo(({ prop, coords, onPress, getImage }) => {
   );
 });
 
+// Reshape a slim map pin into the property shape the markers and callouts
+// already read, so the rendering code does not need to change.
+const toCardShape = (pin) => ({
+  ...pin,
+  location: {
+    city: pin.city, state: pin.state, address: pin.address,
+    coordinates: { type: 'Point', coordinates: [pin.lng, pin.lat] },
+  },
+  details: {
+    bedrooms: pin.bedrooms, bathrooms: pin.bathrooms, total_sqft: pin.total_sqft,
+  },
+  images: pin.image ? [{ url: pin.image, is_primary: true }] : [],
+});
+
 export default function MapExploreScreen({ navigation }) {
   const mapRef = useRef(null);
   const [region, setRegion] = useState(null);
@@ -126,11 +140,13 @@ export default function MapExploreScreen({ navigation }) {
   const loadProperties = async (coords, radiusMiles = 50) => {
     setLoading(true);
     try {
-      const res = await propertyAPI.nearby({
+      // Map pins are a slim payload, so we can show every match in range
+      // rather than the first page of full property documents.
+      const res = await propertyAPI.mapPins({
         lat: coords.lat, lng: coords.lng,
-        radius_miles: radiusMiles, limit: 50,
+        radius_miles: radiusMiles, limit: 2000,
       });
-      setProperties(res.data?.properties || []);
+      setProperties((res.data?.pins || []).map(toCardShape));
     } catch (e) {
       console.log('[MapExplore] load error:', e);
     }
@@ -276,7 +292,8 @@ export default function MapExploreScreen({ navigation }) {
 
   // ─── HELPERS ───
   const formatPrice = (price, unit) => {
-    if (!price) return '$0';
+    // Auction listings often carry no list price; "$0" would read as free.
+    if (!price) return 'Price on request';
     const f = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price);
     if (unit === 'per_month') return `${f}/mo`;
     return f;

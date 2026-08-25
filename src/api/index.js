@@ -1,7 +1,10 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://propertyking-backend-oofk.onrender.com/api/v1';
+// Production by default; EXPO_PUBLIC_API_URL points a dev build at a local
+// backend, matching how the website uses VITE_API_URL.
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
+  || 'https://propertyking-backend-oofk.onrender.com/api/v1';
 
 const api = axios.create({ baseURL: API_BASE_URL, headers: { 'Content-Type': 'application/json' }, timeout: 30000 });
 
@@ -49,6 +52,26 @@ export const propertyAPI = {
   myListings: (params) => api.get('/properties/my-listings', { params }),
   myListingsStats: () => api.get('/properties/my-listings/stats'),
   getViewers: (id, params) => api.get(`/properties/${id}/viewers`, { params }),
+  // Cities we actually have listings in — used by the location picker so every
+  // suggestion leads somewhere with results.
+  locations: (params) => api.get('/properties/locations', { params }),
+  // Slim marker payload, so the map can plot a whole city.
+  mapPins: (params) => api.get('/properties/map-pins', { params }),
+};
+
+// ─── Property claims ───
+// Claiming an imported listing needs admin approval; once approved the property
+// moves into the user's My Listings and their edits go through the queue below.
+export const claimAPI = {
+  submit: (propertyId, data) => api.post(`/claims/${propertyId}`, data),
+  mine: (params) => api.get('/claims/my', { params }),
+  cancel: (claimId) => api.delete(`/claims/${claimId}`),
+};
+
+export const editRequestAPI = {
+  submit: (propertyId, data) => api.post(`/edit-requests/${propertyId}`, data),
+  mine: (params) => api.get('/edit-requests/my', { params }),
+  cancel: (requestId) => api.delete(`/edit-requests/${requestId}`),
 };
 
 export const propertyTypeAPI = { list: () => api.get('/property-types') };

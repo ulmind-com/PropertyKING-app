@@ -6,6 +6,7 @@ import { WebView } from '../../components/WebView/WebViewComponent';
 import * as Location from 'expo-location';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../../theme';
 import { inquiryAPI, favoriteAPI, propertyAPI } from '../../api';
+import DistressPanel from '../../components/DistressPanel';
 import { useCompare } from '../../context/CompareContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -242,7 +243,11 @@ const ScheduleMeetingModal = forwardRef(({ property }, ref) => {
 export default function PropertyDetailsScreen({ route, navigation }) {
   const { user } = useAuth();
   const { isInCompare, addToCompare, removeFromCompare } = useCompare();
-  const property = route.params?.property || {};
+  const passedProperty = route.params?.property || {};
+  // The card that opened this screen carries a summary; the detail fetch below
+  // brings the claim/distress state, so merge the fresher copy over it.
+  const [freshProperty, setFreshProperty] = useState(null);
+  const property = freshProperty ? { ...passedProperty, ...freshProperty } : passedProperty;
   const passedUserCoords = route.params?.userCoords; // Priority to user selected location
   
   const [currentImg, setCurrentImg] = useState(0);
@@ -305,13 +310,17 @@ export default function PropertyDetailsScreen({ route, navigation }) {
     })();
   }, []);
 
-  // Fetch full property to increment view count and record the viewer
-  useEffect(() => {
-    if (property.slug || property.id) {
-      propertyAPI.getBySlug(property.slug || property.id)
-        .catch(e => console.log('Error recording view:', e));
-    }
-  }, []);
+  // Fetch full property to increment view count and record the viewer, and to
+  // pick up claim/distress state the list payload does not carry.
+  const refreshProperty = useCallback(() => {
+    const key = passedProperty.slug || passedProperty.id;
+    if (!key) return;
+    propertyAPI.getBySlug(key)
+      .then(res => setFreshProperty(res.data))
+      .catch(e => console.log('Error loading property:', e));
+  }, [passedProperty.slug, passedProperty.id]);
+
+  useEffect(() => { refreshProperty(); }, [refreshProperty]);
 
   const openMap = () => {
     if (!propCoords || propCoords[0] === 0) return;
@@ -414,6 +423,19 @@ export default function PropertyDetailsScreen({ route, navigation }) {
               </View>
             </View>
           </View>
+
+          {/* Foreclosure facts (when distressed) + the claim entry point.
+              Every imported listing is claimable, not just distressed ones. */}
+          {(property.distress?.is_distressed || property.source || property.claim?.status
+            || property.is_claimable) && (
+            <View style={{ marginHorizontal: -20 }}>
+              <DistressPanel
+                property={property}
+                navigation={navigation}
+                onClaimed={refreshProperty}
+              />
+            </View>
+          )}
 
           {/* Description */}
           <View style={styles.section}>

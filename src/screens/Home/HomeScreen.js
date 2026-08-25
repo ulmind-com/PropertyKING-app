@@ -160,8 +160,8 @@ export default function HomeScreen({ navigation }) {
 
   const fetchFreshData = async () => {
     const typesPromise = loadTypes();
-    const featuredPromise = propertyAPI.recommendations({ limit: 15 }).catch(() => null);
-    const topViewedPromise = propertyAPI.topViewed({ limit: 15 }).catch(() => null);
+    const featuredPromise = propertyAPI.recommendations({ limit: 40 }).catch(() => null);
+    const topViewedPromise = propertyAPI.topViewed({ limit: 40 }).catch(() => null);
     loadNearby();
     try {
       const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
@@ -184,8 +184,8 @@ export default function HomeScreen({ navigation }) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const featuredPromise = propertyAPI.recommendations({ limit: 15 }).catch(() => null);
-    const topViewedPromise = propertyAPI.topViewed({ limit: 15 }).catch(() => null);
+    const featuredPromise = propertyAPI.recommendations({ limit: 40 }).catch(() => null);
+    const topViewedPromise = propertyAPI.topViewed({ limit: 40 }).catch(() => null);
     loadNearby(userCoords || null);
     try {
       const [featRes, topRes] = await Promise.all([featuredPromise, topViewedPromise]);
@@ -220,7 +220,7 @@ export default function HomeScreen({ navigation }) {
         if (customName) setLocationName(customName.split(',')[0]);
       }
       setUserCoords(coords);
-      const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 25, limit: 15 });
+      const res = await propertyAPI.nearby({ lat: coords.lat, lng: coords.lng, radius_miles: 25, limit: 40 });
       setNearbyProps(res.data?.properties || []);
       saveCache();
     } catch (e) { setLocationName('Unknown'); }
@@ -242,17 +242,19 @@ export default function HomeScreen({ navigation }) {
   };
 
   // Deduplication — Priority: Near You → Top Viewed → Featured (Featured = "the rest")
-  const finalNearby = nearbyProps.slice(0, 5);
+  // Each row shows up to this many; "See all" leads to the full list.
+  const ROW_SIZE = 20;
+  const finalNearby = nearbyProps.slice(0, ROW_SIZE);
   const nearbyIds = new Set(finalNearby.map(p => p.id));
   // Top Viewed = genuinely most-viewed (views > 0), excluding Near You
   const finalTopViewed = topViewedProps
     .filter(p => !nearbyIds.has(p.id) && (p.views_count || 0) > 0)
-    .slice(0, 5);
+    .slice(0, ROW_SIZE);
   const topViewedIds = new Set(finalTopViewed.map(p => p.id));
   // Featured = everything else, not already in Near You or Top Viewed
   const finalFeatured = featuredProps
     .filter(p => !nearbyIds.has(p.id) && !topViewedIds.has(p.id))
-    .slice(0, 5);
+    .slice(0, ROW_SIZE);
 
   if (loading) return (
     <View style={st.container}>
@@ -379,6 +381,25 @@ export default function HomeScreen({ navigation }) {
         )}
 
 
+        {/* ═══════════ DISTRESSED ENTRY ═══════════ */}
+        {/* Mirrors the website's Distressed nav item — the headline feature,
+            so it gets a banner rather than being buried in a menu. */}
+        <TouchableOpacity
+          style={st.distressBanner}
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Distressed')}>
+          <View style={st.distressIcon}>
+            <Ionicons name="hammer" size={19} color="#FFF" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 13 }}>
+            <Text style={st.distressTitle}>Distressed Deals</Text>
+            <Text style={st.distressSub}>
+              Foreclosures, auctions and bank-owned — below market value
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
+        </TouchableOpacity>
+
         {/* ═══════════ NEAR YOU ═══════════ */}
         {finalNearby.length > 0 && (
           <View style={st.section} onLayout={(e) => { const y = e.nativeEvent.layout.y; setSectionYs(p => ({ ...p, nearby: y })); }}>
@@ -453,6 +474,20 @@ export default function HomeScreen({ navigation }) {
 const HEADER_GRADIENT = ['#000000', '#1C1C1E', '#3A3A3C', COLORS.bg]; // Fades to background color
 
 const st = StyleSheet.create({
+  distressBanner: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: 20, marginTop: 8, marginBottom: 4,
+    backgroundColor: '#1A1A1A', borderRadius: 16, padding: 15,
+  },
+  distressIcon: {
+    width: 40, height: 40, borderRadius: 12, backgroundColor: '#DC2626',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  distressTitle: { fontFamily: 'Raleway_800ExtraBold', fontSize: 15, color: '#FFF' },
+  distressSub: {
+    fontFamily: 'Raleway_400Regular', fontSize: 11.5,
+    color: 'rgba(255,255,255,0.65)', marginTop: 2, lineHeight: 16,
+  },
   container: { flex: 1, backgroundColor: COLORS.bg },
 
   // ─── FULL BACKGROUND GRADIENT ───

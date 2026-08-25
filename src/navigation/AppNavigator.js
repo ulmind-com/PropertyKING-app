@@ -26,6 +26,8 @@ import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import AllInquiriesScreen from '../screens/Profile/AllInquiriesScreen';
 import CompareScreen from '../screens/PropertyListing/CompareScreen';
 import MapExploreScreen from '../screens/Map/MapExploreScreen';
+import DistressedScreen from '../screens/Distressed/DistressedScreen';
+import MyClaimsScreen from '../screens/Profile/MyClaimsScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import SplashScreenComponent from '../screens/SplashScreen';
 import { PushNotificationService } from '../services/PushNotificationService';
@@ -37,6 +39,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="Distressed" component={DistressedScreen} />
       <Stack.Screen name="LocationPicker" component={LocationPickerScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="PropertyListing" component={PropertyListingScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
@@ -49,6 +52,7 @@ function ExploreStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ExploreMain" component={PropertyListingScreen} />
+      <Stack.Screen name="Distressed" component={DistressedScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
       <Stack.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
@@ -69,6 +73,7 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="MyListings" component={MyListingsScreen} />
+      <Stack.Screen name="MyClaims" component={MyClaimsScreen} />
       <Stack.Screen name="PropertyLeads" component={PropertyLeadsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
@@ -196,6 +201,8 @@ function MainStack() {
       <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="CompareScreen" component={CompareScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="Distressed" component={DistressedScreen} />
+      <Stack.Screen name="MyClaims" component={MyClaimsScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
     </Stack.Navigator>
   );

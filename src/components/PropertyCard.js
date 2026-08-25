@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Vibration 
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SHADOWS, SIZES } from '../theme';
 import { useCompare } from '../context/CompareContext';
+import { distressLabel, distressColor, discountPct } from '../utils/distress';
 
 const { width } = Dimensions.get('window');
 
@@ -15,7 +16,8 @@ export default function PropertyCard({ property, onPress, style }) {
     || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600';
 
   const formatPrice = (price, unit) => {
-    if (!price) return '$0';
+    // Auction listings often carry no list price; "$0" would read as free.
+    if (!price) return 'Price on request';
     const f = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price);
     if (unit === 'per_month') return `${f}/mo`;
     return f;
@@ -24,6 +26,8 @@ export default function PropertyCard({ property, onPress, style }) {
   const d = property?.details || {};
   const loc = property?.location || {};
   const isCompared = isInCompare(property.id);
+  const distress = property?.distress;
+  const discount = discountPct(property);
 
   return (
     <TouchableOpacity style={[s.card, style]} onPress={(e) => { Vibration.vibrate(20); if(onPress) onPress(e); }} activeOpacity={0.9}>
@@ -35,6 +39,20 @@ export default function PropertyCard({ property, onPress, style }) {
         <View style={[s.badge, property?.listing_type === 'rent' ? s.badgeRent : s.badgeSale]}>
           <Text style={s.badgeText}>{property?.listing_type === 'sale' ? 'FOR SALE' : 'FOR RENT'}</Text>
         </View>
+
+        {distress?.is_distressed && (
+          <View style={[s.distressBadge, { backgroundColor: distressColor(distress.type) }]}>
+            <Ionicons name="hammer" size={9} color="#FFF" />
+            <Text style={s.distressText}>{distressLabel(distress.type, true).toUpperCase()}</Text>
+          </View>
+        )}
+
+        {discount > 0 && (
+          <View style={s.discountBadge}>
+            <Ionicons name="trending-down" size={10} color="#FFF" />
+            <Text style={s.discountText}>{discount}% below est.</Text>
+          </View>
+        )}
 
         <View style={s.topActions}>
           <TouchableOpacity 
@@ -89,6 +107,22 @@ export default function PropertyCard({ property, onPress, style }) {
 }
 
 const s = StyleSheet.create({
+  distressBadge: {
+    position: 'absolute', top: 44, left: 12, flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 7, paddingVertical: 3.5, borderRadius: 5,
+  },
+  distressText: {
+    fontFamily: 'Raleway_800ExtraBold', fontSize: 8.5, color: '#FFF',
+    letterSpacing: 0.5, marginLeft: 3,
+  },
+  discountBadge: {
+    position: 'absolute', bottom: 12, left: 12, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(5,150,105,0.95)', paddingHorizontal: 7, paddingVertical: 4,
+    borderRadius: 5,
+  },
+  discountText: {
+    fontFamily: 'Raleway_700Bold', fontSize: 9.5, color: '#FFF', marginLeft: 3,
+  },
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 16,

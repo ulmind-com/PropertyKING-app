@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { userAPI } from '../../api';
 
-const AVAILABLE_SCREENS = ['MyListings', 'EditProfile', 'Favorites', 'Inquiries', 'Notifications'];
+const AVAILABLE_SCREENS = ['MyListings', 'MyClaims', 'EditProfile', 'Favorites', 'Inquiries', 'Notifications'];
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout, refreshUser } = useAuth();
@@ -21,6 +21,7 @@ export default function ProfileScreen({ navigation }) {
   const menuItems = [
     { icon: 'person-outline', label: 'Edit Profile', screen: 'EditProfile' },
     { icon: 'home-outline', label: 'My Listings', screen: 'MyListings' },
+    { icon: 'shield-checkmark-outline', label: 'My Claims', screen: 'MyClaims' },
     { icon: 'heart-outline', label: 'Favorites', screen: 'Favorites' },
     { icon: 'chatbubble-outline', label: 'Inquiries', screen: 'Inquiries' },
     { icon: 'notifications-outline', label: 'Notifications', screen: 'Notifications' },
