@@ -44,7 +44,7 @@ export default function DistressPanel({ property, onClaimed, navigation }) {
 
   const openClaim = () => {
     if (!user) {
-      navigation?.navigate('Auth', { screen: 'Login' });
+      navigation?.navigate('Login');
       return;
     }
     setModalOpen(true);

@@ -52,7 +52,9 @@ export default function LoginScreen({ navigation }) {
     if (!email || !password) return setError('Please enter your email and password.');
     setLoading(true); setError('');
     try { 
-      await login(email, password); 
+      await login(email, password);
+      // Login is a modal over whatever the user was browsing — return there.
+      if (navigation.canGoBack()) navigation.goBack();
     } catch (e) { 
       const detail = e.response?.data?.detail;
       setError(Array.isArray(detail) ? detail[0].msg : (detail || 'Invalid credentials.')); 

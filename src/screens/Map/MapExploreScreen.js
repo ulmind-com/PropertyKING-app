@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image as RNImage, Dimensions,
   StatusBar, Platform, TextInput, ActivityIndicator, Animated, Keyboard, Vibration, FlatList, ScrollView
@@ -99,6 +99,8 @@ const toCardShape = (pin) => ({
 export default function MapExploreScreen({ navigation }) {
   const mapRef = useRef(null);
   const [region, setRegion] = useState(null);
+  // What the map currently shows, used to render only the markers in view.
+  const [viewport, setViewport] = useState(null);
   const [userCoords, setUserCoords] = useState(null);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,9 +144,11 @@ export default function MapExploreScreen({ navigation }) {
     try {
       // Map pins are a slim payload, so we can show every match in range
       // rather than the first page of full property documents.
+      // 2000 pins is more than any viewport shows and made the payload and the
+      // marker pass heavy; 600 covers a metro with room to pan.
       const res = await propertyAPI.mapPins({
         lat: coords.lat, lng: coords.lng,
-        radius_miles: radiusMiles, limit: 2000,
+        radius_miles: radiusMiles, limit: 600,
       });
       setProperties((res.data?.pins || []).map(toCardShape));
     } catch (e) {
@@ -281,6 +285,7 @@ export default function MapExploreScreen({ navigation }) {
 
   // ─── REGION CHANGE ───
   const onRegionChangeComplete = useCallback((newRegion) => {
+    setViewport(newRegion);
     if (!userCoords) return;
     const newCenter = { lat: newRegion.latitude, lng: newRegion.longitude };
     const dLat = Math.abs(newCenter.lat - (userCoords?.lat || 0));
@@ -289,6 +294,60 @@ export default function MapExploreScreen({ navigation }) {
       loadProperties(newCenter, 50);
     }
   }, [userCoords]);
+
+  // Rendering every pin at once locks the UI — a city can return thousands.
+  // Keep only what is actually on screen, nearest the centre first, and cap it.
+  const MAX_MARKERS = 120;
+  const visibleMarkers = useMemo(() => {
+    if (!properties.length) return [];
+
+    const v = viewport || region;
+    let inView = properties
+      .map((prop) => ({ prop, coords: getCoords(prop.location) }))
+      .filter((x) => x.coords);
+
+    if (v) {
+      // A little padding so markers do not pop in at the edges while panning
+      const padLat = (v.latitudeDelta || 0.2) * 0.6;
+      const padLng = (v.longitudeDelta || 0.2) * 0.6;
+      const near = inView.filter(({ coords }) =>
+        Math.abs(coords.lat - v.latitude) <= padLat &&
+        Math.abs(coords.lng - v.longitude) <= padLng);
+      // Panning past the loaded set should not blank the map
+      if (near.length) inView = near;
+
+      inView.sort((a, b) => {
+        const da = (a.coords.lat - v.latitude) ** 2 + (a.coords.lng - v.longitude) ** 2;
+        const db = (b.coords.lat - v.latitude) ** 2 + (b.coords.lng - v.longitude) ** 2;
+        return da - db;
+      });
+    }
+
+    inView = inView.slice(0, MAX_MARKERS);
+
+    // Spread markers that share a coordinate so they do not stack invisibly
+    const counts = {};
+    const keyed = inView.map(({ prop, coords }) => {
+      const key = `${coords.lat.toFixed(5)}_${coords.lng.toFixed(5)}`;
+      const index = counts[key] || 0;
+      counts[key] = index + 1;
+      return { prop, coords, index, key };
+    });
+
+    return keyed.map((item) => {
+      const total = counts[item.key];
+      if (total <= 1) return item;
+      const angle = (2 * Math.PI * item.index) / total;
+      const offset = 0.0008;   // ~80m
+      return {
+        ...item,
+        coords: {
+          lat: item.coords.lat + offset * Math.cos(angle),
+          lng: item.coords.lng + offset * Math.sin(angle),
+        },
+      };
+    });
+  }, [properties, viewport, region]);
 
   // ─── HELPERS ───
   const formatPrice = (price, unit) => {
@@ -333,47 +392,15 @@ export default function MapExploreScreen({ navigation }) {
         onRegionChangeComplete={onRegionChangeComplete}
         mapPadding={{ top: 100, right: 0, bottom: 0, left: 0 }}
       >
-        {mapReady && (() => {
-          // Spread overlapping markers that share the same coordinates
-          const coordMap = {};
-          const jitteredProps = properties.map((prop) => {
-            const coords = getCoords(prop.location);
-            if (!coords) return null;
-            const key = `${coords.lat.toFixed(5)}_${coords.lng.toFixed(5)}`;
-            if (!coordMap[key]) coordMap[key] = 0;
-            const index = coordMap[key]++;
-            return { prop, coords, index, key };
-          }).filter(Boolean);
-
-          // Apply jitter to duplicates
-          const countMap = {};
-          jitteredProps.forEach(item => {
-            countMap[item.key] = (countMap[item.key] || 0) + 1;
-          });
-
-          return jitteredProps.map((item) => {
-            let { coords } = item;
-            const total = countMap[item.key];
-            if (total > 1) {
-              // Spread in a circle: ~0.0008 degrees ≈ ~80m offset
-              const angle = (2 * Math.PI * item.index) / total;
-              const offset = 0.0008;
-              coords = {
-                lat: coords.lat + offset * Math.cos(angle),
-                lng: coords.lng + offset * Math.sin(angle),
-              };
-            }
-            return (
-              <PropertyMarker
-                key={item.prop.id}
-                prop={item.prop}
-                coords={coords}
-                getImage={getMarkerImage(item.prop)}
-                onPress={() => onMarkerPress(item.prop)}
-              />
-            );
-          });
-        })()}
+        {mapReady && visibleMarkers.map((item) => (
+          <PropertyMarker
+            key={item.prop.id}
+            prop={item.prop}
+            coords={item.coords}
+            getImage={getMarkerImage(item.prop)}
+            onPress={() => onMarkerPress(item.prop)}
+          />
+        ))}
       </MapView>
 
       {/* ═══════════ SEARCH BAR OVERLAY ═══════════ */}

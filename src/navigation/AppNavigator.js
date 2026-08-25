@@ -83,16 +83,6 @@ function ProfileStack() {
   );
 }
 
-function AuthStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    </Stack.Navigator>
-  );
-}
-
 // Custom center "+" tab button
 function AddTabButton({ onPress }) {
   return (
@@ -108,6 +98,7 @@ function AddTabButton({ onPress }) {
 function EmptyScreen() { return null; }
 
 function MainTabs() {
+  const { isAuthenticated } = useAuth();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -169,7 +160,7 @@ function MainTabs() {
           tabPress: (e) => {
             Vibration.vibrate(20);
             e.preventDefault();
-            navigation.navigate('AddProperty');
+            navigation.navigate(isAuthenticated ? 'AddProperty' : 'Login');
           },
         })}
       />
@@ -186,6 +177,7 @@ function MainTabs() {
           tabPress: (e) => {
             Vibration.vibrate(20);
             e.preventDefault();
+            if (!isAuthenticated) { navigation.navigate('Login'); return; }
             navigation.navigate('Profile', { screen: 'ProfileMain' });
           }
         })}
@@ -204,6 +196,11 @@ function MainStack() {
       <Stack.Screen name="Distressed" component={DistressedScreen} />
       <Stack.Screen name="MyClaims" component={MyClaimsScreen} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
+
+      {/* Reachable from anywhere: browsing is open, actions ask for an account */}
+      <Stack.Screen name="Login" component={LoginScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }
@@ -251,7 +248,8 @@ export default function AppNavigator() {
         setRouteName(navigationRef.current?.getCurrentRoute()?.name);
       }}
     >
-      {isAuthenticated ? <MainStack /> : <AuthStack />}
+      {/* Always the main stack — the app is browsable signed out. */}
+      <MainStack />
       {isAuthenticated && routeName !== 'CompareScreen' && <FloatingCompareButton />}
     </NavigationContainer>
   );
