@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Play Store build artifacts (63 MB each) — keep them out of the repo
+AAB/
+*.aab
